@@ -194,7 +194,7 @@ export interface Challenge {
   participants: ChallengeParticipant[];
   maxParticipants: number;
   inviteCode: string | null;
-  visibility: 'private' | 'public';
+  visibility: 'PRIVATE' | 'PUBLIC';
   createdAt: string;
 }
 
@@ -299,7 +299,7 @@ export interface CreateChallengeData {
   description?: string;
   habitId?: string;
   maxParticipants?: number;
-  visibility?: 'private' | 'public';
+  visibility?: 'PRIVATE' | 'PUBLIC';
 }
 
 // ---- Request function with retry ----

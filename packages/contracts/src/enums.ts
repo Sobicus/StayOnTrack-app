@@ -66,8 +66,8 @@ export enum ChallengeParticipantStatus {
 }
 
 export enum ChallengeVisibility {
-  PRIVATE = 'private',
-  PUBLIC = 'public',
+  PRIVATE = 'PRIVATE',
+  PUBLIC = 'PUBLIC',
 }
 
 export enum HabitType {

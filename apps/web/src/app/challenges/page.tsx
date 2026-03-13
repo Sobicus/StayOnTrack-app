@@ -71,7 +71,7 @@ export default function ChallengesPage() {
   // Group challenge fields
   const [challengeMode, setChallengeMode] = useState<'1v1' | 'group'>('1v1');
   const [maxParticipants, setMaxParticipants] = useState(5);
-  const [visibility, setVisibility] = useState<'private' | 'public'>('private');
+  const [visibility, setVisibility] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
   const [inviteUsernames, setInviteUsernames] = useState<string[]>([]);
   const [currentInviteInput, setCurrentInviteInput] = useState('');
 
@@ -271,7 +271,7 @@ export default function ChallengesPage() {
     setInviteUsername('');
     setChallengeMode('1v1');
     setMaxParticipants(5);
-    setVisibility('private');
+    setVisibility('PRIVATE');
     setInviteUsernames([]);
     setCurrentInviteInput('');
   };
@@ -450,9 +450,9 @@ export default function ChallengesPage() {
               <label className="text-xs text-[var(--muted)] mb-1.5 block">{t('visibility')}</label>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
-                  onClick={() => setVisibility('private')}
+                  onClick={() => setVisibility('PRIVATE')}
                   className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition-all border ${
-                    visibility === 'private'
+                    visibility === 'PRIVATE'
                       ? 'bg-primary/10 border-primary/30 text-primary'
                       : 'bg-[var(--background)] border-[var(--border)] text-[var(--muted)]'
                   }`}
@@ -461,9 +461,9 @@ export default function ChallengesPage() {
                   {t('private')}
                 </button>
                 <button
-                  onClick={() => setVisibility('public')}
+                  onClick={() => setVisibility('PUBLIC')}
                   className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition-all border ${
-                    visibility === 'public'
+                    visibility === 'PUBLIC'
                       ? 'bg-primary/10 border-primary/30 text-primary'
                       : 'bg-[var(--background)] border-[var(--border)] text-[var(--muted)]'
                   }`}
