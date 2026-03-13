@@ -6,8 +6,13 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
+import dynamic from 'next/dynamic';
 import { AccentThemeProvider } from '@/components/theme-provider-accent';
-import { OfflineBanner } from '@/components/common/offline-banner';
+
+const OfflineBanner = dynamic(
+  () => import('@/components/common/offline-banner').then(m => m.OfflineBanner),
+  { ssr: false }
+);
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
