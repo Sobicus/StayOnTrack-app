@@ -134,12 +134,9 @@
 .live-hero-ring::after {
   content: '';
   position: absolute;
-  inset: 3px;
+  inset: 4px;
   border-radius: 50%;
-  background: var(--card);
-}
-.dark .live-hero-ring::after {
-  background: #0F1115;
+  background: var(--background);
 }
 .live-hero-ring.ring-calories::before {
   background: conic-gradient(
