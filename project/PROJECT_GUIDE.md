@@ -152,6 +152,21 @@ Friends, Privacy settings, Friend leaderboard
 ### Phase 3 — Challenges
 Create challenge, Invite friend, Compare progress, Winner logic
 
+## Git Flow
+```
+main (production-ready)
+  └── dev (active development)
+       ├── feature/TASK-002-habits-crud
+       ├── feature/TASK-007-auth-frontend
+       └── fix/FIX-001-something
+```
+- **main** — stable, production-ready code. Never deleted.
+- **dev** — integration branch for active development. Never deleted.
+- **Feature branches** — created FROM dev, named `feature/TASK-XXX-short-desc` or `fix/FIX-XXX-desc`
+- **Flow**: `dev` → create feature branch → work → merge to `dev` → when stable, merge `dev` to `main`
+- Feature branches are deleted after merge to dev
+- All development happens on feature branches, never directly on dev or main
+
 ## Future Architecture Notes
 - habitType: 'avoidance' | 'achievement' field is in the schema for future positive habit tracking
 - When splitting to microservices, candidates: notifications, stats/analytics, leaderboards, social/challenges

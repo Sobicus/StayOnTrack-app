@@ -39,11 +39,12 @@ async function bootstrap() {
   // const document = SwaggerModule.createDocument(app, config);
   // SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 4700;
+  const port = process.env.PORT || 4800;
   await app.listen(port);
 
   logger.log(`StayOnTrack API running on http://localhost:${port}`);
   logger.log(`Health check: http://localhost:${port}/api/v1/health`);
+  logger.log(`Auth: http://localhost:${port}/api/v1/auth`);
 }
 
 bootstrap();

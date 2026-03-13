@@ -19,17 +19,17 @@
 
 | ID | Title | Status | Phase |
 |---|---|---|---|
-| OPS-001 | Monorepo setup (Turborepo, npm workspaces, Docker) | 🔵 IN_PROGRESS | 0 |
-| OPS-002 | NestJS backend skeleton + health endpoint | 🔵 IN_PROGRESS | 0 |
-| OPS-003 | Next.js frontend skeleton + dark mode | 🔵 IN_PROGRESS | 0 |
-| OPS-004 | Shared contracts package (types, enums, formulas) | 🔵 IN_PROGRESS | 0 |
-| OPS-005 | Agent system and documentation | 🔵 IN_PROGRESS | 0 |
+| OPS-001 | Monorepo setup (Turborepo, npm workspaces, Docker) | 🟢 COMPLETED | 0 |
+| OPS-002 | NestJS backend skeleton + health endpoint | 🟢 COMPLETED | 0 |
+| OPS-003 | Next.js frontend skeleton + dark mode | 🟢 COMPLETED | 0 |
+| OPS-004 | Shared contracts package (types, enums, formulas) | 🟢 COMPLETED | 0 |
+| OPS-005 | Agent system and documentation | 🟢 COMPLETED | 0 |
 
 ## Phase 1: Core Solo Experience
 
 | ID | Title | Status | Phase |
 |---|---|---|---|
-| TASK-001 | Auth module (register, login, JWT, profile) | 🟡 CREATED | 1.1 |
+| TASK-001 | Auth module (register, login, JWT, profile) | 🟢 COMPLETED | 1.1 |
 | TASK-002 | Habits CRUD module | 🟡 CREATED | 1.2 |
 | TASK-003 | Daily check-in module (habit logs) | 🟡 CREATED | 1.3 |
 | TASK-004 | Stats & equivalents module | 🟡 CREATED | 1.4 |
