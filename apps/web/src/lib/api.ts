@@ -126,6 +126,7 @@ export interface Streak {
   bestStreak: number;
   streakShieldsRemaining: number;
   isShieldActive: boolean;
+  lastCheckinDate: string | null;
 }
 
 export interface Achievement {
@@ -210,11 +211,42 @@ export interface Activity {
   caloriesPerUnit: number;
 }
 
+export interface LevelInfo {
+  level: number;
+  currentXp: number;
+  nextLevelXp: number;
+  progress: number;
+}
+
+export interface StreakRecoveryResult {
+  recovered: boolean;
+  xpSpent: number;
+  currentStreak: number;
+  remainingXp: number;
+}
+
 export interface FrequencyStatus {
   habitId: string;
   used: number;
   limit: number | null;
   remaining: number | null;
+}
+
+export interface Quest {
+  id: string;
+  questType: string;
+  date: string;
+  completed: boolean;
+  completedAt: string | null;
+  xpReward: number;
+  title: string;
+  description: string;
+}
+
+export interface QuestCheckResult {
+  quests: Quest[];
+  completedNow: string[];
+  xpEarned: number;
 }
 
 export interface UpdateProfileData {
@@ -379,6 +411,8 @@ export const api = {
   streaks: {
     get: (token: string) =>
       request<Streak>('/streaks', { token }),
+    recover: (token: string) =>
+      request<StreakRecoveryResult>('/streaks/recover', { method: 'POST', token }),
   },
 
   achievements: {
@@ -422,6 +456,15 @@ export const api = {
       request<void>(`/challenges/${id}/decline`, { method: 'PATCH', token }),
     cancel: (token: string, id: string) =>
       request<void>(`/challenges/${id}/cancel`, { method: 'PATCH', token }),
+  },
+
+  gamification: {
+    getLevel: (token: string) =>
+      request<LevelInfo>('/gamification/level', { token }),
+    getQuests: (token: string) =>
+      request<Quest[]>('/gamification/quests', { token }),
+    checkQuests: (token: string) =>
+      request<QuestCheckResult>('/gamification/quests/check', { method: 'POST', token }),
   },
 
   activities: {

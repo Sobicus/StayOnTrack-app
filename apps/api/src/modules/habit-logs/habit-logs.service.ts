@@ -12,8 +12,15 @@ import { Habit, HabitFrequencyType } from '../habits/entities/habit.entity';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { BatchCheckinDto } from './dto/batch-checkin.dto';
 import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto';
-import { getSavedCalories, getSavedMoney } from '@stayontrack/contracts';
+import { getSavedCalories, getSavedMoney, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone } from '../../common/utils/date.utils';
+import { GamificationService, AddXpResult } from '../gamification/gamification.service';
+
+export interface CreateLogResult {
+  log: HabitLog;
+  xpEarned: number;
+  levelUp: boolean;
+}
 
 @Injectable()
 export class HabitLogsService {
@@ -21,6 +28,7 @@ export class HabitLogsService {
     @InjectRepository(HabitLog)
     private readonly logRepository: Repository<HabitLog>,
     private readonly habitsService: HabitsService,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   /**
@@ -28,7 +36,7 @@ export class HabitLogsService {
    * Calculates savedCalories and savedMoney automatically.
    * Enforces frequency limits for WEEKLY/CUSTOM habits.
    */
-  async createLog(userId: string, dto: CreateHabitLogDto, timezone = 'UTC'): Promise<HabitLog> {
+  async createLog(userId: string, dto: CreateHabitLogDto, timezone = 'UTC'): Promise<CreateLogResult> {
     // Verify habit belongs to user
     const habit = await this.habitsService.findOneByUser(dto.habitId, userId);
 
@@ -46,7 +54,9 @@ export class HabitLogsService {
       existing.portionRatio = portionRatio;
       existing.savedCalories = getSavedCalories(habit.caloriesPerOccurrence, portionRatio);
       existing.savedMoney = getSavedMoney(habit.pricePerOccurrence, portionRatio);
-      return this.logRepository.save(existing);
+      const saved = await this.logRepository.save(existing);
+      // No XP on updates — only first check-in earns XP
+      return { log: saved, xpEarned: 0, levelUp: false };
     }
 
     // Enforce frequency limits for non-daily habits
@@ -62,7 +72,24 @@ export class HabitLogsService {
       savedMoney: getSavedMoney(habit.pricePerOccurrence, portionRatio),
     });
 
-    return this.logRepository.save(log);
+    const saved = await this.logRepository.save(log);
+
+    // Award XP for check-in
+    let totalXpEarned = 0;
+    let levelUp = false;
+
+    const checkinResult = await this.gamificationService.addXp(userId, XP_REWARDS.CHECK_IN);
+    totalXpEarned += XP_REWARDS.CHECK_IN;
+    levelUp = checkinResult.levelUp;
+
+    // Bonus XP if fully avoided (portionRatio === 0)
+    if (portionRatio === 0) {
+      const bonusResult = await this.gamificationService.addXp(userId, XP_REWARDS.FULL_DAY_AVOIDED);
+      totalXpEarned += XP_REWARDS.FULL_DAY_AVOIDED;
+      if (bonusResult.levelUp) levelUp = true;
+    }
+
+    return { log: saved, xpEarned: totalXpEarned, levelUp };
   }
 
   /**
@@ -73,16 +100,16 @@ export class HabitLogsService {
     userId: string,
     dto: BatchCheckinDto,
     timezone = 'UTC',
-  ): Promise<HabitLog[]> {
-    const results: HabitLog[] = [];
+  ): Promise<CreateLogResult[]> {
+    const results: CreateLogResult[] = [];
 
     for (const logDto of dto.logs) {
       // Use batch date as fallback if individual log doesn't have one
       if (!logDto.date && dto.date) {
         logDto.date = dto.date;
       }
-      const log = await this.createLog(userId, logDto, timezone);
-      results.push(log);
+      const result = await this.createLog(userId, logDto, timezone);
+      results.push(result);
     }
 
     return results;
@@ -101,7 +128,7 @@ export class HabitLogsService {
 
     const summary = new DaySummaryDto();
     summary.date = date;
-    summary.logs = logs.map(HabitLogResponseDto.fromEntity);
+    summary.logs = logs.map((log) => HabitLogResponseDto.fromEntity(log));
     summary.totalSavedCalories = logs.reduce((sum, l) => sum + l.savedCalories, 0);
     summary.totalSavedMoney = logs.reduce((sum, l) => sum + l.savedMoney, 0);
     summary.checkedInCount = logs.length;

@@ -15,6 +15,7 @@ import { StreaksModule } from './modules/streaks/streaks.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { FriendsModule } from './modules/friends/friends.module';
 import { ChallengesModule } from './modules/challenges/challenges.module';
+import { GamificationModule } from './modules/gamification/gamification.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { EmailModule } from './common/email/email.module';
 
@@ -71,6 +72,7 @@ import { EmailModule } from './common/email/email.module';
     AchievementsModule,
     FriendsModule,
     ChallengesModule,
+    GamificationModule,
   ],
   providers: [
     {

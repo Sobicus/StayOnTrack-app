@@ -36,8 +36,8 @@ export class HabitLogsController {
     @CurrentUser() user: User,
     @Body() dto: CreateHabitLogDto,
   ): Promise<HabitLogResponseDto> {
-    const log = await this.habitLogsService.createLog(user.id, dto, user.timezone);
-    return HabitLogResponseDto.fromEntity(log);
+    const { log, xpEarned, levelUp } = await this.habitLogsService.createLog(user.id, dto, user.timezone);
+    return HabitLogResponseDto.fromEntity(log, { xpEarned, levelUp });
   }
 
   /**
@@ -49,8 +49,8 @@ export class HabitLogsController {
     @CurrentUser() user: User,
     @Body() dto: BatchCheckinDto,
   ): Promise<HabitLogResponseDto[]> {
-    const logs = await this.habitLogsService.batchCheckin(user.id, dto, user.timezone);
-    return logs.map(HabitLogResponseDto.fromEntity);
+    const results = await this.habitLogsService.batchCheckin(user.id, dto, user.timezone);
+    return results.map((r) => HabitLogResponseDto.fromEntity(r.log, { xpEarned: r.xpEarned, levelUp: r.levelUp }));
   }
 
   /**
@@ -94,7 +94,7 @@ export class HabitLogsController {
       start,
       end,
     );
-    return logs.map(HabitLogResponseDto.fromEntity);
+    return logs.map((log) => HabitLogResponseDto.fromEntity(log));
   }
 
   /**
@@ -114,7 +114,7 @@ export class HabitLogsController {
       start,
       end,
     );
-    return logs.map(HabitLogResponseDto.fromEntity);
+    return logs.map((log) => HabitLogResponseDto.fromEntity(log));
   }
 
   /**

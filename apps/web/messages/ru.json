@@ -302,6 +302,35 @@
     "noInvitations": "Нет приглашений"
   },
 
+  "quests": {
+    "title": "Ежедневные квесты",
+    "checkProgress": "Проверить прогресс",
+    "completed": "Выполнено",
+    "xpReward": "+{xp} XP",
+    "allDone": "Все квесты выполнены!"
+  },
+
+  "gamification": {
+    "level": "Уровень",
+    "xp": "Опыт",
+    "xpProgress": "{current} / {next} XP",
+    "levelUp": "Новый уровень!"
+  },
+
+  "streakRecovery": {
+    "title": "Восстановить серию",
+    "description": "Вы пропустили вчерашний день, но можете восстановить серию!",
+    "cost": "Стоимость: {xp} XP",
+    "youHave": "У вас {xp} XP",
+    "recover": "Восстановить",
+    "recovering": "Восстановление...",
+    "success": "Серия восстановлена!",
+    "xpSpent": "-{xp} XP потрачено",
+    "insufficientXp": "Недостаточно опыта",
+    "dismiss": "Скрыть",
+    "error": "Что-то пошло не так"
+  },
+
   "settings": {
     "title": "Настройки",
     "weightKg": "Вес (кг)",
@@ -346,6 +375,9 @@
     "exportDataDescription": "Скачайте копию всех ваших данных (GDPR). Включает профиль, привычки, отметки и многое другое.",
     "downloadData": "Скачать мои данные",
     "exportSuccess": "Данные успешно экспортированы!",
+    "accentColor": "Цвет акцента",
+    "lockedTheme": "Откроется на уровне {level}",
+    "themeApplied": "Тема применена!",
     "dangerZone": "Опасная зона",
     "deleteAccount": "Удалить аккаунт",
     "deleteAccountDescription": "Безвозвратно удалить аккаунт и все данные. Это действие нельзя отменить.",

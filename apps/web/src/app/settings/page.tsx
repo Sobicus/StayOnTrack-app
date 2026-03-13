@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeSelector } from '@/components/settings/theme-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
@@ -27,7 +28,18 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [userLevel, setUserLevel] = useState(1);
   const router = useRouter();
+
+  useEffect(() => {
+    if (token) {
+      api.gamification.getLevel(token).then((info) => {
+        setUserLevel(info.level);
+      }).catch(() => {
+        // fallback to level 1
+      });
+    }
+  }, [token]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -174,13 +186,14 @@ export default function SettingsPage() {
 
       {/* Theme */}
       <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <p className="font-medium text-[var(--foreground)]">{t('theme')}</p>
             <p className="text-xs text-[var(--muted)]">{t('themeDescription')}</p>
           </div>
           <ThemeToggle />
         </div>
+        <ThemeSelector userLevel={userLevel} />
       </div>
 
       {/* Currency */}

@@ -9,6 +9,7 @@
     --foreground: #111827;
     --muted: #6B7280;
     --border: #E5E7EB;
+    --accent-color: #3b82f6;
   }
 
   .dark {
@@ -17,6 +18,7 @@
     --foreground: #F9FAFB;
     --muted: #9CA3AF;
     --border: #2D3139;
+    --accent-color: #3b82f6;
   }
 
   body {

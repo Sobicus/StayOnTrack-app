@@ -90,6 +90,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   passwordResetExpires!: Date | null;
 
+  @Column({ type: 'int', default: 0 })
+  totalXp!: number;
+
   @Column({ type: 'date', nullable: true })
   lastShieldReplenishDate!: Date | null;
 

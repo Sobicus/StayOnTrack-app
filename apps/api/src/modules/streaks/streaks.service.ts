@@ -1,11 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { HabitsService } from '../habits/habits.service';
 import { User } from '../users/entities/user.entity';
-import { PARTIAL_SUCCESS_THRESHOLD, STREAK_SHIELDS_PER_WEEK } from '@stayontrack/contracts';
+import { PARTIAL_SUCCESS_THRESHOLD, STREAK_SHIELDS_PER_WEEK, STREAK_RECOVERY_XP_COST, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone, getDayOfWeekInTimezone } from '../../common/utils/date.utils';
+import { GamificationService } from '../gamification/gamification.service';
+
+/** Streak day counts that trigger a milestone XP reward */
+const STREAK_MILESTONES = [7, 14, 30, 60, 90, 180, 365];
+
+export interface StreakRecoveryResult {
+  recovered: boolean;
+  xpSpent: number;
+  currentStreak: number;
+  remainingXp: number;
+}
 
 export interface StreakResult {
   currentStreak: number;
@@ -23,6 +34,7 @@ export class StreaksService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly habitsService: HabitsService,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   /**
@@ -147,6 +159,120 @@ export class StreaksService {
       streakShieldsRemaining: user.streakShieldsRemaining,
       lastCheckinDate: lastDate,
       isShieldActive: shieldUsedToday,
+    };
+  }
+
+  /**
+   * Check if the current streak has just hit a milestone (7, 14, 30, 60, 90, 180, 365).
+   * If so, award STREAK_MILESTONE XP. Call this after a check-in that may extend the streak.
+   * Returns the milestone reached (or null) and XP result.
+   */
+  async checkAndAwardStreakMilestone(
+    userId: string,
+  ): Promise<{ milestone: number | null; xpAwarded: number; levelUp: boolean }> {
+    const streak = await this.getStreak(userId);
+
+    if (STREAK_MILESTONES.includes(streak.currentStreak)) {
+      const result = await this.gamificationService.addXp(userId, XP_REWARDS.STREAK_MILESTONE);
+      return {
+        milestone: streak.currentStreak,
+        xpAwarded: XP_REWARDS.STREAK_MILESTONE,
+        levelUp: result.levelUp,
+      };
+    }
+
+    return { milestone: null, xpAwarded: 0, levelUp: false };
+  }
+
+  /**
+   * Recover a broken streak by spending XP.
+   *
+   * Rules:
+   * - Streak must have been broken yesterday (last log was 2 days ago)
+   * - User must have enough XP (STREAK_RECOVERY_XP_COST)
+   * - Deducts XP and creates recovery log entries for the missed day
+   */
+  async recoverStreak(userId: string): Promise<StreakRecoveryResult> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const today = getTodayInTimezone(user.timezone);
+    const yesterday = this.getDateOffset(today, -1);
+
+    // Get the most recent check-in date
+    const dates = await this.logRepository
+      .createQueryBuilder('log')
+      .select('DISTINCT log.date', 'date')
+      .where('log.userId = :userId', { userId })
+      .orderBy('log.date', 'DESC')
+      .limit(1)
+      .getRawMany();
+
+    if (dates.length === 0) {
+      throw new BadRequestException('No check-in history found — nothing to recover');
+    }
+
+    const lastDate = dates[0].date;
+    const twoDaysAgo = this.getDateOffset(today, -2);
+
+    // Streak is recoverable only if last check-in was exactly 2 days ago
+    // (meaning yesterday was missed, breaking the streak)
+    if (lastDate !== twoDaysAgo) {
+      if (lastDate === today || lastDate === yesterday) {
+        throw new BadRequestException('Your streak is not broken — no recovery needed');
+      }
+      throw new BadRequestException('Streak was broken more than 1 day ago — recovery is no longer available');
+    }
+
+    // Check XP
+    if (user.totalXp < STREAK_RECOVERY_XP_COST) {
+      throw new BadRequestException(
+        `Not enough XP. You need ${STREAK_RECOVERY_XP_COST} XP but only have ${user.totalXp} XP`,
+      );
+    }
+
+    // Get active habits to create recovery logs for the missed day
+    const activeHabits = await this.habitsService.findActiveByUser(userId);
+    if (activeHabits.length === 0) {
+      throw new BadRequestException('No active habits found');
+    }
+
+    // Check that no logs exist for yesterday (the missed day)
+    const existingLogs = await this.logRepository.find({
+      where: { userId, date: yesterday },
+    });
+    if (existingLogs.length > 0) {
+      throw new BadRequestException('Yesterday already has check-in entries');
+    }
+
+    // Deduct XP
+    user.totalXp -= STREAK_RECOVERY_XP_COST;
+    await this.userRepository.save(user);
+
+    // Create "AVOIDED" recovery log entries for each active habit on the missed day
+    const recoveryLogs = activeHabits.map((habit) =>
+      this.logRepository.create({
+        habitId: habit.id,
+        userId,
+        date: yesterday,
+        status: HabitLogStatus.AVOIDED,
+        portionRatio: 0,
+        savedCalories: habit.caloriesPerOccurrence,
+        savedMoney: habit.pricePerOccurrence,
+      }),
+    );
+    await this.logRepository.save(recoveryLogs);
+
+    // Get updated streak
+    const streakResult = await this.getStreak(userId);
+
+    return {
+      recovered: true,
+      xpSpent: STREAK_RECOVERY_XP_COST,
+      currentStreak: streakResult.currentStreak,
+      remainingXp: user.totalXp,
     };
   }
 

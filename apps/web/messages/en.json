@@ -302,6 +302,35 @@
     "noInvitations": "No pending invitations"
   },
 
+  "quests": {
+    "title": "Daily Quests",
+    "checkProgress": "Check Progress",
+    "completed": "Completed",
+    "xpReward": "+{xp} XP",
+    "allDone": "All quests complete!"
+  },
+
+  "gamification": {
+    "level": "Level",
+    "xp": "XP",
+    "xpProgress": "{current} / {next} XP",
+    "levelUp": "Level Up!"
+  },
+
+  "streakRecovery": {
+    "title": "Recover Your Streak",
+    "description": "You missed yesterday, but you can recover your streak!",
+    "cost": "Cost: {xp} XP",
+    "youHave": "You have {xp} XP",
+    "recover": "Recover",
+    "recovering": "Recovering...",
+    "success": "Streak recovered!",
+    "xpSpent": "-{xp} XP spent",
+    "insufficientXp": "Not enough XP",
+    "dismiss": "Dismiss",
+    "error": "Something went wrong"
+  },
+
   "settings": {
     "title": "Settings",
     "weightKg": "Weight (kg)",
@@ -346,6 +375,9 @@
     "exportDataDescription": "Download a copy of all your data (GDPR). Includes profile, habits, check-ins, and more.",
     "downloadData": "Download my data",
     "exportSuccess": "Data exported successfully!",
+    "accentColor": "Accent Color",
+    "lockedTheme": "Unlock at level {level}",
+    "themeApplied": "Theme applied!",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone.",

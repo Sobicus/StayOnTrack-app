@@ -9,8 +9,13 @@ export class HabitLogResponseDto {
   savedCalories!: number;
   savedMoney!: number;
   createdAt!: Date;
+  xpEarned?: number;
+  levelUp?: boolean;
 
-  static fromEntity(log: HabitLog): HabitLogResponseDto {
+  static fromEntity(
+    log: HabitLog,
+    xpInfo?: { xpEarned: number; levelUp: boolean },
+  ): HabitLogResponseDto {
     const dto = new HabitLogResponseDto();
     dto.id = log.id;
     dto.habitId = log.habitId;
@@ -20,6 +25,10 @@ export class HabitLogResponseDto {
     dto.savedCalories = log.savedCalories;
     dto.savedMoney = log.savedMoney;
     dto.createdAt = log.createdAt;
+    if (xpInfo) {
+      dto.xpEarned = xpInfo.xpEarned;
+      dto.levelUp = xpInfo.levelUp;
+    }
     return dto;
   }
 }

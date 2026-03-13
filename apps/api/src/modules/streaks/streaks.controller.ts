@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -22,5 +23,13 @@ export class StreaksController {
   @Get()
   async getStreak(@CurrentUser() user: User) {
     return this.streaksService.getStreak(user.id);
+  }
+
+  /**
+   * POST /streaks/recover — Recover a broken streak by spending XP
+   */
+  @Post('recover')
+  async recoverStreak(@CurrentUser() user: User) {
+    return this.streaksService.recoverStreak(user.id);
   }
 }
