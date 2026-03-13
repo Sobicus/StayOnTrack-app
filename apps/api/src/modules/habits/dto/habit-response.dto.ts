@@ -3,6 +3,7 @@ import { Habit } from '../entities/habit.entity';
 export class HabitResponseDto {
   id!: string;
   title!: string;
+  emoji!: string;
   category!: string;
   habitType!: string;
   caloriesPerOccurrence!: number;
@@ -18,6 +19,7 @@ export class HabitResponseDto {
     const dto = new HabitResponseDto();
     dto.id = habit.id;
     dto.title = habit.title;
+    dto.emoji = habit.emoji;
     dto.category = habit.category;
     dto.habitType = habit.habitType;
     dto.caloriesPerOccurrence = habit.caloriesPerOccurrence;

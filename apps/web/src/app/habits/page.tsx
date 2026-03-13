@@ -141,7 +141,9 @@ export default function HabitsPage() {
         date: new Date().toISOString().split('T')[0],
       });
       await loadData();
-    } catch {}
+    } catch (err: any) {
+      console.error('Check-in failed:', err?.data || err);
+    }
   };
 
   const getLogForHabit = (habitId: string) =>

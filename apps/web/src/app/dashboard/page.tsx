@@ -45,6 +45,7 @@ export default function DashboardPage() {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [todayLogs, setTodayLogs] = useState<TodayLog[]>([]);
   const [equivalents, setEquivalents] = useState<any[]>([]);
+  const [habits, setHabits] = useState<Record<string, { title: string; emoji: string }>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,16 +55,23 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [s, st, logs, eq] = await Promise.all([
+      const [s, st, logs, eq, h] = await Promise.all([
         api.stats.get(token!),
         api.streaks.get(token!),
         api.habitLogs.today(token!).catch(() => []),
         api.stats.equivalents(token!).catch(() => []),
+        api.habits.list(token!).catch(() => []),
       ]);
       setStats(s);
       setStreak(st);
       setTodayLogs(logs);
       setEquivalents(eq.slice(0, 4)); // Top 4
+      // Build habits lookup
+      const map: Record<string, { title: string; emoji: string }> = {};
+      for (const habit of h) {
+        map[habit.id] = { title: habit.title, emoji: habit.emoji };
+      }
+      setHabits(map);
     } catch {
       // silently handle
     } finally {
@@ -185,10 +193,13 @@ export default function DashboardPage() {
                 key={log.id}
                 className="flex items-center gap-3 p-3 rounded-xl bg-[var(--card)] border border-[var(--border)]"
               >
+                {habits[log.habitId]?.emoji && (
+                  <span className="text-lg">{habits[log.habitId].emoji}</span>
+                )}
                 <StatusIcon status={log.status} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--foreground)] truncate">
-                    {log.habit?.title || 'Habit'}
+                    {habits[log.habitId]?.title || 'Habit'}
                   </p>
                 </div>
                 {log.savedCalories > 0 && (

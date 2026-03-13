@@ -71,8 +71,10 @@ export const api = {
   habitLogs: {
     checkin: (token: string, data: any) =>
       request<any>('/habit-logs', { method: 'POST', body: data, token }),
-    today: (token: string) =>
-      request<any[]>('/habit-logs/today', { token }),
+    today: async (token: string) => {
+      const summary = await request<{ logs: any[] }>('/habit-logs/day', { token });
+      return summary.logs || [];
+    },
     history: (token: string, habitId: string, start?: string, end?: string) => {
       const params = new URLSearchParams();
       if (start) params.set('start', start);
