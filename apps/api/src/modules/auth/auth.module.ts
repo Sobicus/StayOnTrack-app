@@ -19,7 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
           'dev-secret-change-in-production',
         ),
         signOptions: {
-          expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d'),
+          expiresIn: '15m',
         },
       }),
     }),

@@ -2,28 +2,29 @@
 
 ## Last Updated: 2026-03-13
 
-## Current Phase: Phase 0 — Foundation
+## Current Phase: Phase 3 — Challenges + Social Rewards
 
 ## Active Focus
-- Setting up monorepo infrastructure
-- Creating backend and frontend skeletons
-- Establishing project documentation and agent system
+- TASK-030: Challenges backend (1-on-1, scalable for groups)
+- TASK-031: Challenges frontend
+- TASK-040: Invite rewards (shield on friend accept)
+- TASK-041: Extended achievements (SOCIAL, CHALLENGES categories)
 
-## Completed
-- Full product analysis (behavior-change.txt + 9 docs + 3 agent files)
-- All major architectural decisions made (see DECISIONS_LOG.md)
-- Tech stack finalized
-- MVP scope defined (3 phases)
-- Project documentation structure created
+## Completed Phases
+- ✅ Phase 0: Foundation (monorepo, skeletons, contracts, docs)
+- ✅ Phase 1: Core Solo Experience (auth, habits, check-in, stats, streaks, achievements, i18n, onboarding, PWA)
+- ✅ Phase 2: Basic Social (friends, privacy, leaderboard)
+- ✅ Infrastructure: 24 unit tests, CI/CD (GitHub Actions), dark mode, mobile-first
 
-## In Progress
-- OPS-001 through OPS-005 (foundation setup)
+## Key Decisions (recent)
+- Challenges: start 1-on-1, but code via participants[] for future group scaling
+- Invite shields: no limit (each accepted friend = +1 shield)
+- Task order: Challenges → Auth upgrade → Settings → Telegram → Analytics
 
 ## Risks
 - Solo developer — limited bandwidth
-- No designer — UI quality depends on shadcn/ui + good implementation
-- Gmail SMTP for MVP — may have sending limits
-- No CI/CD yet — manual verification until GitHub Actions setup
+- No designer — UI depends on shadcn/ui + good implementation
+- Gmail SMTP for email verification — may have sending limits
 
 ## Key Metrics to Track (when MVP launches)
 - Daily check-in completion rate
@@ -31,3 +32,4 @@
 - Average check-in time (target: 3-5 seconds)
 - Streak length distribution
 - Habit creation rate
+- Challenge participation rate

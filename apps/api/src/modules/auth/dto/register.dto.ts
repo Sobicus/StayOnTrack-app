@@ -10,6 +10,7 @@ import {
 export class RegisterDto {
   @IsEmail()
   @IsNotEmpty()
+  @MaxLength(255)
   email!: string;
 
   @IsString()

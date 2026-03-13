@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /habits
+Disallow: /stats
+Disallow: /friends
+Disallow: /challenges
+Disallow: /achievements
+Disallow: /settings
+
+Sitemap: https://stayontrack.app/sitemap.xml

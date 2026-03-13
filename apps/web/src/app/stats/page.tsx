@@ -83,7 +83,7 @@ const SHORT_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const SHORT_DAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 export default function StatsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const t = useTranslations('stats');
   const tc = useTranslations('common');
   const [stats, setStats] = useState<Stats | null>(null);
@@ -216,7 +216,7 @@ export default function StatsPage() {
         />
         <BigStat
           icon={<DollarSign className="w-6 h-6 text-success" />}
-          value={`€${stats.totalSavedMoney.toFixed(2)}`}
+          value={`${({EUR:'€',USD:'$',GBP:'£',PLN:'zł',UAH:'₴',RUB:'₽'})[user?.currency||'EUR']||'€'}${stats.totalSavedMoney.toFixed(2)}`}
           label={t('moneySaved')}
           bgColor="bg-success/10"
         />

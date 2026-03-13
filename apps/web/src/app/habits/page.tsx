@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
+import { HabitCatalog, CatalogItem } from '@/components/habits/habit-catalog';
 import {
   Plus,
   Pencil,
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Lock,
 } from 'lucide-react';
 
 interface Habit {
@@ -27,6 +29,13 @@ interface Habit {
   frequencyType: string;
   occurrencesPerWeek: number | null;
   isActive: boolean;
+}
+
+interface FrequencyStatus {
+  habitId: string;
+  used: number;
+  limit: number | null;
+  remaining: number | null;
 }
 
 const CATEGORIES = [
@@ -51,6 +60,7 @@ export default function HabitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [todayLogs, setTodayLogs] = useState<any[]>([]);
+  const [freqStatus, setFreqStatus] = useState<FrequencyStatus[]>([]);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -69,12 +79,14 @@ export default function HabitsPage() {
 
   const loadData = async () => {
     try {
-      const [h, logs] = await Promise.all([
+      const [h, logs, freq] = await Promise.all([
         api.habits.list(token!),
         api.habitLogs.today(token!).catch(() => []),
+        api.habitLogs.frequencyStatus(token!).catch(() => []),
       ]);
       setHabits(h);
       setTodayLogs(logs);
+      setFreqStatus(freq);
     } catch {
     } finally {
       setLoading(false);
@@ -173,12 +185,40 @@ export default function HabitsPage() {
       }
       await loadData();
     } catch (err: any) {
-      showToast(t('failedToSave'), 'error');
+      const msg = err?.data?.message || t('failedToSave');
+      showToast(msg, 'error');
     }
   };
 
   const getLogForHabit = (habitId: string) =>
     todayLogs.find((l: any) => l.habitId === habitId);
+
+  const getFreqForHabit = (habitId: string): FrequencyStatus | undefined =>
+    freqStatus.find((f) => f.habitId === habitId);
+
+  /** Check if a habit has reached its weekly limit and has no log for today */
+  const isWeeklyLimitReached = (habitId: string): boolean => {
+    const freq = getFreqForHabit(habitId);
+    if (!freq || freq.limit === null) return false;
+    return freq.remaining === 0;
+  };
+
+  const handleQuickAdd = async (item: CatalogItem) => {
+    try {
+      await api.habits.create(token!, {
+        title: t(`catalog.${item.titleKey}`),
+        emoji: item.emoji,
+        category: item.category,
+        caloriesPerOccurrence: item.calories,
+        pricePerOccurrence: item.price,
+        frequencyType: 'DAILY',
+      });
+      showToast(`${item.emoji} ${t('catalog.addedToast')}`, 'success');
+      await loadData();
+    } catch {
+      showToast(t('failedToSave'), 'error');
+    }
+  };
 
   if (loading) {
     return (
@@ -203,18 +243,23 @@ export default function HabitsPage() {
         </button>
       </div>
 
-      {/* Habit list with check-in */}
-      {habits.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+      {/* Quick Add Catalog — show when no habits or always accessible */}
+      {habits.length === 0 && (
+        <div className="text-center py-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-6">
           <p className="text-[var(--muted)] mb-2">{t('noHabitsYet')}</p>
-          <p className="text-sm text-[var(--muted)]">
-            {t('noHabitsHint')}
-          </p>
+          <p className="text-sm text-[var(--muted)]">{t('noHabitsHint')}</p>
         </div>
-      ) : (
+      )}
+
+      <HabitCatalog onQuickAdd={handleQuickAdd} />
+
+      {/* Habit list with check-in */}
+      {habits.length > 0 && (
         <div className="space-y-3">
-          {habits.map((habit, index) => {
+          {habits.map((habit) => {
             const log = getLogForHabit(habit.id);
+            const freq = getFreqForHabit(habit.id);
+            const limitReached = !log && isWeeklyLimitReached(habit.id);
             return (
               <div
                 key={habit.id}
@@ -234,6 +279,11 @@ export default function HabitsPage() {
                             {habit.frequencyType === 'WEEKLY'
                               ? t('frequencyWeekly')
                               : t('frequencyCustom', { count: habit.occurrencesPerWeek || 0 })}
+                            {freq && freq.limit !== null && (
+                              <span className="ml-1">
+                                ({freq.used}/{freq.limit})
+                              </span>
+                            )}
                           </span>
                         )}
                       </p>
@@ -264,6 +314,13 @@ export default function HabitsPage() {
                         {t('kcalSaved', { count: Math.round(log.savedCalories) })}
                       </span>
                     )}
+                  </div>
+                ) : limitReached ? (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                    <Lock className="w-4 h-4 text-[var(--muted)]" />
+                    <span className="text-xs text-[var(--muted)] font-medium">
+                      {t('weeklyLimitReached')}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

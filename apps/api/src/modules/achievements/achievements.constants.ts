@@ -7,11 +7,13 @@
  * - STREAK: based on current/best streak days
  * - CHECKINS: based on total check-ins
  * - MONEY: based on total money saved
+ * - SOCIAL: based on friends count and social activity
+ * - CHALLENGES: based on challenge participation and wins
  */
 
 export interface AchievementDef {
   id: string;
-  category: 'CALORIES' | 'STREAK' | 'CHECKINS' | 'MONEY';
+  category: 'CALORIES' | 'STREAK' | 'CHECKINS' | 'MONEY' | 'SOCIAL' | 'CHALLENGES';
   title: string;
   description: string;
   emoji: string;
@@ -54,4 +56,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'money-100', category: 'MONEY', title: 'Triple Digits', description: 'Saved €100', emoji: '🤑', threshold: 100, unit: '€' },
   { id: 'money-500', category: 'MONEY', title: 'Half Grand', description: 'Saved €500', emoji: '💎', threshold: 500, unit: '€' },
   { id: 'money-1000', category: 'MONEY', title: 'Thousand Saver', description: 'Saved €1,000!', emoji: '🏦', threshold: 1000, unit: '€' },
+
+  // === SOCIAL ===
+  { id: 'social-first', category: 'SOCIAL', title: 'First Friend', description: 'Added your first friend', emoji: '🤝', threshold: 1, unit: 'friends' },
+  { id: 'social-5', category: 'SOCIAL', title: 'Social Butterfly', description: 'Have 5 friends', emoji: '🦋', threshold: 5, unit: 'friends' },
+  { id: 'social-10', category: 'SOCIAL', title: 'Invite Champion', description: 'Have 10 friends', emoji: '🎉', threshold: 10, unit: 'friends' },
+
+  // === CHALLENGES ===
+  { id: 'challenge-first', category: 'CHALLENGES', title: 'First Challenge', description: 'Participated in your first challenge', emoji: '⚔️', threshold: 1, unit: 'challenges' },
+  { id: 'challenge-5', category: 'CHALLENGES', title: 'Competitor', description: 'Completed 5 challenges', emoji: '🎮', threshold: 5, unit: 'challenges' },
+  { id: 'challenge-win', category: 'CHALLENGES', title: 'Challenge Winner', description: 'Won your first challenge', emoji: '🏆', threshold: 1, unit: 'wins' },
+  { id: 'challenge-3wins', category: 'CHALLENGES', title: 'Triple Crown', description: 'Won 3 challenges', emoji: '👑', threshold: 3, unit: 'wins' },
+  { id: 'challenge-weekend', category: 'CHALLENGES', title: 'Weekend Warrior', description: 'Completed a weekend challenge', emoji: '🛡️', threshold: 1, unit: 'weekend-challenges' },
 ];

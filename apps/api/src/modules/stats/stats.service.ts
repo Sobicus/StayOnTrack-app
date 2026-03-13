@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { ActivitiesService } from '../activities/activities.service';
+import { User } from '../users/entities/user.entity';
 import {
   getPotentialWeightAvoided,
   getCaloriesPerMinute,
@@ -16,6 +17,23 @@ export interface UserStatsResult {
   potentialWeightAvoidedKg: number;
   totalCheckIns: number;
   totalDaysTracked: number;
+}
+
+export interface LiveStatsResult {
+  /** Total saved from all past days (before today) */
+  pastCalories: number;
+  pastMoney: number;
+  pastWeightKg: number;
+  /** Today's checked-in totals so far */
+  todayCalories: number;
+  todayMoney: number;
+  /** Expected daily total from today's check-ins (for interpolation) */
+  todayExpectedCalories: number;
+  todayExpectedMoney: number;
+  /** User's journey start time */
+  startedAt: string;
+  /** Day boundary hour (0-23) */
+  dayEndHour: number;
 }
 
 export interface EffortEquivalentResult {
@@ -101,6 +119,56 @@ export class StatsService {
     }
 
     return equivalents;
+  }
+
+  /**
+   * Get live stats for the hero widget.
+   * Returns past days total + today's data for frontend interpolation.
+   */
+  async getLiveStats(user: User): Promise<LiveStatsResult> {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Past days (everything before today)
+    const pastResult = await this.logRepository
+      .createQueryBuilder('log')
+      .select('SUM(log.savedCalories)', 'cal')
+      .addSelect('SUM(log.savedMoney)', 'money')
+      .where('log.userId = :userId', { userId: user.id })
+      .andWhere('log.date < :today', { today })
+      .getRawOne();
+
+    const pastCalories = parseFloat(pastResult?.cal) || 0;
+    const pastMoney = parseFloat(pastResult?.money) || 0;
+
+    // Today's check-ins
+    const todayResult = await this.logRepository
+      .createQueryBuilder('log')
+      .select('SUM(log.savedCalories)', 'cal')
+      .addSelect('SUM(log.savedMoney)', 'money')
+      .where('log.userId = :userId', { userId: user.id })
+      .andWhere('log.date = :today', { today })
+      .getRawOne();
+
+    const todayCalories = parseFloat(todayResult?.cal) || 0;
+    const todayMoney = parseFloat(todayResult?.money) || 0;
+
+    // Expected daily total = sum of all habits' calories/cost that have a check-in today as AVOIDED
+    // For interpolation: use today's actual check-in total as the expected value
+    // (what's already checked in today is what we interpolate over the day)
+    const todayExpectedCalories = todayCalories;
+    const todayExpectedMoney = todayMoney;
+
+    return {
+      pastCalories,
+      pastMoney,
+      pastWeightKg: parseFloat(getPotentialWeightAvoided(pastCalories).toFixed(3)),
+      todayCalories,
+      todayMoney,
+      todayExpectedCalories,
+      todayExpectedMoney,
+      startedAt: user.createdAt.toISOString(),
+      dayEndHour: user.dayEndHour,
+    };
   }
 
   /**

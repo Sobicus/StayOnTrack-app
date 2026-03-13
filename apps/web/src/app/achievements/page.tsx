@@ -2,32 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api } from '@/lib/api';
+import { api, type Achievement, type AchievementsSummary } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useTranslations } from 'next-intl';
 import { Trophy, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface Achievement {
-  id: string;
-  category: string;
-  title: string;
-  description: string;
-  emoji: string;
-  threshold: number;
-  unit: string;
-  progress: number;
-  unlocked: boolean;
-  progressPercent: number;
-}
-
-interface AchievementsSummary {
-  total: number;
-  unlocked: number;
-  achievements: Achievement[];
-}
-
-const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY'];
+const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY', 'SOCIAL', 'CHALLENGES'];
 
 export default function AchievementsPage() {
   const { token } = useAuth();

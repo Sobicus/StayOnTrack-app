@@ -5,15 +5,36 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
+import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
 export const metadata: Metadata = {
-  title: 'StayOnTrack',
-  description: 'Track what you avoided, not what you consumed',
+  title: {
+    default: 'StayOnTrack — Track What You Avoided',
+    template: '%s | StayOnTrack',
+  },
+  description: 'Track what you avoided, not what you consumed. See saved calories, money, and potential weight avoided — all in real time.',
   manifest: '/manifest.json',
   themeColor: '#6366F1',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:4801'),
+  openGraph: {
+    type: 'website',
+    siteName: 'StayOnTrack',
+    title: 'StayOnTrack — Track What You Avoided',
+    description: 'Track what you avoided, not what you consumed. See saved calories, money, and potential weight avoided — all in real time.',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'StayOnTrack — Track What You Avoided',
+    description: 'Track what you avoided, not what you consumed.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -37,6 +58,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body
         className={`${inter.className} antialiased bg-[var(--background)] text-[var(--foreground)] transition-colors`}
       >
@@ -44,6 +69,7 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AuthProvider>
               <ToastProvider>
+                <ServiceWorkerRegister />
                 {children}
               </ToastProvider>
             </AuthProvider>

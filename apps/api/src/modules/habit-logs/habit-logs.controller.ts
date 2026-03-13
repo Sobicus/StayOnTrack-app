@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -18,7 +19,10 @@ import { HabitLogsService } from './habit-logs.service';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { BatchCheckinDto } from './dto/batch-checkin.dto';
 import { HabitLogResponseDto, DaySummaryDto } from './dto/habit-log-response.dto';
+import { getTodayInTimezone } from '../../common/utils/date.utils';
 
+@ApiTags('Check-ins')
+@ApiBearerAuth('access-token')
 @Controller('habit-logs')
 @UseGuards(JwtAuthGuard)
 export class HabitLogsController {
@@ -32,7 +36,7 @@ export class HabitLogsController {
     @CurrentUser() user: User,
     @Body() dto: CreateHabitLogDto,
   ): Promise<HabitLogResponseDto> {
-    const log = await this.habitLogsService.createLog(user.id, dto);
+    const log = await this.habitLogsService.createLog(user.id, dto, user.timezone);
     return HabitLogResponseDto.fromEntity(log);
   }
 
@@ -45,8 +49,21 @@ export class HabitLogsController {
     @CurrentUser() user: User,
     @Body() dto: BatchCheckinDto,
   ): Promise<HabitLogResponseDto[]> {
-    const logs = await this.habitLogsService.batchCheckin(user.id, dto);
+    const logs = await this.habitLogsService.batchCheckin(user.id, dto, user.timezone);
     return logs.map(HabitLogResponseDto.fromEntity);
+  }
+
+  /**
+   * GET /habit-logs/frequency-status?date=2026-03-13
+   * Get weekly frequency status for all active habits.
+   * Returns used/limit/remaining for each habit.
+   */
+  @Get('frequency-status')
+  async getFrequencyStatus(
+    @CurrentUser() user: User,
+    @Query('date') date?: string,
+  ) {
+    return this.habitLogsService.getFrequencyStatus(user.id, date, user.timezone);
   }
 
   /**
@@ -58,7 +75,7 @@ export class HabitLogsController {
     @CurrentUser() user: User,
     @Query('date') date?: string,
   ): Promise<DaySummaryDto> {
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || getTodayInTimezone(user.timezone);
     return this.habitLogsService.getDaySummary(user.id, targetDate);
   }
 

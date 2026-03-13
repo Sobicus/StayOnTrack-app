@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build contracts package
+        run: cd packages/contracts && npm run build --if-present
+
+      - name: Type check API
+        run: npx tsc --noEmit -p apps/api/tsconfig.build.json
+
+      - name: Type check Web
+        run: npx tsc --noEmit -p apps/web/tsconfig.json
+
+  test-api:
+    name: API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API tests
+        run: cd apps/api && npm test -- --passWithNoTests --ci
+        env:
+          NODE_ENV: test
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: cd apps/web && npx next build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4800/api/v1

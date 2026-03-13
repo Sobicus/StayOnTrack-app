@@ -4,11 +4,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { StatsService } from './stats.service';
 
+@ApiTags('Stats')
+@ApiBearerAuth('access-token')
 @Controller('stats')
 @UseGuards(JwtAuthGuard)
 export class StatsController {
@@ -32,6 +35,14 @@ export class StatsController {
   ) {
     const weightKg = weight ? parseFloat(weight) : user.weightKg || 75;
     return this.statsService.getEffortEquivalents(user.id, weightKg);
+  }
+
+  /**
+   * GET /stats/live — Live stats for the hero widget (interpolation data)
+   */
+  @Get('live')
+  async getLiveStats(@CurrentUser() user: User) {
+    return this.statsService.getLiveStats(user);
   }
 
   /**

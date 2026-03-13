@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ApiError } from '@/lib/api';
 
 interface User {
@@ -14,6 +14,10 @@ interface User {
   visibility: string;
   locale: string;
   streakShieldsRemaining: number;
+  dayEndHour: number;
+  currency: string;
+  weekStartDay: string;
+  onboardingCompleted: boolean;
   createdAt: string;
 }
 
@@ -31,26 +35,66 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'stayontrack_token';
+const REFRESH_TOKEN_KEY = 'stayontrack_refresh_token';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshingRef = useRef(false);
 
-  const saveToken = (t: string) => {
-    localStorage.setItem(TOKEN_KEY, t);
-    setToken(t);
+  const saveTokens = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    // Set marker cookie for middleware route protection
+    document.cookie = 'stayontrack_authenticated=1; path=/; max-age=2592000; SameSite=Lax';
+    setToken(accessToken);
   };
 
   const clearAuth = () => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    // Remove marker cookie
+    document.cookie = 'stayontrack_authenticated=; path=/; max-age=0';
     setToken(null);
     setUser(null);
   };
 
+  /**
+   * Try to refresh the access token using the stored refresh token.
+   * Returns the new access token, or null if refresh failed.
+   */
+  const tryRefreshTokens = useCallback(async (): Promise<string | null> => {
+    if (refreshingRef.current) return null;
+    refreshingRef.current = true;
+
+    const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!storedRefresh) {
+      refreshingRef.current = false;
+      return null;
+    }
+
+    try {
+      const result = await api.auth.refresh(storedRefresh);
+      saveTokens(result.accessToken, result.refreshToken);
+      setUser(result.user);
+      refreshingRef.current = false;
+      return result.accessToken;
+    } catch {
+      clearAuth();
+      refreshingRef.current = false;
+      return null;
+    }
+  }, []);
+
   const refreshUser = useCallback(async () => {
     const stored = token || localStorage.getItem(TOKEN_KEY);
     if (!stored) {
+      // Try refresh token if no access token
+      const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (storedRefresh) {
+        await tryRefreshTokens();
+      }
       setIsLoading(false);
       return;
     }
@@ -60,12 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(stored);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        clearAuth();
+        // Access token expired — try refresh
+        const newToken = await tryRefreshTokens();
+        if (!newToken) {
+          clearAuth();
+        }
       }
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, tryRefreshTokens]);
 
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
@@ -75,19 +123,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, []);
 
+  // Auto-refresh: set a timer to refresh before access token expires (~14 min)
+  useEffect(() => {
+    if (!token) return;
+    const timer = setInterval(async () => {
+      await tryRefreshTokens();
+    }, 14 * 60 * 1000); // 14 minutes
+    return () => clearInterval(timer);
+  }, [token, tryRefreshTokens]);
+
   const login = async (email: string, password: string) => {
     const result = await api.auth.login({ email, password });
-    saveToken(result.accessToken);
+    saveTokens(result.accessToken, result.refreshToken);
     setUser(result.user);
   };
 
   const register = async (email: string, password: string, username: string) => {
     const result = await api.auth.register({ email, password, username });
-    saveToken(result.accessToken);
+    saveTokens(result.accessToken, result.refreshToken);
     setUser(result.user);
   };
 
   const logout = () => {
+    // Revoke refresh token on server (best effort)
+    const stored = localStorage.getItem(TOKEN_KEY);
+    if (stored) {
+      api.auth.logout(stored).catch(() => {});
+    }
     clearAuth();
   };
 

@@ -60,3 +60,200 @@
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* ===== Live Hero — Neon Ring ===== */
+
+/* Rotating conic gradient for the outer glow ring */
+@keyframes hero-ring-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Pulsing glow intensity */
+@keyframes hero-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.04); }
+}
+
+/* Shimmer sweep across the ring */
+@keyframes hero-shimmer {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Outer glow wrapper */
+.live-hero-container {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+/* Multi-layer neon glow behind the ring */
+.live-hero-glow-layer {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  animation: hero-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+.live-hero-glow-layer.glow-calories {
+  background: radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 70%);
+  box-shadow:
+    0 0 30px 8px rgba(251,191,36,0.2),
+    0 0 60px 20px rgba(251,191,36,0.1);
+}
+.live-hero-glow-layer.glow-money {
+  background: radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%);
+  box-shadow:
+    0 0 30px 8px rgba(34,197,94,0.2),
+    0 0 60px 20px rgba(34,197,94,0.1);
+}
+.live-hero-glow-layer.glow-weight {
+  background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+  box-shadow:
+    0 0 30px 8px rgba(99,102,241,0.2),
+    0 0 60px 20px rgba(99,102,241,0.1);
+}
+
+/* Rotating conic-gradient ring */
+.live-hero-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 3px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.live-hero-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  animation: hero-ring-spin 6s linear infinite;
+}
+.live-hero-ring.ring-calories::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(251,191,36,0.1),
+    rgba(251,191,36,0.9),
+    rgba(245,158,11,0.6),
+    rgba(251,191,36,0.1),
+    rgba(251,191,36,0.8),
+    rgba(251,191,36,0.1)
+  );
+}
+.live-hero-ring.ring-money::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(34,197,94,0.1),
+    rgba(34,197,94,0.9),
+    rgba(22,163,74,0.6),
+    rgba(34,197,94,0.1),
+    rgba(34,197,94,0.8),
+    rgba(34,197,94,0.1)
+  );
+}
+.live-hero-ring.ring-weight::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(99,102,241,0.1),
+    rgba(168,85,247,0.9),
+    rgba(99,102,241,0.6),
+    rgba(139,92,246,0.1),
+    rgba(168,85,247,0.8),
+    rgba(99,102,241,0.1)
+  );
+}
+
+/* Pulsing glow dot at arc leading edge */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.8; r: 5; }
+  50%      { opacity: 1;   r: 7; }
+}
+.live-hero-dot-pulse {
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+
+/* Inner progress arc glow */
+.live-hero-progress-glow {
+  filter:
+    drop-shadow(0 0 4px var(--hero-color, rgba(99,102,241,0.8)))
+    drop-shadow(0 0 10px var(--hero-color, rgba(99,102,241,0.4)));
+}
+
+/* Subtle particles / sparkles */
+@keyframes sparkle-1 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(-8px, -12px) scale(1); }
+}
+@keyframes sparkle-2 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(10px, -8px) scale(1); }
+}
+@keyframes sparkle-3 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(-5px, 10px) scale(1); }
+}
+
+.live-hero-sparkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.live-hero-sparkle:nth-child(1) {
+  top: 8%; left: 20%;
+  animation: sparkle-1 2.5s ease-in-out infinite;
+}
+.live-hero-sparkle:nth-child(2) {
+  top: 15%; right: 12%;
+  animation: sparkle-2 3s ease-in-out infinite 0.5s;
+}
+.live-hero-sparkle:nth-child(3) {
+  bottom: 18%; left: 15%;
+  animation: sparkle-3 2.8s ease-in-out infinite 1s;
+}
+.live-hero-sparkle:nth-child(4) {
+  bottom: 10%; right: 20%;
+  animation: sparkle-1 3.2s ease-in-out infinite 1.5s;
+}
+.live-hero-sparkle:nth-child(5) {
+  top: 50%; left: 2%;
+  animation: sparkle-2 2.6s ease-in-out infinite 0.8s;
+}
+
+/* Safe area for iOS notch / home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent text selection on interactive elements */
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth touch scrolling */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch target sizing — minimum 44px for accessibility */
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Hide scrollbar on overflow containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

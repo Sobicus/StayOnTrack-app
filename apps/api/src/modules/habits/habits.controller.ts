@@ -12,6 +12,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -20,6 +21,8 @@ import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
 import { HabitResponseDto } from './dto/habit-response.dto';
 
+@ApiTags('Habits')
+@ApiBearerAuth('access-token')
 @Controller('habits')
 @UseGuards(JwtAuthGuard)
 export class HabitsController {

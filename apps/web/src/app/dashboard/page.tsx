@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { OnboardingScreen, useOnboarding } from '@/components/onboarding';
 import { useTranslations } from 'next-intl';
+import { LiveHero } from '@/components/dashboard/live-hero';
 import {
   Flame,
   DollarSign,
@@ -16,6 +17,10 @@ import {
   AlertCircle,
   XCircle,
 } from 'lucide-react';
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€', USD: '$', GBP: '£', PLN: 'zł', UAH: '₴', RUB: '₽',
+};
 
 interface Stats {
   totalSavedCalories: number;
@@ -42,7 +47,7 @@ interface TodayLog {
 }
 
 export default function DashboardPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const t = useTranslations('dashboard');
   const { showOnboarding, completeOnboarding } = useOnboarding();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -97,6 +102,9 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
+      {/* Live Progress Hero */}
+      <LiveHero />
+
       {/* Streak Banner */}
       {streak && (
         <div className="bg-gradient-to-r from-streak/20 to-primary/20 rounded-2xl p-4 mb-6 border border-streak/20">
@@ -139,7 +147,7 @@ export default function DashboardPage() {
           <StatCard
             icon={<DollarSign className="w-5 h-5 text-success" />}
             label={t('moneySaved')}
-            value={`€${stats.totalSavedMoney.toFixed(2)}`}
+            value={`${CURRENCY_SYMBOLS[user?.currency || 'EUR'] || '€'}${stats.totalSavedMoney.toFixed(2)}`}
             color="success"
           />
           <StatCard

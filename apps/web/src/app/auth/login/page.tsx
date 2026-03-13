@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { ApiError } from '@/lib/api';
@@ -9,9 +9,23 @@ import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, LogIn, Flame } from 'lucide-react';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const t = useTranslations('auth');
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +40,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -116,7 +130,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-[var(--muted)] text-sm">
+        <div className="text-center mt-4">
+          <Link href="/auth/forgot-password" className="text-sm text-[var(--muted)] hover:text-primary transition-colors">
+            {t('forgotPassword')}
+          </Link>
+        </div>
+
+        <p className="text-center mt-4 text-[var(--muted)] text-sm">
           {t('noAccount')}{' '}
           <Link href="/auth/register" className="text-primary hover:underline font-medium">
             {t('signUp')}

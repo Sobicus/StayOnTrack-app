@@ -9,6 +9,8 @@ import {
   ListChecks,
   BarChart3,
   Trophy,
+  Users,
+  Swords,
   Settings,
   LogOut,
   Flame,
@@ -20,8 +22,9 @@ const navKeys = [
   { href: '/dashboard', labelKey: 'home' as const, icon: LayoutDashboard },
   { href: '/habits', labelKey: 'habits' as const, icon: ListChecks },
   { href: '/achievements', labelKey: 'awards' as const, icon: Trophy },
+  { href: '/friends', labelKey: 'friends' as const, icon: Users },
+  { href: '/challenges', labelKey: 'challenges' as const, icon: Swords },
   { href: '/stats', labelKey: 'stats' as const, icon: BarChart3 },
-  { href: '/settings', labelKey: 'settings' as const, icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -56,8 +59,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Flame className="w-6 h-6 text-primary" />
             <span className="font-bold text-[var(--foreground)]">{tc('appName')}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--muted)]">{user?.username}</span>
+            <Link
+              href="/settings"
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                pathname === '/settings'
+                  ? 'text-primary bg-primary/10'
+                  : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--border)]',
+              )}
+              title={t('settings')}
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
             <button
               onClick={() => { logout(); router.push('/auth/login'); }}
               className="p-2 rounded-lg text-[var(--muted)] hover:text-danger hover:bg-danger/10 transition-all"

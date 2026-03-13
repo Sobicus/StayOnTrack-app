@@ -20,6 +20,8 @@
     "home": "Главная",
     "habits": "Привычки",
     "awards": "Награды",
+    "friends": "Друзья",
+    "challenges": "Вызовы",
     "stats": "Статистика",
     "settings": "Настройки",
     "signOut": "Выйти"
@@ -55,7 +57,24 @@
     "repeatPassword": "Повторите пароль",
     "passwordsMismatch": "Пароли не совпадают",
     "registrationFailed": "Регистрация не удалась. Попробуйте ещё раз.",
-    "hasAccount": "Уже есть аккаунт?"
+    "hasAccount": "Уже есть аккаунт?",
+    "forgotPassword": "Забыли пароль?",
+    "forgotPasswordTitle": "Восстановление пароля",
+    "forgotPasswordHint": "Введите email и мы отправим ссылку для сброса.",
+    "forgotPasswordSent": "Ссылка отправлена!",
+    "forgotPasswordCheck": "Проверьте email (или консоль сервера в dev-режиме).",
+    "forgotPasswordError": "Что-то пошло не так. Попробуйте ещё раз.",
+    "sendResetLink": "Отправить ссылку",
+    "backToLogin": "Назад ко входу",
+    "resetPasswordTitle": "Новый пароль",
+    "newPassword": "Новый пароль",
+    "passwordTooShort": "Пароль должен быть минимум 8 символов",
+    "resetPassword": "Сбросить пароль",
+    "resetPasswordSuccess": "Пароль успешно изменён!",
+    "resetPasswordError": "Недействительный или просроченный токен.",
+    "invalidResetToken": "Недействительный токен сброса.",
+    "requestNewLink": "Запросить новую ссылку",
+    "goToLogin": "Перейти ко входу →"
   },
 
   "dashboard": {
@@ -72,7 +91,13 @@
     "todayCheckins": "Отметки сегодня",
     "noCheckinsYet": "Пока нет отметок за сегодня",
     "goToCheckin": "Перейти к отметкам →",
-    "habit": "Привычка"
+    "habit": "Привычка",
+    "liveHero": {
+      "calories": "Калории",
+      "money": "Деньги",
+      "weight": "Вес",
+      "saved": "сэконом."
+    }
   },
 
   "habits": {
@@ -108,6 +133,7 @@
     "frequencyWeekly": "раз/нед",
     "frequencyCustom": "{count}x/нед",
     "timesPerWeek": "Раз в неделю (1-7)",
+    "weeklyLimitReached": "Лимит на неделю достигнут — возвращайся на следующей!",
     "categories": {
       "SWEETS": "Сладости",
       "ALCOHOL": "Алкоголь",
@@ -115,6 +141,35 @@
       "SNACKS": "Снеки",
       "DRINKS": "Напитки",
       "CUSTOM": "Другое"
+    },
+    "catalog": {
+      "title": "Быстрое добавление",
+      "showAll": "Показать все ({count})",
+      "showLess": "Свернуть",
+      "addedToast": "Добавлено!",
+      "bigMac": "Биг Мак",
+      "fries": "Картофель фри",
+      "pizzaSlice": "Кусок пиццы",
+      "burrito": "Буррито",
+      "hotDog": "Хот-дог",
+      "friedChicken": "Жареная курица",
+      "donut": "Пончик",
+      "chocolate": "Шоколадка",
+      "cookies": "Печенье",
+      "cakeSlice": "Кусок торта",
+      "cupcake": "Капкейк",
+      "cola": "Кола",
+      "latte": "Латте",
+      "juice": "Сок",
+      "energyDrink": "Энергетик",
+      "beer": "Пиво",
+      "wine": "Бокал вина",
+      "cocktail": "Коктейль",
+      "croissant": "Круассан",
+      "popcorn": "Попкорн",
+      "nachos": "Начос",
+      "cigarette": "Сигарета",
+      "onlineShopping": "Онлайн-покупка"
     }
   },
 
@@ -125,7 +180,9 @@
       "CALORIES": "Избежанные калории",
       "STREAK": "Серия дней",
       "CHECKINS": "Цели по отметкам",
-      "MONEY": "Сэкономлено денег"
+      "MONEY": "Сэкономлено денег",
+      "SOCIAL": "Социальные",
+      "CHALLENGES": "Челленджи"
     }
   },
 
@@ -160,6 +217,84 @@
     "letsGo": "Поехали!"
   },
 
+  "friends": {
+    "title": "Друзья",
+    "add": "Добавить",
+    "addPlaceholder": "Введите имя пользователя...",
+    "tabFriends": "Друзья",
+    "tabRequests": "Заявки",
+    "tabLeaderboard": "Рейтинг",
+    "noFriends": "Пока нет друзей",
+    "noFriendsHint": "Добавляйте друзей по имени, чтобы сравнивать прогресс!",
+    "friendSince": "Друзья с {date}",
+    "remove": "Удалить друга",
+    "removeConfirm": "Удалить этого друга?",
+    "incoming": "Входящие заявки",
+    "outgoing": "Отправленные заявки",
+    "noIncoming": "Нет входящих заявок",
+    "noOutgoing": "Нет отправленных заявок",
+    "pending": "Ожидание...",
+    "requestSent": "Заявка в друзья отправлена!",
+    "requestAccepted": "Заявка принята!",
+    "requestFailed": "Не удалось отправить заявку",
+    "noLeaderboard": "Добавьте друзей, чтобы увидеть рейтинг!",
+    "you": "вы"
+  },
+
+  "challenges": {
+    "title": "Челленджи",
+    "newChallenge": "Новый челлендж",
+    "noChallenges": "Челленджей пока нет",
+    "noChallengesHint": "Создайте челлендж и пригласите друга соревноваться!",
+    "tabActive": "Активные",
+    "tabInvitations": "Приглашения",
+    "tabCompleted": "Завершённые",
+    "challengeTitle": "Название",
+    "titlePlaceholder": "напр., Неделя без сладкого",
+    "type": "Тип челленджа",
+    "types": {
+      "HABIT": "Привычка",
+      "CALORIES": "Калории",
+      "STREAK": "Серия",
+      "MONEY": "Деньги"
+    },
+    "target": "Цель",
+    "targetHints": {
+      "HABIT": "Дней воздержания",
+      "CALORIES": "Калорий сохранено",
+      "STREAK": "Дней серии",
+      "MONEY": "Денег сохранено (€)"
+    },
+    "startDate": "Дата начала",
+    "endDate": "Дата окончания",
+    "inviteFriend": "Пригласить друга",
+    "invitePlaceholder": "Имя пользователя...",
+    "create": "Создать челлендж",
+    "creating": "Создаём...",
+    "created": "Челлендж создан!",
+    "createFailed": "Не удалось создать челлендж",
+    "accept": "Принять",
+    "decline": "Отклонить",
+    "cancel": "Отменить челлендж",
+    "cancelConfirm": "Отменить этот челлендж?",
+    "accepted": "Челлендж принят!",
+    "declined": "Челлендж отклонён",
+    "cancelled": "Челлендж отменён",
+    "vs": "против",
+    "progress": "Прогресс",
+    "target_label": "Цель: {value}",
+    "daysLeft": "Осталось {count} дн.",
+    "ended": "Завершён",
+    "winner": "Победитель!",
+    "you": "вы",
+    "statusActive": "Активный",
+    "statusCompleted": "Завершён",
+    "statusCancelled": "Отменён",
+    "invited": "Приглашён",
+    "selectHabit": "Выберите привычку",
+    "noInvitations": "Нет приглашений"
+  },
+
   "settings": {
     "title": "Настройки",
     "weightKg": "Вес (кг)",
@@ -168,9 +303,44 @@
     "goalPlaceholder": "напр., Продержаться 30 дней",
     "saveProfile": "Сохранить профиль",
     "saved": "Сохранено!",
+    "privacy": "Приватность",
+    "privacyDescription": "Кто может видеть ваш профиль и прогресс",
+    "visibility": {
+      "PRIVATE": "Закрытый",
+      "FRIENDS": "Друзья",
+      "PUBLIC": "Открытый"
+    },
     "theme": "Тема",
     "themeDescription": "Светлая / Тёмная тема",
     "language": "Язык",
-    "languageDescription": "Язык интерфейса"
+    "languageDescription": "Язык интерфейса",
+    "currency": "Валюта",
+    "currencyDescription": "Валюта для отображения сэкономленных денег",
+    "currencies": {
+      "EUR": "€ EUR",
+      "USD": "$ USD",
+      "GBP": "£ GBP",
+      "PLN": "zł PLN",
+      "UAH": "₴ UAH",
+      "RUB": "₽ RUB"
+    },
+    "weekStart": "Неделя начинается с",
+    "weekStartDescription": "Первый день недели для статистики и серий",
+    "weekDays": {
+      "monday": "Понедельник",
+      "sunday": "Воскресенье"
+    },
+    "dayEnd": "День заканчивается в",
+    "dayEndDescription": "Когда сбрасывается день для отметок и серий",
+    "midnight": "Полночь",
+    "exportData": "Ваши данные",
+    "exportDataDescription": "Скачайте копию всех ваших данных (GDPR). Включает профиль, привычки, отметки и многое другое.",
+    "downloadData": "Скачать мои данные",
+    "exportSuccess": "Данные успешно экспортированы!",
+    "dangerZone": "Опасная зона",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteAccountDescription": "Безвозвратно удалить аккаунт и все данные. Это действие нельзя отменить.",
+    "deleteConfirm": "Вы уверены? Это безвозвратно удалит ваш аккаунт.",
+    "confirmDelete": "Да, удалить мой аккаунт"
   }
 }

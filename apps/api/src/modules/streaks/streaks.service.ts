@@ -5,6 +5,7 @@ import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entit
 import { HabitsService } from '../habits/habits.service';
 import { User } from '../users/entities/user.entity';
 import { PARTIAL_SUCCESS_THRESHOLD, STREAK_SHIELDS_PER_WEEK } from '@stayontrack/contracts';
+import { getTodayInTimezone, getDayOfWeekInTimezone } from '../../common/utils/date.utils';
 
 export interface StreakResult {
   currentStreak: number;
@@ -85,7 +86,7 @@ export class StreaksService {
     let shieldUsedToday = false;
 
     // Check if the most recent date is today or yesterday (streak is still alive)
-    const today = this.getTodayDate();
+    const today = getTodayInTimezone(user.timezone);
     const yesterday = this.getDateOffset(today, -1);
     const lastDate = dates[0]?.date;
 
@@ -229,33 +230,26 @@ export class StreaksService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return;
 
-    const today = new Date();
+    const todayStr = getTodayInTimezone(user.timezone);
     const lastReplenish = user.lastShieldReplenishDate
-      ? new Date(user.lastShieldReplenishDate)
+      ? new Date(user.lastShieldReplenishDate).toISOString().split('T')[0]
       : null;
 
-    // Check if today is Monday and shield hasn't been replenished this week
-    if (today.getDay() === 1) {
+    // Check if today is Monday in the user's timezone and shield hasn't been replenished today
+    const dayOfWeek = getDayOfWeekInTimezone(user.timezone);
+    if (dayOfWeek === 1) {
       // Monday = 1
-      if (
-        !lastReplenish ||
-        lastReplenish.toISOString().split('T')[0] !==
-          today.toISOString().split('T')[0]
-      ) {
+      if (!lastReplenish || lastReplenish !== todayStr) {
         user.streakShieldsRemaining = STREAK_SHIELDS_PER_WEEK;
-        user.lastShieldReplenishDate = today;
+        user.lastShieldReplenishDate = new Date(todayStr + 'T00:00:00Z');
         await this.userRepository.save(user);
       }
     }
   }
 
-  private getTodayDate(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
   private getDateOffset(date: string, days: number): string {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
+    const d = new Date(date + 'T12:00:00Z'); // noon UTC to avoid DST edge cases
+    d.setUTCDate(d.getUTCDate() + days);
     return d.toISOString().split('T')[0];
   }
 }

@@ -5,10 +5,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ActivitiesService } from './activities.service';
 import { Activity, ActivityCategory } from './entities/activity.entity';
 
+@ApiTags('Activities')
+@ApiBearerAuth('access-token')
 @Controller('activities')
 @UseGuards(JwtAuthGuard)
 export class ActivitiesController {

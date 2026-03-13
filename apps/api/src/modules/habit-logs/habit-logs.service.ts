@@ -5,13 +5,15 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
 import { HabitsService } from '../habits/habits.service';
+import { Habit, HabitFrequencyType } from '../habits/entities/habit.entity';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { BatchCheckinDto } from './dto/batch-checkin.dto';
 import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto';
 import { getSavedCalories, getSavedMoney } from '@stayontrack/contracts';
+import { getTodayInTimezone } from '../../common/utils/date.utils';
 
 @Injectable()
 export class HabitLogsService {
@@ -24,12 +26,13 @@ export class HabitLogsService {
   /**
    * Create a single habit log (check-in for one habit).
    * Calculates savedCalories and savedMoney automatically.
+   * Enforces frequency limits for WEEKLY/CUSTOM habits.
    */
-  async createLog(userId: string, dto: CreateHabitLogDto): Promise<HabitLog> {
+  async createLog(userId: string, dto: CreateHabitLogDto, timezone = 'UTC'): Promise<HabitLog> {
     // Verify habit belongs to user
     const habit = await this.habitsService.findOneByUser(dto.habitId, userId);
 
-    const date = dto.date || this.getTodayDate();
+    const date = dto.date || getTodayInTimezone(timezone);
     const portionRatio = this.resolvePortionRatio(dto.status, dto.portionRatio);
 
     // Check for duplicate
@@ -45,6 +48,9 @@ export class HabitLogsService {
       existing.savedMoney = getSavedMoney(habit.pricePerOccurrence, portionRatio);
       return this.logRepository.save(existing);
     }
+
+    // Enforce frequency limits for non-daily habits
+    await this.enforceFrequencyLimit(habit, date);
 
     const log = this.logRepository.create({
       habitId: dto.habitId,
@@ -66,6 +72,7 @@ export class HabitLogsService {
   async batchCheckin(
     userId: string,
     dto: BatchCheckinDto,
+    timezone = 'UTC',
   ): Promise<HabitLog[]> {
     const results: HabitLog[] = [];
 
@@ -74,7 +81,7 @@ export class HabitLogsService {
       if (!logDto.date && dto.date) {
         logDto.date = dto.date;
       }
-      const log = await this.createLog(userId, logDto);
+      const log = await this.createLog(userId, logDto, timezone);
       results.push(log);
     }
 
@@ -135,7 +142,7 @@ export class HabitLogsService {
     // Verify ownership
     await this.habitsService.findOneByUser(habitId, userId);
 
-    const where: any = { userId, habitId };
+    const where: FindOptionsWhere<HabitLog> = { userId, habitId };
     if (startDate && endDate) {
       where.date = Between(startDate, endDate);
     }
@@ -191,7 +198,107 @@ export class HabitLogsService {
     }
   }
 
-  private getTodayDate(): string {
-    return new Date().toISOString().split('T')[0];
+  /**
+   * Get frequency status for all active habits (how many check-ins used/remaining this week).
+   */
+  async getFrequencyStatus(
+    userId: string,
+    date?: string,
+    timezone = 'UTC',
+  ): Promise<Array<{ habitId: string; used: number; limit: number | null; remaining: number | null }>> {
+    const targetDate = date || getTodayInTimezone(timezone);
+    const habits = await this.habitsService.findActiveByUser(userId);
+    const { start, end } = this.getIsoWeekBounds(targetDate);
+
+    const results: Array<{ habitId: string; used: number; limit: number | null; remaining: number | null }> = [];
+
+    for (const habit of habits) {
+      if (habit.frequencyType === HabitFrequencyType.DAILY) {
+        results.push({ habitId: habit.id, used: 0, limit: null, remaining: null });
+        continue;
+      }
+
+      const weeklyLimit = this.getWeeklyLimit(habit);
+      const used = await this.countWeeklyLogs(habit.id, start, end);
+
+      results.push({
+        habitId: habit.id,
+        used,
+        limit: weeklyLimit,
+        remaining: Math.max(0, weeklyLimit - used),
+      });
+    }
+
+    return results;
   }
+
+  /**
+   * Enforce frequency limit: reject check-in if weekly limit already reached.
+   * Only applies to WEEKLY and CUSTOM frequency types.
+   */
+  private async enforceFrequencyLimit(habit: Habit, date: string): Promise<void> {
+    if (habit.frequencyType === HabitFrequencyType.DAILY) {
+      return; // No weekly limit for daily habits
+    }
+
+    const weeklyLimit = this.getWeeklyLimit(habit);
+    const { start, end } = this.getIsoWeekBounds(date);
+    const used = await this.countWeeklyLogs(habit.id, start, end);
+
+    if (used >= weeklyLimit) {
+      throw new BadRequestException(
+        `Weekly check-in limit reached for this habit (${used}/${weeklyLimit} this week)`,
+      );
+    }
+  }
+
+  /**
+   * Get the weekly limit for a habit based on its frequency type.
+   * WEEKLY defaults to 1, CUSTOM uses occurrencesPerWeek.
+   */
+  private getWeeklyLimit(habit: Habit): number {
+    if (habit.frequencyType === HabitFrequencyType.WEEKLY) {
+      return habit.occurrencesPerWeek ?? 1;
+    }
+    // CUSTOM
+    return habit.occurrencesPerWeek ?? 7;
+  }
+
+  /**
+   * Count how many logs exist for a habit within a date range.
+   */
+  private async countWeeklyLogs(
+    habitId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<number> {
+    return this.logRepository.count({
+      where: {
+        habitId,
+        date: Between(startDate, endDate),
+      },
+    });
+  }
+
+  /**
+   * Get ISO week boundaries (Monday to Sunday) for a given date string.
+   */
+  private getIsoWeekBounds(dateStr: string): { start: string; end: string } {
+    const date = new Date(dateStr + 'T12:00:00Z'); // noon UTC to avoid DST edge cases
+    const dayOfWeek = date.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    // Convert to ISO day: Mon=0, Tue=1, ..., Sun=6
+    const isoDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+    const monday = new Date(date);
+    monday.setUTCDate(date.getUTCDate() - isoDay);
+
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+
+    return {
+      start: monday.toISOString().split('T')[0],
+      end: sunday.toISOString().split('T')[0],
+    };
+  }
+
 }

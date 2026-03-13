@@ -11,6 +11,8 @@ export class UserResponseDto {
   visibility!: string;
   locale!: string;
   streakShieldsRemaining!: number;
+  dayEndHour!: number;
+  timezone!: string;
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {
@@ -25,6 +27,8 @@ export class UserResponseDto {
     dto.visibility = user.visibility;
     dto.locale = user.locale;
     dto.streakShieldsRemaining = user.streakShieldsRemaining;
+    dto.dayEndHour = user.dayEndHour;
+    dto.timezone = user.timezone;
     dto.createdAt = user.createdAt;
     return dto;
   }

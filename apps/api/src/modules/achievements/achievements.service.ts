@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { StatsService } from '../stats/stats.service';
-import { StreaksService } from '../streaks/streaks.service';
+import { StatsService, UserStatsResult } from '../stats/stats.service';
+import { StreaksService, StreakResult } from '../streaks/streaks.service';
+import { FriendsService } from '../friends/friends.service';
+import { ChallengesService } from '../challenges/challenges.service';
 import { ACHIEVEMENTS, AchievementDef } from './achievements.constants';
 
 export interface UserAchievement {
@@ -25,21 +27,30 @@ export interface AchievementsSummary {
   recentlyUnlocked: UserAchievement[];
 }
 
+interface SocialStats {
+  friendCount: number;
+  challengeCount: number;
+  winCount: number;
+}
+
 @Injectable()
 export class AchievementsService {
   constructor(
     private readonly statsService: StatsService,
     private readonly streaksService: StreaksService,
+    private readonly friendsService: FriendsService,
+    private readonly challengesService: ChallengesService,
   ) {}
 
   async getUserAchievements(userId: string): Promise<AchievementsSummary> {
-    const [stats, streak] = await Promise.all([
+    const [stats, streak, socialStats] = await Promise.all([
       this.statsService.getUserStats(userId),
       this.streaksService.getStreak(userId),
+      this.getSocialStats(userId),
     ]);
 
     const achievements: UserAchievement[] = ACHIEVEMENTS.map((def) => {
-      const progress = this.getProgress(def, stats, streak);
+      const progress = this.getProgress(def, stats, streak, socialStats);
       const unlocked = progress >= def.threshold;
       const progressPercent = Math.min(
         100,
@@ -63,7 +74,6 @@ export class AchievementsService {
     const unlocked = achievements.filter((a) => a.unlocked);
 
     // "Recently unlocked" = unlocked achievements where progress is within 120% of threshold
-    // (i.e. just barely crossed the line)
     const recentlyUnlocked = unlocked.filter(
       (a) => a.progress < a.threshold * 1.2,
     );
@@ -76,10 +86,20 @@ export class AchievementsService {
     };
   }
 
+  private async getSocialStats(userId: string): Promise<SocialStats> {
+    const [friendCount, challengeCount, winCount] = await Promise.all([
+      this.friendsService.getFriendCount(userId),
+      this.challengesService.getChallengeCount(userId),
+      this.challengesService.getWinCount(userId),
+    ]);
+    return { friendCount, challengeCount, winCount };
+  }
+
   private getProgress(
     def: AchievementDef,
-    stats: any,
-    streak: any,
+    stats: UserStatsResult,
+    streak: StreakResult,
+    social: SocialStats,
   ): number {
     switch (def.category) {
       case 'CALORIES':
@@ -90,6 +110,12 @@ export class AchievementsService {
         return stats.totalCheckIns || 0;
       case 'MONEY':
         return stats.totalSavedMoney || 0;
+      case 'SOCIAL':
+        return social.friendCount;
+      case 'CHALLENGES':
+        if (def.unit === 'wins') return social.winCount;
+        if (def.unit === 'weekend-challenges') return social.challengeCount > 0 ? 1 : 0;
+        return social.challengeCount;
       default:
         return 0;
     }
