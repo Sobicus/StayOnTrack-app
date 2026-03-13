@@ -117,55 +117,61 @@
     0 0 60px 20px rgba(99,102,241,0.1);
 }
 
-/* Rotating conic-gradient ring */
+/* Rotating conic-gradient ring — using border approach for browser compat */
 .live-hero-ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  padding: 3px;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  overflow: hidden;
 }
 .live-hero-ring::before {
   content: '';
   position: absolute;
-  inset: -4px;
+  inset: -50%;
   border-radius: 50%;
   animation: hero-ring-spin 6s linear infinite;
+}
+.live-hero-ring::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--card);
+}
+.dark .live-hero-ring::after {
+  background: #0F1115;
 }
 .live-hero-ring.ring-calories::before {
   background: conic-gradient(
     from 0deg,
-    rgba(251,191,36,0.1),
+    rgba(251,191,36,0.05),
     rgba(251,191,36,0.9),
     rgba(245,158,11,0.6),
-    rgba(251,191,36,0.1),
+    rgba(251,191,36,0.05),
     rgba(251,191,36,0.8),
-    rgba(251,191,36,0.1)
+    rgba(251,191,36,0.05)
   );
 }
 .live-hero-ring.ring-money::before {
   background: conic-gradient(
     from 0deg,
-    rgba(34,197,94,0.1),
+    rgba(34,197,94,0.05),
     rgba(34,197,94,0.9),
     rgba(22,163,74,0.6),
-    rgba(34,197,94,0.1),
+    rgba(34,197,94,0.05),
     rgba(34,197,94,0.8),
-    rgba(34,197,94,0.1)
+    rgba(34,197,94,0.05)
   );
 }
 .live-hero-ring.ring-weight::before {
   background: conic-gradient(
     from 0deg,
-    rgba(99,102,241,0.1),
+    rgba(99,102,241,0.05),
     rgba(168,85,247,0.9),
     rgba(99,102,241,0.6),
-    rgba(139,92,246,0.1),
+    rgba(139,92,246,0.05),
     rgba(168,85,247,0.8),
-    rgba(99,102,241,0.1)
+    rgba(99,102,241,0.05)
   );
 }
 

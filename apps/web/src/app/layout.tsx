@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { NextIntlClientProvider } from 'next-intl';
@@ -6,22 +6,9 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
-import dynamic from 'next/dynamic';
-
-const AccentThemeProvider = dynamic(
-  () => import('@/components/theme-provider-accent').then(m => m.AccentThemeProvider),
-  { ssr: false }
-);
-
-const OfflineBanner = dynamic(
-  () => import('@/components/common/offline-banner').then(m => m.OfflineBanner),
-  { ssr: false }
-);
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
-
-import type { Viewport } from 'next';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -83,11 +70,8 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AuthProvider>
               <ToastProvider>
-                  <ServiceWorkerRegister />
-                  <AccentThemeProvider>
-                    <OfflineBanner />
-                    {children}
-                  </AccentThemeProvider>
+                <ServiceWorkerRegister />
+                {children}
               </ToastProvider>
             </AuthProvider>
           </ThemeProvider>

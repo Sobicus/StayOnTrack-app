@@ -212,7 +212,7 @@ export function LiveHero() {
         ))}
 
         {/* Layer 4: SVG Progress Arc */}
-        <div className="absolute inset-[10px]">
+        <div className="absolute inset-[10px] z-[5]">
           <svg
             width={SIZE}
             height={SIZE}
