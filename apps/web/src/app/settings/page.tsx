@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
+import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 import { Save, User } from 'lucide-react';
 
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const { user, token, refreshUser } = useAuth();
   const t = useTranslations('settings');
   const tc = useTranslations('common');
+  const { showToast } = useToast();
 
   const [weightKg, setWeightKg] = useState(user?.weightKg?.toString() || '');
   const [heightCm, setHeightCm] = useState(user?.heightCm?.toString() || '');
@@ -30,8 +32,11 @@ export default function SettingsPage() {
       });
       await refreshUser();
       setSaved(true);
+      showToast(t('saved'), 'success');
       setTimeout(() => setSaved(false), 2000);
-    } catch {}
+    } catch {
+      showToast(tc('error'), 'error');
+    }
     finally {
       setSaving(false);
     }

@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/contexts/auth-context';
+import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -29,7 +30,9 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AuthProvider>
-              {children}
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </AuthProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

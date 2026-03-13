@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 import {
   Plus,
@@ -43,7 +44,9 @@ export default function HabitsPage() {
   const { token } = useAuth();
   const t = useTranslations('habits');
   const tc = useTranslations('common');
+  const { showToast } = useToast();
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -157,9 +160,20 @@ export default function HabitsPage() {
         portionRatio,
         date: new Date().toISOString().split('T')[0],
       });
+      if (status === 'AVOIDED') {
+        setCelebratingId(habitId);
+        const habit = habits.find((h) => h.id === habitId);
+        showToast(
+          `${habit?.emoji || '✅'} ${t('avoidedBadge')} ${habit?.caloriesPerOccurrence ? t('kcalSaved', { count: habit.caloriesPerOccurrence }) : ''}`,
+          'success',
+        );
+        setTimeout(() => setCelebratingId(null), 500);
+      } else if (status === 'PARTIAL') {
+        showToast(t('partial'), 'warning');
+      }
       await loadData();
     } catch (err: any) {
-      console.error('Check-in failed:', err?.data || err);
+      showToast(t('failedToSave'), 'error');
     }
   };
 
@@ -199,12 +213,14 @@ export default function HabitsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {habits.map((habit) => {
+          {habits.map((habit, index) => {
             const log = getLogForHabit(habit.id);
             return (
               <div
                 key={habit.id}
-                className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]"
+                className={`p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] transition-all ${
+                  celebratingId === habit.id ? 'animate-celebrate border-success/50' : ''
+                }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
