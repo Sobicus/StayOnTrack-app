@@ -16,6 +16,8 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { ChallengesService } from './challenges.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
+import { JoinChallengeDto } from './dto/join-challenge.dto';
+import { InviteMultipleDto } from './dto/invite-multiple.dto';
 import { ChallengeResponseDto } from './dto/challenge-response.dto';
 
 @ApiTags('Challenges')
@@ -45,6 +47,29 @@ export class ChallengesController {
     @CurrentUser() user: User,
   ): Promise<ChallengeResponseDto[]> {
     const challenges = await this.challengesService.findAllByUser(user.id);
+    return challenges.map(ChallengeResponseDto.fromEntity);
+  }
+
+  /**
+   * POST /challenges/join — Join a challenge by invite code
+   */
+  @Post('join')
+  async joinByCode(
+    @CurrentUser() user: User,
+    @Body() dto: JoinChallengeDto,
+  ): Promise<ChallengeResponseDto> {
+    const challenge = await this.challengesService.joinByCode(user.id, dto.code);
+    return ChallengeResponseDto.fromEntity(challenge);
+  }
+
+  /**
+   * GET /challenges/browse — Browse public challenges
+   */
+  @Get('browse')
+  async browse(
+    @CurrentUser() user: User,
+  ): Promise<ChallengeResponseDto[]> {
+    const challenges = await this.challengesService.findPublicChallenges(user.id);
     return challenges.map(ChallengeResponseDto.fromEntity);
   }
 
@@ -107,5 +132,22 @@ export class ChallengesController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     await this.challengesService.cancelChallenge(id, user.id);
+  }
+
+  /**
+   * POST /challenges/:id/invite — Invite multiple users to a challenge
+   */
+  @Post(':id/invite')
+  async inviteMultiple(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: InviteMultipleDto,
+  ) {
+    const participants = await this.challengesService.inviteMultiple(
+      id,
+      user.id,
+      dto.usernames,
+    );
+    return { added: participants.length };
   }
 }

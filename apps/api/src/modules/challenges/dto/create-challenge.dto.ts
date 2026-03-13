@@ -2,14 +2,16 @@ import {
   IsString,
   IsEnum,
   IsNumber,
+  IsInt,
   IsOptional,
   IsDateString,
   IsUUID,
   MinLength,
   MaxLength,
   Min,
+  Max,
 } from 'class-validator';
-import { ChallengeType } from '@stayontrack/contracts';
+import { ChallengeType, ChallengeVisibility } from '@stayontrack/contracts';
 
 export class CreateChallengeDto {
   @IsString()
@@ -42,4 +44,14 @@ export class CreateChallengeDto {
   @IsString()
   @MaxLength(30)
   inviteUsername!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  @Max(20)
+  maxParticipants?: number;
+
+  @IsOptional()
+  @IsEnum(ChallengeVisibility)
+  visibility?: ChallengeVisibility;
 }

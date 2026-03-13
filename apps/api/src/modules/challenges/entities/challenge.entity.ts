@@ -11,8 +11,8 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { ChallengeParticipant } from './challenge-participant.entity';
 
-export { ChallengeType, ChallengeStatus } from '@stayontrack/contracts';
-import { ChallengeType, ChallengeStatus } from '@stayontrack/contracts';
+export { ChallengeType, ChallengeStatus, ChallengeVisibility } from '@stayontrack/contracts';
+import { ChallengeType, ChallengeStatus, ChallengeVisibility } from '@stayontrack/contracts';
 
 @Entity('challenges')
 export class Challenge {
@@ -60,6 +60,19 @@ export class Challenge {
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'winnerId' })
   winner!: User | null;
+
+  @Column({ type: 'int', default: 2 })
+  maxParticipants!: number;
+
+  @Column({ type: 'varchar', length: 8, nullable: true, unique: true })
+  inviteCode!: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ChallengeVisibility,
+    default: ChallengeVisibility.PRIVATE,
+  })
+  visibility!: ChallengeVisibility;
 
   @OneToMany(() => ChallengeParticipant, (p) => p.challenge, { cascade: true })
   participants!: ChallengeParticipant[];

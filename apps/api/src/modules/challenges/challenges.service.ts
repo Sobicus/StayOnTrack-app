@@ -5,8 +5,9 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Challenge, ChallengeStatus } from './entities/challenge.entity';
+import { Repository, In, Not } from 'typeorm';
+import * as crypto from 'crypto';
+import { Challenge, ChallengeStatus, ChallengeVisibility } from './entities/challenge.entity';
 import {
   ChallengeParticipant,
   ChallengeParticipantStatus,
@@ -75,6 +76,7 @@ export class ChallengesService {
     }
 
     // Create challenge
+    const inviteCode = crypto.randomBytes(4).toString('hex');
     const challenge = this.challengeRepository.create({
       creatorUserId: creatorId,
       title: dto.title,
@@ -85,6 +87,9 @@ export class ChallengesService {
       startDate: dto.startDate,
       endDate: dto.endDate,
       status: ChallengeStatus.ACTIVE,
+      maxParticipants: dto.maxParticipants ?? 2,
+      inviteCode,
+      visibility: dto.visibility ?? ChallengeVisibility.PRIVATE,
     });
 
     const savedChallenge = await this.challengeRepository.save(challenge);
@@ -385,6 +390,145 @@ export class ChallengesService {
     return this.challengeRepository.count({
       where: { winnerId: userId, status: ChallengeStatus.COMPLETED },
     });
+  }
+
+  /**
+   * Join a challenge by invite code.
+   */
+  async joinByCode(userId: string, code: string): Promise<Challenge> {
+    const challenge = await this.challengeRepository.findOne({
+      where: { inviteCode: code },
+      relations: ['participants'],
+    });
+
+    if (!challenge) {
+      throw new NotFoundException('Challenge not found');
+    }
+
+    if (challenge.status !== ChallengeStatus.ACTIVE) {
+      throw new BadRequestException('Challenge is not active');
+    }
+
+    const today = this.getTodayDate();
+    if (challenge.endDate <= today) {
+      throw new BadRequestException('Challenge has already ended');
+    }
+
+    // Check if user is already a participant
+    const existing = challenge.participants.find((p) => p.userId === userId);
+    if (existing) {
+      throw new BadRequestException('You are already a participant of this challenge');
+    }
+
+    // Check participant limit
+    const maxParticipants = challenge.maxParticipants;
+    if (challenge.participants.length >= maxParticipants) {
+      throw new BadRequestException('Challenge has reached the maximum number of participants');
+    }
+
+    const participant = this.participantRepository.create({
+      challengeId: challenge.id,
+      userId,
+      status: ChallengeParticipantStatus.ACCEPTED,
+    });
+    await this.participantRepository.save(participant);
+
+    return this.findOneWithRelations(challenge.id);
+  }
+
+  /**
+   * Invite multiple users to a challenge (creator only).
+   */
+  async inviteMultiple(
+    challengeId: string,
+    creatorUserId: string,
+    usernames: string[],
+  ): Promise<ChallengeParticipant[]> {
+    const challenge = await this.challengeRepository.findOne({
+      where: { id: challengeId },
+      relations: ['participants'],
+    });
+
+    if (!challenge) {
+      throw new NotFoundException('Challenge not found');
+    }
+
+    if (challenge.creatorUserId !== creatorUserId) {
+      throw new ForbiddenException('Only the creator can invite participants');
+    }
+
+    // Check participant limit
+    const maxParticipants = challenge.maxParticipants;
+    const currentCount = challenge.participants.length;
+    if (currentCount + usernames.length > maxParticipants) {
+      throw new BadRequestException(
+        `Cannot invite ${usernames.length} users. Max participants: ${maxParticipants}, current: ${currentCount}`,
+      );
+    }
+
+    // Find users by usernames
+    const users: { id: string; username: string }[] = [];
+    for (const username of usernames) {
+      const user = await this.usersService.findByUsername(username);
+      if (!user) {
+        throw new NotFoundException(`User "${username}" not found`);
+      }
+      users.push(user);
+    }
+
+    // Filter out users who are already participants
+    const existingUserIds = new Set(challenge.participants.map((p) => p.userId));
+    const newUsers = users.filter((u) => !existingUserIds.has(u.id));
+
+    if (newUsers.length === 0) {
+      throw new BadRequestException('All specified users are already participants');
+    }
+
+    // Create participant entries
+    const participants = newUsers.map((u) =>
+      this.participantRepository.create({
+        challengeId: challenge.id,
+        userId: u.id,
+        status: ChallengeParticipantStatus.INVITED,
+      }),
+    );
+
+    return this.participantRepository.save(participants);
+  }
+
+  /**
+   * Find public challenges the user hasn't joined yet.
+   */
+  async findPublicChallenges(userId: string): Promise<Challenge[]> {
+    const today = this.getTodayDate();
+
+    // Get IDs of challenges the user is already participating in
+    const participations = await this.participantRepository.find({
+      where: { userId },
+      select: ['challengeId'],
+    });
+    const joinedIds = participations.map((p) => p.challengeId);
+
+    const qb = this.challengeRepository
+      .createQueryBuilder('challenge')
+      .leftJoinAndSelect('challenge.creator', 'creator')
+      .leftJoinAndSelect('challenge.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'participantUser')
+      .where('challenge.visibility = :visibility', {
+        visibility: ChallengeVisibility.PUBLIC,
+      })
+      .andWhere('challenge.status = :status', {
+        status: ChallengeStatus.ACTIVE,
+      })
+      .andWhere('challenge.endDate > :today', { today })
+      .orderBy('challenge.createdAt', 'DESC')
+      .take(20);
+
+    if (joinedIds.length > 0) {
+      qb.andWhere('challenge.id NOT IN (:...joinedIds)', { joinedIds });
+    }
+
+    return qb.getMany();
   }
 
   private findOneWithRelations(challengeId: string): Promise<Challenge> {

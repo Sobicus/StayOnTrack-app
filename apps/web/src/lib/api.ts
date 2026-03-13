@@ -190,6 +190,9 @@ export interface Challenge {
   winnerId: string | null;
   winnerUsername: string | null;
   participants: ChallengeParticipant[];
+  maxParticipants: number;
+  inviteCode: string | null;
+  visibility: 'private' | 'public';
   createdAt: string;
 }
 
@@ -291,6 +294,8 @@ export interface CreateChallengeData {
   inviteUsername: string;
   description?: string;
   habitId?: string;
+  maxParticipants?: number;
+  visibility?: 'private' | 'public';
 }
 
 // ---- Request function with retry ----
@@ -456,6 +461,14 @@ export const api = {
       request<void>(`/challenges/${id}/decline`, { method: 'PATCH', token }),
     cancel: (token: string, id: string) =>
       request<void>(`/challenges/${id}/cancel`, { method: 'PATCH', token }),
+    joinByCode: (token: string, code: string) =>
+      request<Challenge>('/challenges/join', { method: 'POST', body: { code }, token }),
+    inviteMultiple: (token: string, challengeId: string, usernames: string[]) =>
+      request<void>(`/challenges/${challengeId}/invite`, { method: 'POST', body: { usernames }, token }),
+    invite: (token: string, challengeId: string, username: string) =>
+      request<void>(`/challenges/${challengeId}/invite`, { method: 'POST', body: { usernames: [username] }, token }),
+    browse: (token: string) =>
+      request<Challenge[]>('/challenges/browse', { token }),
   },
 
   gamification: {

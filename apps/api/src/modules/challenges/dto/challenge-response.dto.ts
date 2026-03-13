@@ -38,6 +38,9 @@ export class ChallengeResponseDto {
   winnerId!: string | null;
   winnerUsername!: string | null;
   participants!: ChallengeParticipantDto[];
+  maxParticipants!: number;
+  inviteCode!: string | null;
+  visibility!: string;
   createdAt!: Date;
 
   static fromEntity(challenge: Challenge): ChallengeResponseDto {
@@ -58,6 +61,9 @@ export class ChallengeResponseDto {
     dto.participants = (challenge.participants || []).map(
       ChallengeParticipantDto.fromEntity,
     );
+    dto.maxParticipants = challenge.maxParticipants;
+    dto.inviteCode = challenge.inviteCode;
+    dto.visibility = challenge.visibility;
     dto.createdAt = challenge.createdAt;
     return dto;
   }
