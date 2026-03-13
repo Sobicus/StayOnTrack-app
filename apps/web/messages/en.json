@@ -146,6 +146,20 @@
     "allConsumed": "Consumed"
   },
 
+  "onboarding": {
+    "step1Title": "Welcome to StayOnTrack!",
+    "step1Text": "Track what you avoid, not what you consume. Every small victory counts.",
+    "step2Title": "Add Your Habits",
+    "step2Text": "Tell us what you want to avoid — sweets, fast food, alcohol, or anything else.",
+    "step3Title": "Check In Daily",
+    "step3Text": "Mark each habit as avoided, partial, or consumed. It takes just 3 seconds!",
+    "step4Title": "Watch Your Progress",
+    "step4Text": "See saved calories, money, and effort equivalents grow. Earn achievements!",
+    "next": "Next",
+    "skip": "Skip",
+    "letsGo": "Let's Go!"
+  },
+
   "settings": {
     "title": "Settings",
     "weightKg": "Weight (kg)",

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { OnboardingScreen, useOnboarding } from '@/components/onboarding';
 import { useTranslations } from 'next-intl';
 import {
   Flame,
@@ -43,6 +44,7 @@ interface TodayLog {
 export default function DashboardPage() {
   const { token } = useAuth();
   const t = useTranslations('dashboard');
+  const { showOnboarding, completeOnboarding } = useOnboarding();
   const [stats, setStats] = useState<Stats | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [todayLogs, setTodayLogs] = useState<TodayLog[]>([]);
@@ -78,6 +80,10 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
 
   if (loading) {
     return (
