@@ -36,7 +36,7 @@ const METRIC_CONFIG: Record<
     cssColor: 'rgba(251,191,36,0.8)',
     textColor: 'text-amber-400',
     glowClass: 'glow-calories',
-    ringClass: 'ring-calories',
+    ringClass: 'neon-calories',
     sparkleColor: '#fbbf24',
   },
   money: {
@@ -44,7 +44,7 @@ const METRIC_CONFIG: Record<
     cssColor: 'rgba(34,197,94,0.8)',
     textColor: 'text-emerald-400',
     glowClass: 'glow-money',
-    ringClass: 'ring-money',
+    ringClass: 'neon-money',
     sparkleColor: '#22c55e',
   },
   weight: {
@@ -52,7 +52,7 @@ const METRIC_CONFIG: Record<
     cssColor: 'rgba(168,85,247,0.8)',
     textColor: 'text-purple-400',
     glowClass: 'glow-weight',
-    ringClass: 'ring-weight',
+    ringClass: 'neon-weight',
     sparkleColor: '#a855f7',
   },
 };
