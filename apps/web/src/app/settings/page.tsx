@@ -5,10 +5,14 @@ import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LocaleSwitcher } from '@/components/ui/locale-switcher';
+import { useTranslations } from 'next-intl';
 import { Save, User } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, token, refreshUser } = useAuth();
+  const t = useTranslations('settings');
+  const tc = useTranslations('common');
 
   const [weightKg, setWeightKg] = useState(user?.weightKg?.toString() || '');
   const [heightCm, setHeightCm] = useState(user?.heightCm?.toString() || '');
@@ -35,7 +39,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <h1 className="text-xl font-bold text-[var(--foreground)] mb-6">Settings</h1>
+      <h1 className="text-xl font-bold text-[var(--foreground)] mb-6">{t('title')}</h1>
 
       {/* Profile */}
       <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
@@ -53,13 +57,13 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-[var(--muted)] mb-1">
-                Weight (kg) <span className="text-[var(--muted)] font-normal">— optional</span>
+                {t('weightKg')} <span className="text-[var(--muted)] font-normal">— {tc('optional')}</span>
               </label>
               <input
                 type="number"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
-                placeholder="optional"
+                placeholder={tc('optional')}
                 min="20"
                 max="300"
                 className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -67,13 +71,13 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--muted)] mb-1">
-                Height (cm) <span className="text-[var(--muted)] font-normal">— optional</span>
+                {t('heightCm')} <span className="text-[var(--muted)] font-normal">— {tc('optional')}</span>
               </label>
               <input
                 type="number"
                 value={heightCm}
                 onChange={(e) => setHeightCm(e.target.value)}
-                placeholder="optional"
+                placeholder={tc('optional')}
                 min="50"
                 max="300"
                 className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -83,13 +87,13 @@ export default function SettingsPage() {
 
           <div>
             <label className="block text-xs font-medium text-[var(--muted)] mb-1">
-              Goal
+              {t('goal')}
             </label>
             <input
               type="text"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              placeholder="e.g., Stay clean for 30 days"
+              placeholder={t('goalPlaceholder')}
               className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
@@ -100,16 +104,27 @@ export default function SettingsPage() {
             className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saved ? (
-              'Saved!'
+              t('saved')
             ) : saving ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Profile
+                {t('saveProfile')}
               </>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* Language */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-[var(--foreground)]">{t('language')}</p>
+            <p className="text-xs text-[var(--muted)]">{t('languageDescription')}</p>
+          </div>
+          <LocaleSwitcher />
         </div>
       </div>
 
@@ -117,8 +132,8 @@ export default function SettingsPage() {
       <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-[var(--foreground)]">Theme</p>
-            <p className="text-xs text-[var(--muted)]">Light / Dark mode</p>
+            <p className="font-medium text-[var(--foreground)]">{t('theme')}</p>
+            <p className="text-xs text-[var(--muted)]">{t('themeDescription')}</p>
           </div>
           <ThemeToggle />
         </div>

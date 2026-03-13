@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { useTranslations } from 'next-intl';
 import { Trophy, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,17 +27,11 @@ interface AchievementsSummary {
   achievements: Achievement[];
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  CALORIES: 'Calories Avoided',
-  STREAK: 'Streak Milestones',
-  CHECKINS: 'Check-in Goals',
-  MONEY: 'Money Saved',
-};
-
 const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY'];
 
 export default function AchievementsPage() {
   const { token } = useAuth();
+  const t = useTranslations('achievements');
   const [data, setData] = useState<AchievementsSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -63,7 +58,7 @@ export default function AchievementsPage() {
     return (
       <AppShell>
         <div className="text-center py-12 text-[var(--muted)]">
-          Could not load achievements
+          {t('couldNotLoad')}
         </div>
       </AppShell>
     );
@@ -79,7 +74,7 @@ export default function AchievementsPage() {
     <AppShell>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[var(--foreground)]">Achievements</h1>
+        <h1 className="text-xl font-bold text-[var(--foreground)]">{t('title')}</h1>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-achievement/10">
           <Trophy className="w-4 h-4 text-achievement" />
           <span className="text-sm font-semibold text-achievement">
@@ -99,7 +94,7 @@ export default function AchievementsPage() {
             <div key={cat}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider">
-                  {CATEGORY_LABELS[cat]}
+                  {t(`categories.${cat}`)}
                 </h2>
                 <span className="text-xs text-[var(--muted)]">
                   {unlockedCount}/{achievements.length}

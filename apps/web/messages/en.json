@@ -1,0 +1,147 @@
+{
+  "common": {
+    "appName": "StayOnTrack",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "back": "Back",
+    "kcal": "kcal",
+    "kg": "kg",
+    "days": "days",
+    "total": "total",
+    "optional": "optional"
+  },
+
+  "nav": {
+    "home": "Home",
+    "habits": "Habits",
+    "awards": "Awards",
+    "stats": "Stats",
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+
+  "landing": {
+    "tagline": "Track what you avoided, not what you consumed",
+    "getStarted": "Get Started",
+    "signIn": "Sign In"
+  },
+
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to continue your progress",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up",
+    "invalidCredentials": "Invalid email or password",
+    "genericError": "Something went wrong. Please try again.",
+    "connectionError": "Connection error. Is the server running?",
+
+    "createAccount": "Create Account",
+    "registerSubtitle": "Start tracking what you avoid",
+    "username": "Username",
+    "usernamePlaceholder": "your_username",
+    "usernamePattern": "Letters, numbers, and underscores only",
+    "minChars": "Min 6 characters",
+    "confirmPassword": "Confirm Password",
+    "repeatPassword": "Repeat password",
+    "passwordsMismatch": "Passwords do not match",
+    "registrationFailed": "Registration failed. Please try again.",
+    "hasAccount": "Already have an account?"
+  },
+
+  "dashboard": {
+    "daysSingular": "{count} day",
+    "daysPlural": "{count} days",
+    "bestStreak": "Best: {count} days",
+    "shieldsSingular": "{count} shield",
+    "shieldsPlural": "{count} shields",
+    "caloriesSaved": "Calories Saved",
+    "moneySaved": "Money Saved",
+    "weightAvoided": "Weight Avoided",
+    "checkIns": "Check-ins",
+    "equivalentTo": "That's equivalent to",
+    "todayCheckins": "Today's Check-ins",
+    "noCheckinsYet": "No check-ins yet today",
+    "goToCheckin": "Go to check-in →",
+    "habit": "Habit"
+  },
+
+  "habits": {
+    "myHabits": "My Habits",
+    "noHabitsYet": "No habits yet",
+    "noHabitsHint": "Add habits you want to avoid — we'll track your progress!",
+    "editHabit": "Edit Habit",
+    "newHabit": "New Habit",
+    "emoji": "Emoji",
+    "name": "Name",
+    "namePlaceholder": "e.g., Fast food burger",
+    "category": "Category",
+    "caloriesPerOccurrence": "Calories per occurrence (kcal)",
+    "caloriesPlaceholder": "e.g., 550",
+    "costPerOccurrence": "Cost per occurrence (€)",
+    "costPlaceholder": "e.g., 8.50",
+    "saveChanges": "Save Changes",
+    "createHabit": "Create Habit",
+    "nameRequired": "Name is required",
+    "failedToSave": "Failed to save",
+    "deleteConfirm": "Delete this habit?",
+    "avoided": "Avoided",
+    "partial": "Partial",
+    "hadIt": "Had it",
+    "avoidedBadge": "Avoided!",
+    "kcalSaved": "+{count} kcal saved",
+    "categories": {
+      "SWEETS": "Sweets",
+      "ALCOHOL": "Alcohol",
+      "FASTFOOD": "Fast Food",
+      "SNACKS": "Snacks",
+      "DRINKS": "Drinks",
+      "CUSTOM": "Custom"
+    }
+  },
+
+  "achievements": {
+    "title": "Achievements",
+    "couldNotLoad": "Could not load achievements",
+    "categories": {
+      "CALORIES": "Calories Avoided",
+      "STREAK": "Streak Milestones",
+      "CHECKINS": "Check-in Goals",
+      "MONEY": "Money Saved"
+    }
+  },
+
+  "stats": {
+    "yourProgress": "Your Progress",
+    "caloriesSaved": "Calories Saved",
+    "moneySaved": "Money Saved",
+    "weightAvoided": "Weight Avoided",
+    "daysTracked": "Days Tracked",
+    "effortEquivalents": "Effort Equivalents",
+    "savedCaloriesEqual": "Your {count} saved calories equal:",
+    "noStatsYet": "No stats yet. Start checking in!"
+  },
+
+  "settings": {
+    "title": "Settings",
+    "weightKg": "Weight (kg)",
+    "heightCm": "Height (cm)",
+    "goal": "Goal",
+    "goalPlaceholder": "e.g., Stay clean for 30 days",
+    "saveProfile": "Save Profile",
+    "saved": "Saved!",
+    "theme": "Theme",
+    "themeDescription": "Light / Dark mode",
+    "language": "Language",
+    "languageDescription": "Interface language"
+  }
+}

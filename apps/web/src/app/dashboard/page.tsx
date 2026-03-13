@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { useTranslations } from 'next-intl';
 import {
   Flame,
   DollarSign,
@@ -41,6 +42,7 @@ interface TodayLog {
 
 export default function DashboardPage() {
   const { token } = useAuth();
+  const t = useTranslations('dashboard');
   const [stats, setStats] = useState<Stats | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [todayLogs, setTodayLogs] = useState<TodayLog[]>([]);
@@ -65,15 +67,13 @@ export default function DashboardPage() {
       setStats(s);
       setStreak(st);
       setTodayLogs(logs);
-      setEquivalents(eq.slice(0, 4)); // Top 4
-      // Build habits lookup
+      setEquivalents(eq.slice(0, 4));
       const map: Record<string, { title: string; emoji: string }> = {};
       for (const habit of h) {
         map[habit.id] = { title: habit.title, emoji: habit.emoji };
       }
       setHabits(map);
     } catch {
-      // silently handle
     } finally {
       setLoading(false);
     }
@@ -101,16 +101,20 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[var(--foreground)]">
-                  {streak.currentStreak} day{streak.currentStreak !== 1 ? 's' : ''}
+                  {streak.currentStreak !== 1
+                    ? t('daysPlural', { count: streak.currentStreak })
+                    : t('daysSingular', { count: streak.currentStreak })}
                 </p>
                 <p className="text-xs text-[var(--muted)]">
-                  Best: {streak.bestStreak} days
+                  {t('bestStreak', { count: streak.bestStreak })}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 text-xs text-[var(--muted)]">
               <Shield className="w-4 h-4" />
-              {streak.streakShieldsRemaining} shield{streak.streakShieldsRemaining !== 1 ? 's' : ''}
+              {streak.streakShieldsRemaining !== 1
+                ? t('shieldsPlural', { count: streak.streakShieldsRemaining })
+                : t('shieldsSingular', { count: streak.streakShieldsRemaining })}
             </div>
           </div>
         </div>
@@ -121,27 +125,27 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard
             icon={<Zap className="w-5 h-5 text-warning" />}
-            label="Calories Saved"
+            label={t('caloriesSaved')}
             value={Math.round(stats.totalSavedCalories).toLocaleString()}
             unit="kcal"
             color="warning"
           />
           <StatCard
             icon={<DollarSign className="w-5 h-5 text-success" />}
-            label="Money Saved"
+            label={t('moneySaved')}
             value={`€${stats.totalSavedMoney.toFixed(2)}`}
             color="success"
           />
           <StatCard
             icon={<Scale className="w-5 h-5 text-primary" />}
-            label="Weight Avoided"
+            label={t('weightAvoided')}
             value={stats.potentialWeightAvoidedKg.toFixed(2)}
             unit="kg"
             color="primary"
           />
           <StatCard
             icon={<CheckCircle2 className="w-5 h-5 text-streak" />}
-            label="Check-ins"
+            label={t('checkIns')}
             value={stats.totalCheckIns.toString()}
             unit="total"
             color="streak"
@@ -153,7 +157,7 @@ export default function DashboardPage() {
       {equivalents.length > 0 && (
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
-            That&apos;s equivalent to
+            {t('equivalentTo')}
           </h2>
           <div className="space-y-2">
             {equivalents.map((eq) => (
@@ -174,16 +178,16 @@ export default function DashboardPage() {
       {/* Today's Check-ins */}
       <div>
         <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
-          Today&apos;s Check-ins
+          {t('todayCheckins')}
         </h2>
         {todayLogs.length === 0 ? (
           <div className="text-center py-8 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-            <p className="text-[var(--muted)]">No check-ins yet today</p>
+            <p className="text-[var(--muted)]">{t('noCheckinsYet')}</p>
             <a
               href="/habits"
               className="text-primary text-sm hover:underline mt-2 inline-block"
             >
-              Go to check-in →
+              {t('goToCheckin')}
             </a>
           </div>
         ) : (
@@ -199,7 +203,7 @@ export default function DashboardPage() {
                 <StatusIcon status={log.status} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--foreground)] truncate">
-                    {habits[log.habitId]?.title || 'Habit'}
+                    {habits[log.habitId]?.title || t('habit')}
                   </p>
                 </div>
                 {log.savedCalories > 0 && (

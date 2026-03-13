@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { useTranslations } from 'next-intl';
 import {
   Plus,
   Pencil,
@@ -38,6 +39,8 @@ const EMOJI_OPTIONS = ['🍔', '🍕', '🍟', '🍩', '🍫', '🥤', '🍺', '
 
 export default function HabitsPage() {
   const { token } = useAuth();
+  const t = useTranslations('habits');
+  const tc = useTranslations('common');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -95,7 +98,7 @@ export default function HabitsPage() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setFormError('Name is required');
+      setFormError(t('nameRequired'));
       return;
     }
     setSaving(true);
@@ -118,14 +121,14 @@ export default function HabitsPage() {
       setShowForm(false);
       await loadData();
     } catch (err: any) {
-      setFormError(err?.data?.message || 'Failed to save');
+      setFormError(err?.data?.message || t('failedToSave'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this habit?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       await api.habits.delete(token!, id);
       await loadData();
@@ -162,22 +165,22 @@ export default function HabitsPage() {
   return (
     <AppShell>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[var(--foreground)]">My Habits</h1>
+        <h1 className="text-xl font-bold text-[var(--foreground)]">{t('myHabits')}</h1>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all"
         >
           <Plus className="w-4 h-4" />
-          Add
+          {tc('add')}
         </button>
       </div>
 
       {/* Habit list with check-in */}
       {habits.length === 0 ? (
         <div className="text-center py-12 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-          <p className="text-[var(--muted)] mb-2">No habits yet</p>
+          <p className="text-[var(--muted)] mb-2">{t('noHabitsYet')}</p>
           <p className="text-sm text-[var(--muted)]">
-            Add habits you want to avoid — we&apos;ll track your progress!
+            {t('noHabitsHint')}
           </p>
         </div>
       ) : (
@@ -195,7 +198,7 @@ export default function HabitsPage() {
                     <div>
                       <p className="font-medium text-[var(--foreground)]">{habit.title}</p>
                       <p className="text-xs text-[var(--muted)]">
-                        {habit.caloriesPerOccurrence} kcal · €{habit.pricePerOccurrence}
+                        {habit.caloriesPerOccurrence} {tc('kcal')} · €{habit.pricePerOccurrence}
                       </p>
                     </div>
                   </div>
@@ -221,7 +224,7 @@ export default function HabitsPage() {
                     <StatusBadge status={log.status} />
                     {log.savedCalories > 0 && (
                       <span className="text-xs text-success ml-auto">
-                        +{Math.round(log.savedCalories)} kcal saved
+                        {t('kcalSaved', { count: Math.round(log.savedCalories) })}
                       </span>
                     )}
                   </div>
@@ -232,21 +235,21 @@ export default function HabitsPage() {
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-success/10 text-success text-sm font-medium hover:bg-success/20 transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      Avoided
+                      {t('avoided')}
                     </button>
                     <button
                       onClick={() => handleCheckin(habit.id, 'PARTIAL', 0.5)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-warning/10 text-warning text-sm font-medium hover:bg-warning/20 transition-all"
                     >
                       <AlertCircle className="w-4 h-4" />
-                      Partial
+                      {t('partial')}
                     </button>
                     <button
                       onClick={() => handleCheckin(habit.id, 'CONSUMED', 1)}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-danger/10 text-danger text-sm font-medium hover:bg-danger/20 transition-all"
                     >
                       <XCircle className="w-4 h-4" />
-                      Had it
+                      {t('hadIt')}
                     </button>
                   </div>
                 )}
@@ -262,7 +265,7 @@ export default function HabitsPage() {
           <div className="w-full max-w-md bg-[var(--card)] rounded-t-3xl sm:rounded-2xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-[var(--foreground)]">
-                {editingHabit ? 'Edit Habit' : 'New Habit'}
+                {editingHabit ? t('editHabit') : t('newHabit')}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
@@ -282,7 +285,7 @@ export default function HabitsPage() {
               {/* Emoji picker */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-                  Emoji
+                  {t('emoji')}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {EMOJI_OPTIONS.map((e) => (
@@ -305,13 +308,13 @@ export default function HabitsPage() {
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  Name
+                  {t('name')}
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Fast food burger"
+                  placeholder={t('namePlaceholder')}
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
@@ -319,7 +322,7 @@ export default function HabitsPage() {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  Category
+                  {t('category')}
                 </label>
                 <select
                   value={category}
@@ -328,7 +331,7 @@ export default function HabitsPage() {
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
+                      {t(`categories.${c}`)}
                     </option>
                   ))}
                 </select>
@@ -337,13 +340,13 @@ export default function HabitsPage() {
               {/* Calories */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  Calories per occurrence (kcal)
+                  {t('caloriesPerOccurrence')}
                 </label>
                 <input
                   type="number"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
-                  placeholder="e.g., 550"
+                  placeholder={t('caloriesPlaceholder')}
                   min="0"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
@@ -352,13 +355,13 @@ export default function HabitsPage() {
               {/* Cost */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  Cost per occurrence (€)
+                  {t('costPerOccurrence')}
                 </label>
                 <input
                   type="number"
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
-                  placeholder="e.g., 8.50"
+                  placeholder={t('costPlaceholder')}
                   min="0"
                   step="0.01"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -375,7 +378,7 @@ export default function HabitsPage() {
                 ) : (
                   <>
                     <Check className="w-5 h-5" />
-                    {editingHabit ? 'Save Changes' : 'Create Habit'}
+                    {editingHabit ? t('saveChanges') : t('createHabit')}
                   </>
                 )}
               </button>
@@ -388,16 +391,17 @@ export default function HabitsPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { icon: typeof CheckCircle2; text: string; color: string }> = {
-    AVOIDED: { icon: CheckCircle2, text: 'Avoided!', color: 'text-success' },
-    PARTIAL: { icon: AlertCircle, text: 'Partial', color: 'text-warning' },
-    CONSUMED: { icon: XCircle, text: 'Had it', color: 'text-danger' },
+  const t = useTranslations('habits');
+  const config: Record<string, { icon: typeof CheckCircle2; textKey: string; color: string }> = {
+    AVOIDED: { icon: CheckCircle2, textKey: 'avoidedBadge', color: 'text-success' },
+    PARTIAL: { icon: AlertCircle, textKey: 'partial', color: 'text-warning' },
+    CONSUMED: { icon: XCircle, textKey: 'hadIt', color: 'text-danger' },
   };
   const c = config[status] || config.CONSUMED;
   return (
     <div className={`flex items-center gap-1.5 text-sm font-medium ${c.color}`}>
       <c.icon className="w-4 h-4" />
-      {c.text}
+      {t(c.textKey)}
     </div>
   );
 }

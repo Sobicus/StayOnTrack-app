@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
+import { useTranslations } from 'next-intl';
 import {
   Zap,
   DollarSign,
@@ -30,6 +31,8 @@ interface Equivalent {
 
 export default function StatsPage() {
   const { token, user } = useAuth();
+  const t = useTranslations('stats');
+  const tc = useTranslations('common');
   const [stats, setStats] = useState<Stats | null>(null);
   const [equivalents, setEquivalents] = useState<Equivalent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,7 @@ export default function StatsPage() {
     return (
       <AppShell>
         <div className="text-center py-12">
-          <p className="text-[var(--muted)]">No stats yet. Start checking in!</p>
+          <p className="text-[var(--muted)]">{t('noStatsYet')}</p>
         </div>
       </AppShell>
     );
@@ -75,35 +78,35 @@ export default function StatsPage() {
 
   return (
     <AppShell>
-      <h1 className="text-xl font-bold text-[var(--foreground)] mb-6">Your Progress</h1>
+      <h1 className="text-xl font-bold text-[var(--foreground)] mb-6">{t('yourProgress')}</h1>
 
       {/* Big stats */}
       <div className="grid grid-cols-2 gap-3 mb-8">
         <BigStat
           icon={<Zap className="w-6 h-6 text-warning" />}
           value={Math.round(stats.totalSavedCalories).toLocaleString()}
-          unit="kcal"
-          label="Calories Saved"
+          unit={tc('kcal')}
+          label={t('caloriesSaved')}
           bgColor="bg-warning/10"
         />
         <BigStat
           icon={<DollarSign className="w-6 h-6 text-success" />}
           value={`€${stats.totalSavedMoney.toFixed(2)}`}
-          label="Money Saved"
+          label={t('moneySaved')}
           bgColor="bg-success/10"
         />
         <BigStat
           icon={<Scale className="w-6 h-6 text-primary" />}
           value={stats.potentialWeightAvoidedKg.toFixed(2)}
-          unit="kg"
-          label="Weight Avoided"
+          unit={tc('kg')}
+          label={t('weightAvoided')}
           bgColor="bg-primary/10"
         />
         <BigStat
           icon={<Calendar className="w-6 h-6 text-streak" />}
           value={stats.totalDaysTracked.toString()}
-          unit="days"
-          label="Days Tracked"
+          unit={tc('days')}
+          label={t('daysTracked')}
           bgColor="bg-streak/10"
         />
       </div>
@@ -114,11 +117,11 @@ export default function StatsPage() {
           <div className="flex items-center gap-2 mb-4">
             <Dumbbell className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold text-[var(--foreground)]">
-              Effort Equivalents
+              {t('effortEquivalents')}
             </h2>
           </div>
           <p className="text-sm text-[var(--muted)] mb-4">
-            Your {Math.round(stats.totalSavedCalories).toLocaleString()} saved calories equal:
+            {t('savedCaloriesEqual', { count: Math.round(stats.totalSavedCalories).toLocaleString() })}
           </p>
           <div className="space-y-2">
             {equivalents.map((eq) => (

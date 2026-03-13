@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { ApiError } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, LogIn, Flame } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const t = useTranslations('auth');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,11 +31,11 @@ export default function LoginPage() {
       if (err instanceof ApiError) {
         setError(
           err.status === 401
-            ? 'Invalid email or password'
-            : 'Something went wrong. Please try again.',
+            ? t('invalidCredentials')
+            : t('genericError'),
         );
       } else {
-        setError('Connection error. Is the server running?');
+        setError(t('connectionError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -48,8 +50,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Flame className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Welcome back</h1>
-          <p className="text-[var(--muted)] mt-1">Sign in to continue your progress</p>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('welcomeBack')}</h1>
+          <p className="text-[var(--muted)] mt-1">{t('signInSubtitle')}</p>
         </div>
 
         {/* Form */}
@@ -62,13 +64,13 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder={t('emailPlaceholder')}
               required
               className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
@@ -76,14 +78,14 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Password
+              {t('password')}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••"
+                placeholder={t('passwordPlaceholder')}
                 required
                 minLength={6}
                 className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all pr-12"
@@ -108,16 +110,16 @@ export default function LoginPage() {
             ) : (
               <>
                 <LogIn className="w-5 h-5" />
-                Sign In
+                {t('signIn')}
               </>
             )}
           </button>
         </form>
 
         <p className="text-center mt-6 text-[var(--muted)] text-sm">
-          Don&apos;t have an account?{' '}
+          {t('noAccount')}{' '}
           <Link href="/auth/register" className="text-primary hover:underline font-medium">
-            Sign Up
+            {t('signUp')}
           </Link>
         </p>
       </div>

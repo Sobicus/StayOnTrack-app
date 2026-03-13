@@ -3,12 +3,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { useTranslations } from 'next-intl';
 import { Flame } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('landing');
+  const tc = useTranslations('common');
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -31,10 +34,10 @@ export default function HomePage() {
           <Flame className="w-10 h-10 text-primary" />
         </div>
         <h1 className="text-4xl font-bold text-[var(--foreground)] mb-3">
-          StayOnTrack
+          {tc('appName')}
         </h1>
         <p className="text-lg text-[var(--muted)] mb-8">
-          Track what you avoided, not what you consumed
+          {t('tagline')}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -42,13 +45,13 @@ export default function HomePage() {
             href="/auth/register"
             className="w-full py-3 px-4 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition-all text-center"
           >
-            Get Started
+            {t('getStarted')}
           </Link>
           <Link
             href="/auth/login"
             className="w-full py-3 px-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] font-medium hover:bg-[var(--border)]/50 transition-all text-center"
           >
-            Sign In
+            {t('signIn')}
           </Link>
         </div>
       </div>

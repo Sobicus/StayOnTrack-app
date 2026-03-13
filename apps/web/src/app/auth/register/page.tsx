@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { ApiError } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, UserPlus, Flame } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
+  const t = useTranslations('auth');
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -24,7 +26,7 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('passwordsMismatch'));
       return;
     }
 
@@ -41,10 +43,10 @@ export default function RegisterPage() {
         } else if (Array.isArray(msg)) {
           setError(msg.join('. '));
         } else {
-          setError('Registration failed. Please try again.');
+          setError(t('registrationFailed'));
         }
       } else {
-        setError('Connection error. Is the server running?');
+        setError(t('connectionError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -59,8 +61,8 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Flame className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Create Account</h1>
-          <p className="text-[var(--muted)] mt-1">Start tracking what you avoid</p>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('createAccount')}</h1>
+          <p className="text-[var(--muted)] mt-1">{t('registerSubtitle')}</p>
         </div>
 
         {/* Form */}
@@ -73,31 +75,31 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Username
+              {t('username')}
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="your_username"
+              placeholder={t('usernamePlaceholder')}
               required
               minLength={3}
               maxLength={30}
               pattern="^[a-zA-Z0-9_]+$"
-              title="Letters, numbers, and underscores only"
+              title={t('usernamePattern')}
               className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder={t('emailPlaceholder')}
               required
               className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
@@ -105,14 +107,14 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Password
+              {t('password')}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 characters"
+                placeholder={t('minChars')}
                 required
                 minLength={6}
                 className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all pr-12"
@@ -129,13 +131,13 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-              Confirm Password
+              {t('confirmPassword')}
             </label>
             <input
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat password"
+              placeholder={t('repeatPassword')}
               required
               minLength={6}
               className="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
@@ -152,16 +154,16 @@ export default function RegisterPage() {
             ) : (
               <>
                 <UserPlus className="w-5 h-5" />
-                Create Account
+                {t('createAccount')}
               </>
             )}
           </button>
         </form>
 
         <p className="text-center mt-6 text-[var(--muted)] text-sm">
-          Already have an account?{' '}
+          {t('hasAccount')}{' '}
           <Link href="/auth/login" className="text-primary hover:underline font-medium">
-            Sign In
+            {t('signIn')}
           </Link>
         </p>
       </div>

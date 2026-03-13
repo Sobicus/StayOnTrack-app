@@ -1,0 +1,147 @@
+{
+  "common": {
+    "appName": "StayOnTrack",
+    "loading": "Загрузка...",
+    "error": "Что-то пошло не так",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Изменить",
+    "add": "Добавить",
+    "back": "Назад",
+    "kcal": "ккал",
+    "kg": "кг",
+    "days": "дн.",
+    "total": "всего",
+    "optional": "необязательно"
+  },
+
+  "nav": {
+    "home": "Главная",
+    "habits": "Привычки",
+    "awards": "Награды",
+    "stats": "Статистика",
+    "settings": "Настройки",
+    "signOut": "Выйти"
+  },
+
+  "landing": {
+    "tagline": "Отслеживай то, от чего воздержался, а не то, что потребил",
+    "getStarted": "Начать",
+    "signIn": "Войти"
+  },
+
+  "auth": {
+    "welcomeBack": "С возвращением",
+    "signInSubtitle": "Войдите, чтобы продолжить прогресс",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Пароль",
+    "passwordPlaceholder": "••••••",
+    "signIn": "Войти",
+    "noAccount": "Нет аккаунта?",
+    "signUp": "Зарегистрироваться",
+    "invalidCredentials": "Неверный email или пароль",
+    "genericError": "Что-то пошло не так. Попробуйте ещё раз.",
+    "connectionError": "Ошибка подключения. Сервер запущен?",
+
+    "createAccount": "Создать аккаунт",
+    "registerSubtitle": "Начни отслеживать то, от чего воздерживаешься",
+    "username": "Имя пользователя",
+    "usernamePlaceholder": "your_username",
+    "usernamePattern": "Только буквы, цифры и подчёркивания",
+    "minChars": "Минимум 6 символов",
+    "confirmPassword": "Подтвердите пароль",
+    "repeatPassword": "Повторите пароль",
+    "passwordsMismatch": "Пароли не совпадают",
+    "registrationFailed": "Регистрация не удалась. Попробуйте ещё раз.",
+    "hasAccount": "Уже есть аккаунт?"
+  },
+
+  "dashboard": {
+    "daysSingular": "{count} день",
+    "daysPlural": "{count} дн.",
+    "bestStreak": "Лучший: {count} дн.",
+    "shieldsSingular": "{count} щит",
+    "shieldsPlural": "{count} щитов",
+    "caloriesSaved": "Калории",
+    "moneySaved": "Экономия",
+    "weightAvoided": "Вес не набран",
+    "checkIns": "Отметки",
+    "equivalentTo": "Это эквивалентно",
+    "todayCheckins": "Отметки сегодня",
+    "noCheckinsYet": "Пока нет отметок за сегодня",
+    "goToCheckin": "Перейти к отметкам →",
+    "habit": "Привычка"
+  },
+
+  "habits": {
+    "myHabits": "Мои привычки",
+    "noHabitsYet": "Привычек пока нет",
+    "noHabitsHint": "Добавьте привычки, от которых хотите воздержаться — мы будем отслеживать ваш прогресс!",
+    "editHabit": "Редактировать",
+    "newHabit": "Новая привычка",
+    "emoji": "Эмодзи",
+    "name": "Название",
+    "namePlaceholder": "напр., Бургер из фастфуда",
+    "category": "Категория",
+    "caloriesPerOccurrence": "Калории за раз (ккал)",
+    "caloriesPlaceholder": "напр., 550",
+    "costPerOccurrence": "Стоимость за раз (€)",
+    "costPlaceholder": "напр., 8.50",
+    "saveChanges": "Сохранить",
+    "createHabit": "Создать привычку",
+    "nameRequired": "Название обязательно",
+    "failedToSave": "Не удалось сохранить",
+    "deleteConfirm": "Удалить эту привычку?",
+    "avoided": "Воздержался",
+    "partial": "Частично",
+    "hadIt": "Не удержался",
+    "avoidedBadge": "Воздержался!",
+    "kcalSaved": "+{count} ккал сохранено",
+    "categories": {
+      "SWEETS": "Сладости",
+      "ALCOHOL": "Алкоголь",
+      "FASTFOOD": "Фастфуд",
+      "SNACKS": "Снеки",
+      "DRINKS": "Напитки",
+      "CUSTOM": "Другое"
+    }
+  },
+
+  "achievements": {
+    "title": "Достижения",
+    "couldNotLoad": "Не удалось загрузить достижения",
+    "categories": {
+      "CALORIES": "Избежанные калории",
+      "STREAK": "Серия дней",
+      "CHECKINS": "Цели по отметкам",
+      "MONEY": "Сэкономлено денег"
+    }
+  },
+
+  "stats": {
+    "yourProgress": "Ваш прогресс",
+    "caloriesSaved": "Калории",
+    "moneySaved": "Экономия",
+    "weightAvoided": "Вес не набран",
+    "daysTracked": "Дней отслежено",
+    "effortEquivalents": "Эквивалент усилий",
+    "savedCaloriesEqual": "Ваши {count} сохранённых калорий равны:",
+    "noStatsYet": "Пока нет статистики. Начните отмечаться!"
+  },
+
+  "settings": {
+    "title": "Настройки",
+    "weightKg": "Вес (кг)",
+    "heightCm": "Рост (см)",
+    "goal": "Цель",
+    "goalPlaceholder": "напр., Продержаться 30 дней",
+    "saveProfile": "Сохранить профиль",
+    "saved": "Сохранено!",
+    "theme": "Тема",
+    "themeDescription": "Светлая / Тёмная тема",
+    "language": "Язык",
+    "languageDescription": "Язык интерфейса"
+  }
+}

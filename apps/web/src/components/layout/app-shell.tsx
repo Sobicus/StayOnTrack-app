@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   ListChecks,
@@ -15,18 +16,20 @@ import {
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/habits', label: 'Habits', icon: ListChecks },
-  { href: '/achievements', label: 'Awards', icon: Trophy },
-  { href: '/stats', label: 'Stats', icon: BarChart3 },
-  { href: '/settings', label: 'Settings', icon: Settings },
+const navKeys = [
+  { href: '/dashboard', labelKey: 'home' as const, icon: LayoutDashboard },
+  { href: '/habits', labelKey: 'habits' as const, icon: ListChecks },
+  { href: '/achievements', labelKey: 'awards' as const, icon: Trophy },
+  { href: '/stats', labelKey: 'stats' as const, icon: BarChart3 },
+  { href: '/settings', labelKey: 'settings' as const, icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('nav');
+  const tc = useTranslations('common');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -51,14 +54,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="w-6 h-6 text-primary" />
-            <span className="font-bold text-[var(--foreground)]">StayOnTrack</span>
+            <span className="font-bold text-[var(--foreground)]">{tc('appName')}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-[var(--muted)]">{user?.username}</span>
             <button
               onClick={() => { logout(); router.push('/auth/login'); }}
               className="p-2 rounded-lg text-[var(--muted)] hover:text-danger hover:bg-danger/10 transition-all"
-              title="Sign out"
+              title={t('signOut')}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -74,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Bottom navigation — mobile-first */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--card)] border-t border-[var(--border)] safe-area-bottom">
         <div className="max-w-lg mx-auto flex items-center justify-around h-16">
-          {navItems.map((item) => {
+          {navKeys.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
@@ -88,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <item.icon className={cn('w-5 h-5', isActive && 'scale-110')} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
               </Link>
             );
           })}
