@@ -23,6 +23,8 @@ interface Habit {
   category: string;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
+  frequencyType: string;
+  occurrencesPerWeek: number | null;
   isActive: boolean;
 }
 
@@ -53,6 +55,8 @@ export default function HabitsPage() {
   const [category, setCategory] = useState('CUSTOM');
   const [calories, setCalories] = useState('');
   const [cost, setCost] = useState('');
+  const [frequencyType, setFrequencyType] = useState('DAILY');
+  const [occurrencesPerWeek, setOccurrencesPerWeek] = useState('');
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -81,6 +85,8 @@ export default function HabitsPage() {
     setCategory('CUSTOM');
     setCalories('');
     setCost('');
+    setFrequencyType('DAILY');
+    setOccurrencesPerWeek('');
     setFormError('');
     setShowForm(true);
   };
@@ -92,6 +98,8 @@ export default function HabitsPage() {
     setCategory(h.category);
     setCalories(h.caloriesPerOccurrence.toString());
     setCost(h.pricePerOccurrence.toString());
+    setFrequencyType(h.frequencyType || 'DAILY');
+    setOccurrencesPerWeek(h.occurrencesPerWeek?.toString() || '');
     setFormError('');
     setShowForm(true);
   };
@@ -104,13 +112,19 @@ export default function HabitsPage() {
     setSaving(true);
     setFormError('');
 
-    const data = {
+    const data: any = {
       title: title.trim(),
       emoji,
       category,
       caloriesPerOccurrence: parseFloat(calories) || 0,
       pricePerOccurrence: parseFloat(cost) || 0,
+      frequencyType,
     };
+    if (frequencyType === 'CUSTOM' && occurrencesPerWeek) {
+      data.occurrencesPerWeek = parseInt(occurrencesPerWeek, 10);
+    } else {
+      data.occurrencesPerWeek = null;
+    }
 
     try {
       if (editingHabit) {
@@ -199,6 +213,13 @@ export default function HabitsPage() {
                       <p className="font-medium text-[var(--foreground)]">{habit.title}</p>
                       <p className="text-xs text-[var(--muted)]">
                         {habit.caloriesPerOccurrence} {tc('kcal')} · €{habit.pricePerOccurrence}
+                        {habit.frequencyType && habit.frequencyType !== 'DAILY' && (
+                          <span className="ml-1.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium">
+                            {habit.frequencyType === 'WEEKLY'
+                              ? t('frequencyWeekly')
+                              : t('frequencyCustom', { count: habit.occurrencesPerWeek || 0 })}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -366,6 +387,45 @@ export default function HabitsPage() {
                   step="0.01"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
+              </div>
+
+              {/* Frequency */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                  {t('frequency')}
+                </label>
+                <div className="flex items-center gap-2">
+                  {(['DAILY', 'WEEKLY', 'CUSTOM'] as const).map((ft) => (
+                    <button
+                      key={ft}
+                      type="button"
+                      onClick={() => {
+                        setFrequencyType(ft);
+                        if (ft !== 'CUSTOM') setOccurrencesPerWeek('');
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        frequencyType === ft
+                          ? 'bg-primary text-white'
+                          : 'bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]'
+                      }`}
+                    >
+                      {t(`frequencyTypes.${ft}`)}
+                    </button>
+                  ))}
+                </div>
+                {frequencyType === 'CUSTOM' && (
+                  <div className="mt-2">
+                    <input
+                      type="number"
+                      value={occurrencesPerWeek}
+                      onChange={(e) => setOccurrencesPerWeek(e.target.value)}
+                      placeholder={t('timesPerWeek')}
+                      min="1"
+                      max="7"
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                )}
               </div>
 
               <button

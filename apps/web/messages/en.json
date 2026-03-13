@@ -99,6 +99,15 @@
     "hadIt": "Had it",
     "avoidedBadge": "Avoided!",
     "kcalSaved": "+{count} kcal saved",
+    "frequency": "Frequency",
+    "frequencyTypes": {
+      "DAILY": "Daily",
+      "WEEKLY": "Weekly",
+      "CUSTOM": "Custom"
+    },
+    "frequencyWeekly": "weekly",
+    "frequencyCustom": "{count}x/week",
+    "timesPerWeek": "Times per week (1-7)",
     "categories": {
       "SWEETS": "Sweets",
       "ALCOHOL": "Alcohol",

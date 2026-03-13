@@ -99,6 +99,15 @@
     "hadIt": "Не удержался",
     "avoidedBadge": "Воздержался!",
     "kcalSaved": "+{count} ккал сохранено",
+    "frequency": "Частота",
+    "frequencyTypes": {
+      "DAILY": "Ежедневно",
+      "WEEKLY": "Еженедельно",
+      "CUSTOM": "Своя"
+    },
+    "frequencyWeekly": "раз/нед",
+    "frequencyCustom": "{count}x/нед",
+    "timesPerWeek": "Раз в неделю (1-7)",
     "categories": {
       "SWEETS": "Сладости",
       "ALCOHOL": "Алкоголь",
