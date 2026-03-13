@@ -17,6 +17,7 @@ import { FriendsModule } from './modules/friends/friends.module';
 import { ChallengesModule } from './modules/challenges/challenges.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { EmailModule } from './common/email/email.module';
 
@@ -54,7 +55,7 @@ import { EmailModule } from './common/email/email.module';
         // In production, run migrations on startup
         migrationsRun: config.get<string>('NODE_ENV') === 'production',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
-        logging: ['error', 'warn', 'migration'],
+        logging: config.get<string>('NODE_ENV') === 'production' ? ['error'] : ['error', 'warn'],
       }),
     }),
 
@@ -75,6 +76,7 @@ import { EmailModule } from './common/email/email.module';
     ChallengesModule,
     GamificationModule,
     NotificationsModule,
+    AnalyticsModule,
   ],
   providers: [
     {

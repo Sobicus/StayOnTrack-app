@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { FriendsModule } from '../friends/friends.module';
 import { StatsModule } from '../stats/stats.module';
 import { StreaksModule } from '../streaks/streaks.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { StreaksModule } from '../streaks/streaks.module';
     FriendsModule,
     StatsModule,
     StreaksModule,
+    AnalyticsModule,
   ],
   controllers: [ChallengesController],
   providers: [ChallengesService],

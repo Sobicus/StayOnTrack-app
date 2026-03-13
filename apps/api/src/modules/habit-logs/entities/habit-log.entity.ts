@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Habit } from '../../habits/entities/habit.entity';
@@ -18,6 +19,7 @@ export enum HabitLogStatus {
 
 @Entity('habit_logs')
 @Unique(['habitId', 'date'])
+@Index(['userId', 'date'])
 export class HabitLog {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

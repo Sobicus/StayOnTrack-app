@@ -4,6 +4,8 @@ import { BadRequestException } from '@nestjs/common';
 import { HabitLogsService } from './habit-logs.service';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
 import { HabitsService } from '../habits/habits.service';
+import { GamificationService } from '../gamification/gamification.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { HabitFrequencyType } from '../habits/entities/habit.entity';
 
 describe('HabitLogsService', () => {
@@ -42,6 +44,8 @@ describe('HabitLogsService', () => {
         HabitLogsService,
         { provide: getRepositoryToken(HabitLog), useValue: logRepository },
         { provide: HabitsService, useValue: habitsService },
+        { provide: GamificationService, useValue: { addXp: jest.fn().mockResolvedValue({ totalXp: 10, xpEarned: 10, levelUp: false, newLevel: 1 }) } },
+        { provide: AnalyticsService, useValue: { trackEvent: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

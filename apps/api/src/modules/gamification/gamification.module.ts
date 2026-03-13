@@ -6,9 +6,10 @@ import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { Habit } from '../habits/entities/habit.entity';
 import { GamificationService } from './gamification.service';
 import { GamificationController } from './gamification.controller';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Quest, HabitLog, Habit])],
+  imports: [TypeOrmModule.forFeature([User, Quest, HabitLog, Habit]), AnalyticsModule],
   controllers: [GamificationController],
   providers: [GamificationService],
   exports: [GamificationService],

@@ -4,6 +4,7 @@ import { StreaksService } from './streaks.service';
 import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { User } from '../users/entities/user.entity';
 import { HabitsService } from '../habits/habits.service';
+import { GamificationService } from '../gamification/gamification.service';
 import { STREAK_SHIELDS_PER_WEEK } from '@stayontrack/contracts';
 
 describe('StreaksService', () => {
@@ -11,6 +12,7 @@ describe('StreaksService', () => {
   let logRepo: any;
   let userRepo: any;
   let habitsService: any;
+  let gamificationService: any;
 
   // Helper to format dates as YYYY-MM-DD
   const toDateStr = (d: Date): string => d.toISOString().split('T')[0];
@@ -64,12 +66,17 @@ describe('StreaksService', () => {
       findActiveByUser: jest.fn().mockResolvedValue(mockActiveHabits),
     };
 
+    gamificationService = {
+      addXp: jest.fn().mockResolvedValue({ totalXp: 100, xpEarned: 100, levelUp: false, newLevel: 1 }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StreaksService,
         { provide: getRepositoryToken(HabitLog), useValue: logRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: HabitsService, useValue: habitsService },
+        { provide: GamificationService, useValue: gamificationService },
       ],
     }).compile();
 

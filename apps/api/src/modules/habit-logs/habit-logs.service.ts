@@ -15,6 +15,7 @@ import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto
 import { getSavedCalories, getSavedMoney, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone } from '../../common/utils/date.utils';
 import { GamificationService, AddXpResult } from '../gamification/gamification.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 export interface CreateLogResult {
   log: HabitLog;
@@ -29,6 +30,7 @@ export class HabitLogsService {
     private readonly logRepository: Repository<HabitLog>,
     private readonly habitsService: HabitsService,
     private readonly gamificationService: GamificationService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   /**
@@ -73,6 +75,10 @@ export class HabitLogsService {
     });
 
     const saved = await this.logRepository.save(log);
+
+    this.analyticsService
+      .trackEvent(userId, 'checkin_completed', { habitId: dto.habitId, status: dto.status })
+      .catch(() => {});
 
     // Award XP for check-in
     let totalXpEarned = 0;

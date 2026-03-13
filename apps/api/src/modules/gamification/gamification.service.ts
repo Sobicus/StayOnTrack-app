@@ -7,6 +7,7 @@ import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entit
 import { Habit } from '../habits/entities/habit.entity';
 import { QUEST_DEFINITIONS, getQuestDefinitionMap } from './quest-definitions';
 import { getLevel, getXpForNextLevel, XP_REWARDS } from '@stayontrack/contracts';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 export interface LevelInfo {
   level: number;
@@ -49,6 +50,7 @@ export class GamificationService {
     private readonly habitLogRepository: Repository<HabitLog>,
     @InjectRepository(Habit)
     private readonly habitRepository: Repository<Habit>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   /**
@@ -137,6 +139,10 @@ export class GamificationService {
         await this.addXp(userId, quest.xpReward);
         totalXpEarned += quest.xpReward;
         completedNow.push(quest.questType);
+
+        this.analyticsService
+          .trackEvent(userId, 'quest_completed', { questType: quest.questType, xpEarned: quest.xpReward })
+          .catch(() => {});
       }
     }
 

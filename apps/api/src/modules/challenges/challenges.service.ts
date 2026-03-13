@@ -18,6 +18,7 @@ import { FriendsService } from '../friends/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 @Injectable()
 export class ChallengesService {
@@ -30,6 +31,7 @@ export class ChallengesService {
     private readonly friendsService: FriendsService,
     private readonly statsService: StatsService,
     private readonly streaksService: StreaksService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   /**
@@ -432,6 +434,10 @@ export class ChallengesService {
       status: ChallengeParticipantStatus.ACCEPTED,
     });
     await this.participantRepository.save(participant);
+
+    this.analyticsService
+      .trackEvent(userId, 'challenge_joined', { challengeId: challenge.id })
+      .catch(() => {});
 
     return this.findOneWithRelations(challenge.id);
   }

@@ -13,6 +13,7 @@ import { FriendsService } from '../friends/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { ChallengeType, ChallengeStatus, ChallengeParticipantStatus } from '@stayontrack/contracts';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 describe('ChallengesService', () => {
   let service: ChallengesService;
@@ -22,6 +23,7 @@ describe('ChallengesService', () => {
   let friendsService: any;
   let statsService: any;
   let streaksService: any;
+  let analyticsService: any;
 
   const mockUser = { id: 'user-1', username: 'alice' };
   const mockFriend = { id: 'user-2', username: 'bob' };
@@ -105,6 +107,10 @@ describe('ChallengesService', () => {
       }),
     };
 
+    analyticsService = {
+      trackEvent: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChallengesService,
@@ -114,6 +120,7 @@ describe('ChallengesService', () => {
         { provide: FriendsService, useValue: friendsService },
         { provide: StatsService, useValue: statsService },
         { provide: StreaksService, useValue: streaksService },
+        { provide: AnalyticsService, useValue: analyticsService },
       ],
     }).compile();
 
@@ -312,6 +319,166 @@ describe('ChallengesService', () => {
       challengeRepo.count.mockResolvedValue(2);
       const result = await service.getWinCount('user-1');
       expect(result).toBe(2);
+    });
+  });
+
+  // ── joinByCode ──────────────────────────────────────────────────
+
+  describe('joinByCode', () => {
+    const activeChallenge = {
+      ...mockChallenge,
+      inviteCode: 'abc12345',
+      maxParticipants: 5,
+      participants: [
+        { userId: 'user-1', status: ChallengeParticipantStatus.ACCEPTED },
+      ],
+    };
+
+    it('should join a challenge by valid invite code', async () => {
+      challengeRepo.findOne.mockResolvedValue({ ...activeChallenge });
+
+      const result = await service.joinByCode('user-3', 'abc12345');
+
+      expect(participantRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-3',
+          status: ChallengeParticipantStatus.ACCEPTED,
+        }),
+      );
+      expect(participantRepo.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for invalid invite code', async () => {
+      challengeRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.joinByCode('user-3', 'invalid'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if challenge is not active', async () => {
+      challengeRepo.findOne.mockResolvedValue({
+        ...activeChallenge,
+        status: ChallengeStatus.COMPLETED,
+      });
+
+      await expect(
+        service.joinByCode('user-3', 'abc12345'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if user is already a participant', async () => {
+      challengeRepo.findOne.mockResolvedValue({
+        ...activeChallenge,
+        participants: [
+          { userId: 'user-3', status: ChallengeParticipantStatus.ACCEPTED },
+        ],
+      });
+
+      await expect(
+        service.joinByCode('user-3', 'abc12345'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if challenge is full', async () => {
+      challengeRepo.findOne.mockResolvedValue({
+        ...activeChallenge,
+        maxParticipants: 2,
+        participants: [
+          { userId: 'user-1', status: ChallengeParticipantStatus.ACCEPTED },
+          { userId: 'user-2', status: ChallengeParticipantStatus.ACCEPTED },
+        ],
+      });
+
+      await expect(
+        service.joinByCode('user-3', 'abc12345'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if challenge has ended', async () => {
+      challengeRepo.findOne.mockResolvedValue({
+        ...activeChallenge,
+        endDate: '2020-01-01',
+      });
+
+      await expect(
+        service.joinByCode('user-3', 'abc12345'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ── findPublicChallenges ────────────────────────────────────────
+
+  describe('findPublicChallenges', () => {
+    it('should call query builder to find public active challenges', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
+      participantRepo.find.mockResolvedValue([]);
+
+      const result = await service.findPublicChallenges('user-1');
+
+      expect(challengeRepo.createQueryBuilder).toHaveBeenCalledWith('challenge');
+      expect(mockQb.where).toHaveBeenCalledWith(
+        'challenge.visibility = :visibility',
+        expect.objectContaining({ visibility: 'PUBLIC' }),
+      );
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'challenge.status = :status',
+        expect.objectContaining({ status: 'ACTIVE' }),
+      );
+      expect(result).toEqual([]);
+    });
+
+    it('should exclude challenges user has already joined', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
+
+      participantRepo.find.mockResolvedValue([
+        { challengeId: 'challenge-1' },
+        { challengeId: 'challenge-2' },
+      ]);
+
+      await service.findPublicChallenges('user-1');
+
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'challenge.id NOT IN (:...joinedIds)',
+        { joinedIds: ['challenge-1', 'challenge-2'] },
+      );
+    });
+
+    it('should not add NOT IN clause when user has no participations', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
+      participantRepo.find.mockResolvedValue([]);
+
+      await service.findPublicChallenges('user-1');
+
+      // Should NOT have been called with NOT IN
+      const notInCalls = mockQb.andWhere.mock.calls.filter(
+        (call: any[]) => typeof call[0] === 'string' && call[0].includes('NOT IN'),
+      );
+      expect(notInCalls).toHaveLength(0);
     });
   });
 });

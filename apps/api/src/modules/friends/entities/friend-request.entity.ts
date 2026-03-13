@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -17,6 +18,7 @@ export enum FriendRequestStatus {
 
 @Entity('friend_requests')
 @Unique(['fromUserId', 'toUserId'])
+@Index(['toUserId', 'status'])
 export class FriendRequest {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

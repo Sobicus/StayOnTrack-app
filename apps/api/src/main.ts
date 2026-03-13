@@ -37,6 +37,7 @@ async function bootstrap() {
       ? process.env.CORS_ORIGIN.split(',')
       : ['http://localhost:4801'],
     credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   });
 
   // Swagger / OpenAPI documentation

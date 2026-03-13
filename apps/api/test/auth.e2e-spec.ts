@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 
@@ -57,7 +57,7 @@ describe('Auth (e2e)', () => {
     // Clean up test user(s) from the database
     try {
       await dataSource.query(
-        `DELETE FROM "user" WHERE email LIKE 'e2e_test_%@example.com'`,
+        `DELETE FROM "users" WHERE email LIKE 'e2e_test_%@example.com'`,
       );
     } catch {
       // Ignore cleanup errors — DB may already be clean

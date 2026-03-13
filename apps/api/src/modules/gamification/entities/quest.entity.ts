@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -18,6 +19,7 @@ export enum QuestType {
 
 @Entity('quests')
 @Unique(['userId', 'questType', 'date'])
+@Index(['userId', 'date'])
 export class Quest {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

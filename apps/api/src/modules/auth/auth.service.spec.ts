@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../../common/email/email.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { ProfileVisibility } from '../users/entities/user.entity';
 
 // Mock bcrypt
@@ -79,6 +80,7 @@ describe('AuthService', () => {
           },
         },
         { provide: EmailService, useValue: emailService },
+        { provide: AnalyticsService, useValue: { trackEvent: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

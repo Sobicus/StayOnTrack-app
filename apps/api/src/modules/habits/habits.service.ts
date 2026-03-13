@@ -8,12 +8,14 @@ import { Repository } from 'typeorm';
 import { Habit } from './entities/habit.entity';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 @Injectable()
 export class HabitsService {
   constructor(
     @InjectRepository(Habit)
     private readonly habitRepository: Repository<Habit>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async create(userId: string, dto: CreateHabitDto): Promise<Habit> {
@@ -30,7 +32,13 @@ export class HabitsService {
       sortOrder: (maxSortOrder?.max ?? -1) + 1,
     });
 
-    return this.habitRepository.save(habit);
+    const saved = await this.habitRepository.save(habit);
+
+    this.analyticsService
+      .trackEvent(userId, 'habit_created', { habitId: saved.id, category: dto.category })
+      .catch(() => {});
+
+    return saved;
   }
 
   async findAllByUser(userId: string): Promise<Habit[]> {

@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ChallengeParticipant } from './challenge-participant.entity';
@@ -15,6 +16,7 @@ export { ChallengeType, ChallengeStatus, ChallengeVisibility } from '@stayontrac
 import { ChallengeType, ChallengeStatus, ChallengeVisibility } from '@stayontrack/contracts';
 
 @Entity('challenges')
+@Index(['status', 'visibility'])
 export class Challenge {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
