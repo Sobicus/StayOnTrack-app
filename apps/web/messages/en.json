@@ -137,7 +137,13 @@
     "daysTracked": "Days Tracked",
     "effortEquivalents": "Effort Equivalents",
     "savedCaloriesEqual": "Your {count} saved calories equal:",
-    "noStatsYet": "No stats yet. Start checking in!"
+    "noStatsYet": "No stats yet. Start checking in!",
+    "weeklyChart": "Weekly Calories",
+    "thisWeek": "This week",
+    "calendar": "Activity Calendar",
+    "allAvoided": "All avoided",
+    "mixed": "Mixed",
+    "allConsumed": "Consumed"
   },
 
   "settings": {

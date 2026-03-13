@@ -137,7 +137,13 @@
     "daysTracked": "Дней отслежено",
     "effortEquivalents": "Эквивалент усилий",
     "savedCaloriesEqual": "Ваши {count} сохранённых калорий равны:",
-    "noStatsYet": "Пока нет статистики. Начните отмечаться!"
+    "noStatsYet": "Пока нет статистики. Начните отмечаться!",
+    "weeklyChart": "Калории за неделю",
+    "thisWeek": "Эта неделя",
+    "calendar": "Календарь активности",
+    "allAvoided": "Всё избежано",
+    "mixed": "Смешанно",
+    "allConsumed": "Потреблено"
   },
 
   "settings": {

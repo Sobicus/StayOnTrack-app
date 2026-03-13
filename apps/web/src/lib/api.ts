@@ -82,6 +82,10 @@ export const api = {
       const query = params.toString() ? `?${params}` : '';
       return request<any[]>(`/habit-logs/habit/${habitId}${query}`, { token });
     },
+    range: (token: string, start: string, end: string) =>
+      request<any[]>(`/habit-logs/range?start=${start}&end=${end}`, { token }),
+    daySummary: (token: string, date: string) =>
+      request<any>(`/habit-logs/day?date=${date}`, { token }),
   },
 
   stats: {
