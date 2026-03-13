@@ -53,13 +53,13 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-[var(--muted)] mb-1">
-                Weight (kg)
+                Weight (kg) <span className="text-[var(--muted)] font-normal">— optional</span>
               </label>
               <input
                 type="number"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
-                placeholder="75"
+                placeholder="optional"
                 min="20"
                 max="300"
                 className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -67,13 +67,13 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--muted)] mb-1">
-                Height (cm)
+                Height (cm) <span className="text-[var(--muted)] font-normal">— optional</span>
               </label>
               <input
                 type="number"
                 value={heightCm}
                 onChange={(e) => setHeightCm(e.target.value)}
-                placeholder="175"
+                placeholder="optional"
                 min="50"
                 max="300"
                 className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -89,7 +89,7 @@ export default function SettingsPage() {
               type="text"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
-              placeholder="e.g., Lose 5 kg by summer"
+              placeholder="e.g., Stay clean for 30 days"
               className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>

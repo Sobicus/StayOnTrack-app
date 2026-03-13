@@ -17,23 +17,21 @@ import {
 
 interface Habit {
   id: string;
-  name: string;
+  title: string;
   emoji: string;
   category: string;
   caloriesPerOccurrence: number;
-  costPerOccurrence: number;
+  pricePerOccurrence: number;
   isActive: boolean;
 }
 
 const CATEGORIES = [
-  'FOOD',
-  'DRINKS',
-  'SNACKS',
-  'SMOKING',
+  'SWEETS',
   'ALCOHOL',
-  'SHOPPING',
-  'SOCIAL_MEDIA',
-  'OTHER',
+  'FASTFOOD',
+  'SNACKS',
+  'DRINKS',
+  'CUSTOM',
 ];
 
 const EMOJI_OPTIONS = ['🍔', '🍕', '🍟', '🍩', '🍫', '🥤', '🍺', '🍷', '🚬', '☕', '🛒', '📱', '🎮', '💊'];
@@ -47,9 +45,9 @@ export default function HabitsPage() {
   const [todayLogs, setTodayLogs] = useState<any[]>([]);
 
   // Form state
-  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🍔');
-  const [category, setCategory] = useState('FOOD');
+  const [category, setCategory] = useState('CUSTOM');
   const [calories, setCalories] = useState('');
   const [cost, setCost] = useState('');
   const [formError, setFormError] = useState('');
@@ -75,9 +73,9 @@ export default function HabitsPage() {
 
   const openCreate = () => {
     setEditingHabit(null);
-    setName('');
+    setTitle('');
     setEmoji('🍔');
-    setCategory('FOOD');
+    setCategory('CUSTOM');
     setCalories('');
     setCost('');
     setFormError('');
@@ -86,17 +84,17 @@ export default function HabitsPage() {
 
   const openEdit = (h: Habit) => {
     setEditingHabit(h);
-    setName(h.name);
-    setEmoji(h.emoji);
+    setTitle(h.title);
+    setEmoji(h.emoji || '🍔');
     setCategory(h.category);
     setCalories(h.caloriesPerOccurrence.toString());
-    setCost(h.costPerOccurrence.toString());
+    setCost(h.pricePerOccurrence.toString());
     setFormError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
+    if (!title.trim()) {
       setFormError('Name is required');
       return;
     }
@@ -104,11 +102,11 @@ export default function HabitsPage() {
     setFormError('');
 
     const data = {
-      name: name.trim(),
+      title: title.trim(),
       emoji,
       category,
       caloriesPerOccurrence: parseFloat(calories) || 0,
-      costPerOccurrence: parseFloat(cost) || 0,
+      pricePerOccurrence: parseFloat(cost) || 0,
     };
 
     try {
@@ -193,9 +191,9 @@ export default function HabitsPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{habit.emoji}</span>
                     <div>
-                      <p className="font-medium text-[var(--foreground)]">{habit.name}</p>
+                      <p className="font-medium text-[var(--foreground)]">{habit.title}</p>
                       <p className="text-xs text-[var(--muted)]">
-                        {habit.caloriesPerOccurrence} kcal · €{habit.costPerOccurrence}
+                        {habit.caloriesPerOccurrence} kcal · €{habit.pricePerOccurrence}
                       </p>
                     </div>
                   </div>
@@ -309,8 +307,8 @@ export default function HabitsPage() {
                 </label>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Fast food burger"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />

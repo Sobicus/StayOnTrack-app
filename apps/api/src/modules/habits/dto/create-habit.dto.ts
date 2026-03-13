@@ -17,6 +17,11 @@ export class CreateHabitDto {
   @MaxLength(255)
   title!: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  emoji?: string;
+
   @IsEnum(HabitCategory)
   @IsOptional()
   category?: HabitCategory;

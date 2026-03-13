@@ -36,7 +36,7 @@ interface TodayLog {
   status: string;
   savedCalories: number;
   savedMoney: number;
-  habit?: { name: string; emoji: string };
+  habit?: { title: string; emoji: string };
 }
 
 export default function DashboardPage() {
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                 <StatusIcon status={log.status} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--foreground)] truncate">
-                    {log.habit?.name || 'Habit'}
+                    {log.habit?.title || 'Habit'}
                   </p>
                 </div>
                 {log.savedCalories > 0 && (

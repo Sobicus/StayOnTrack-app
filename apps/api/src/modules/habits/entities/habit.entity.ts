@@ -44,6 +44,9 @@ export class Habit {
   @Column({ type: 'varchar', length: 255 })
   title!: string;
 
+  @Column({ type: 'varchar', length: 10, default: '🚫' })
+  emoji!: string;
+
   @Column({
     type: 'enum',
     enum: HabitCategory,

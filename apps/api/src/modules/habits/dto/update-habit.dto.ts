@@ -19,6 +19,11 @@ export class UpdateHabitDto {
   @IsOptional()
   title?: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  emoji?: string;
+
   @IsEnum(HabitCategory)
   @IsOptional()
   category?: HabitCategory;
