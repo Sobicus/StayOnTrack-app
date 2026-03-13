@@ -23,7 +23,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@stayontrack/contracts": ["../../packages/contracts/dist"]
     }
   }
 }

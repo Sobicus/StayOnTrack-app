@@ -5,6 +5,7 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HabitsModule } from './modules/habits/habits.module';
+import { HabitLogsModule } from './modules/habit-logs/habit-logs.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { HabitsModule } from './modules/habits/habits.module';
     AuthModule,
     UsersModule,
     HabitsModule,
+    HabitLogsModule,
   ],
 })
 export class AppModule {}
