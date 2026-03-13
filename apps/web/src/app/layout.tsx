@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
 import { AccentThemeProvider } from '@/components/theme-provider-accent';
+import { OfflineBanner } from '@/components/common/offline-banner';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -72,6 +73,7 @@ export default async function RootLayout({
               <ToastProvider>
                 <AccentThemeProvider>
                   <ServiceWorkerRegister />
+                  <OfflineBanner />
                   {children}
                 </AccentThemeProvider>
               </ToastProvider>

@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api, HabitLog } from '@/lib/api';
+import { api, ApiError, HabitLog } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 import { HabitCatalog, CatalogItem } from '@/components/habits/habit-catalog';
 import { HabitSparkline } from '@/components/habits/habit-sparkline';
+import { addPendingCheckin, hasPendingCheckins } from '@/lib/offline-queue';
+import { syncPendingCheckins } from '@/lib/sync-manager';
 import {
   Plus,
   Pencil,
@@ -76,7 +78,13 @@ export default function HabitsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (token) loadData();
+    if (token) {
+      loadData();
+      // Sync any pending offline check-ins when online
+      if (typeof window !== 'undefined' && navigator.onLine && hasPendingCheckins()) {
+        syncPendingCheckins(token).then(() => loadData());
+      }
+    }
   }, [token]);
 
   const loadData = async () => {
@@ -175,12 +183,13 @@ export default function HabitsPage() {
   };
 
   const handleCheckin = async (habitId: string, status: string, portionRatio: number = 0) => {
+    const date = new Date().toISOString().split('T')[0];
     try {
       await api.habitLogs.checkin(token!, {
         habitId,
         status,
         portionRatio,
-        date: new Date().toISOString().split('T')[0],
+        date,
       });
       if (status === 'AVOIDED') {
         setCelebratingId(habitId);
@@ -195,7 +204,14 @@ export default function HabitsPage() {
       }
       await loadData();
     } catch (err: any) {
-      const msg = err?.data?.message || t('failedToSave');
+      // Network error (not an API error) — save offline
+      if (!(err instanceof ApiError)) {
+        addPendingCheckin({ habitId, date, portionRatio, timestamp: Date.now() });
+        showToast(tc('savedOffline'), 'warning');
+        return;
+      }
+      const rawMsg = err?.data?.message || t('failedToSave');
+      const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : rawMsg;
       showToast(msg, 'error');
     }
   };

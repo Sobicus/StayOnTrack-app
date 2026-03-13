@@ -14,6 +14,8 @@ export class UserResponseDto {
   dayEndHour!: number;
   timezone!: string;
   monthlySavingsGoal!: number | null;
+  emailReminders!: boolean;
+  reminderHour!: number;
   totalXp!: number;
   createdAt!: Date;
 
@@ -32,6 +34,8 @@ export class UserResponseDto {
     dto.dayEndHour = user.dayEndHour;
     dto.timezone = user.timezone;
     dto.monthlySavingsGoal = user.monthlySavingsGoal;
+    dto.emailReminders = user.emailReminders;
+    dto.reminderHour = user.reminderHour;
     dto.totalXp = user.totalXp;
     dto.createdAt = user.createdAt;
     return dto;

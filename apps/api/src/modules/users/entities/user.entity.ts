@@ -77,6 +77,14 @@ export class User {
   @Column({ type: 'boolean', default: false })
   onboardingCompleted!: boolean;
 
+  /** Whether the user wants daily reminder emails. */
+  @Column({ type: 'boolean', default: true })
+  emailReminders!: boolean;
+
+  /** Hour (0-23) when daily reminder should be sent. Default 20 (8 PM). */
+  @Column({ type: 'int', default: 20 })
+  reminderHour!: number;
+
   /** Hashed refresh token (null when logged out). */
   @Column({ type: 'varchar', length: 255, nullable: true })
   @Exclude()

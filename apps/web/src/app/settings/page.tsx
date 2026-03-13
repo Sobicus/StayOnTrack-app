@@ -9,7 +9,7 @@ import { ThemeSelector } from '@/components/settings/theme-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
-import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download } from 'lucide-react';
+import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const VISIBILITY_OPTIONS = ['PRIVATE', 'FRIENDS', 'PUBLIC'] as const;
@@ -194,6 +194,67 @@ export default function SettingsPage() {
           <ThemeToggle />
         </div>
         <ThemeSelector userLevel={userLevel} />
+      </div>
+
+      {/* Notifications */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Bell className="w-4 h-4 text-primary" />
+          <p className="font-medium text-[var(--foreground)]">{t('notifications')}</p>
+        </div>
+        <p className="text-xs text-[var(--muted)] mb-3">{t('reminderDescription')}</p>
+
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-[var(--foreground)]">{t('dailyReminder')}</span>
+          <button
+            onClick={() => {
+              const newVal = !(user?.emailReminders ?? true);
+              api.users.updateProfile(token!, { emailReminders: newVal }).then(() => {
+                refreshUser();
+                showToast(t('saved'), 'success');
+              }).catch(() => showToast(tc('error'), 'error'));
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              (user?.emailReminders ?? true) ? 'bg-primary' : 'bg-[var(--border)]'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                (user?.emailReminders ?? true) ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {(user?.emailReminders ?? true) && (
+          <div>
+            <label className="block text-xs font-medium text-[var(--muted)] mb-1">
+              {t('reminderTime')}
+            </label>
+            <select
+              value={user?.reminderHour ?? 20}
+              onChange={(e) => {
+                const hour = parseInt(e.target.value);
+                api.users.updateProfile(token!, { reminderHour: hour }).then(() => {
+                  refreshUser();
+                  showToast(t('saved'), 'success');
+                }).catch(() => showToast(tc('error'), 'error'));
+              }}
+              className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {Array.from({ length: 24 }, (_, i) => {
+                const hour12 = i % 12 || 12;
+                const ampm = i < 12 ? 'AM' : 'PM';
+                const label = `${hour12}:00 ${ampm}`;
+                return (
+                  <option key={i} value={i}>
+                    {label}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Currency */}

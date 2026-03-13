@@ -19,6 +19,8 @@ interface User {
   weekStartDay: string;
   onboardingCompleted: boolean;
   monthlySavingsGoal: number | null;
+  emailReminders: boolean;
+  reminderHour: number;
   createdAt: string;
 }
 

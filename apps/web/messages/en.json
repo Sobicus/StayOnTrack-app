@@ -13,7 +13,11 @@
     "kg": "kg",
     "days": "days",
     "total": "total",
-    "optional": "optional"
+    "optional": "optional",
+    "offline": "You're offline. Check-ins will be saved and synced when you're back online.",
+    "syncPending": "Syncing {count} check-ins...",
+    "synced": "All synced!",
+    "savedOffline": "Saved offline"
   },
 
   "nav": {
@@ -404,6 +408,10 @@
     "exportDataDescription": "Download a copy of all your data (GDPR). Includes profile, habits, check-ins, and more.",
     "downloadData": "Download my data",
     "exportSuccess": "Data exported successfully!",
+    "notifications": "Notifications",
+    "dailyReminder": "Daily Reminder Email",
+    "reminderTime": "Reminder Time",
+    "reminderDescription": "Get a reminder if you haven't checked in",
     "accentColor": "Accent Color",
     "lockedTheme": "Unlock at level {level}",
     "themeApplied": "Theme applied!",

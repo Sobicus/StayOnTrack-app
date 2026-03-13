@@ -82,4 +82,14 @@ export class UpdateUserDto {
   @IsNumber()
   @Min(0)
   monthlySavingsGoal?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  emailReminders?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(23)
+  reminderHour?: number;
 }
