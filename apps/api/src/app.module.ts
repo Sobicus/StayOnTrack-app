@@ -6,6 +6,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HabitsModule } from './modules/habits/habits.module';
 import { HabitLogsModule } from './modules/habit-logs/habit-logs.module';
+import { ActivitiesModule } from './modules/activities/activities.module';
+import { StatsModule } from './modules/stats/stats.module';
+import { StreaksModule } from './modules/streaks/streaks.module';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { HabitLogsModule } from './modules/habit-logs/habit-logs.module';
     UsersModule,
     HabitsModule,
     HabitLogsModule,
+    ActivitiesModule,
+    StatsModule,
+    StreaksModule,
   ],
 })
 export class AppModule {}
