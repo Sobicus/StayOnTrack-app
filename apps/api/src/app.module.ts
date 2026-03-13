@@ -9,6 +9,7 @@ import { HabitLogsModule } from './modules/habit-logs/habit-logs.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { StreaksModule } from './modules/streaks/streaks.module';
+import { AchievementsModule } from './modules/achievements/achievements.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { StreaksModule } from './modules/streaks/streaks.module';
     ActivitiesModule,
     StatsModule,
     StreaksModule,
+    AchievementsModule,
   ],
 })
 export class AppModule {}

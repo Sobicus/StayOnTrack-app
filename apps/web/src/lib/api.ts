@@ -98,6 +98,11 @@ export const api = {
       request<any>('/streaks', { token }),
   },
 
+  achievements: {
+    get: (token: string) =>
+      request<any>('/achievements', { token }),
+  },
+
   activities: {
     list: (token: string) =>
       request<any[]>('/activities', { token }),

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ListChecks,
   BarChart3,
+  Trophy,
   Settings,
   LogOut,
   Flame,
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/habits', label: 'Habits', icon: ListChecks },
+  { href: '/achievements', label: 'Awards', icon: Trophy },
   { href: '/stats', label: 'Stats', icon: BarChart3 },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
