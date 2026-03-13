@@ -54,7 +54,7 @@ import { EmailModule } from './common/email/email.module';
         // In production, run migrations on startup
         migrationsRun: config.get<string>('NODE_ENV') === 'production',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
-        logging: config.get<string>('NODE_ENV') === 'development',
+        logging: ['error', 'warn', 'migration'],
       }),
     }),
 

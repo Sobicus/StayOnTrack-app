@@ -7,7 +7,11 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
 import dynamic from 'next/dynamic';
-import { AccentThemeProvider } from '@/components/theme-provider-accent';
+
+const AccentThemeProvider = dynamic(
+  () => import('@/components/theme-provider-accent').then(m => m.AccentThemeProvider),
+  { ssr: false }
+);
 
 const OfflineBanner = dynamic(
   () => import('@/components/common/offline-banner').then(m => m.OfflineBanner),
@@ -17,6 +21,16 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
 
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#6366F1',
+};
+
 export const metadata: Metadata = {
   title: {
     default: 'StayOnTrack — Track What You Avoided',
@@ -24,7 +38,6 @@ export const metadata: Metadata = {
   },
   description: 'Track what you avoided, not what you consumed. See saved calories, money, and potential weight avoided — all in real time.',
   manifest: '/manifest.json',
-  themeColor: '#6366F1',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:4801'),
   openGraph: {
     type: 'website',
@@ -46,12 +59,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'StayOnTrack',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
   },
 };
 
@@ -76,11 +83,11 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AuthProvider>
               <ToastProvider>
-                <AccentThemeProvider>
                   <ServiceWorkerRegister />
-                  <OfflineBanner />
-                  {children}
-                </AccentThemeProvider>
+                  <AccentThemeProvider>
+                    <OfflineBanner />
+                    {children}
+                  </AccentThemeProvider>
               </ToastProvider>
             </AuthProvider>
           </ThemeProvider>
