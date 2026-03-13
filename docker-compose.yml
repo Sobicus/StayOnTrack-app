@@ -1,0 +1,22 @@
+services:
+  stayontrack_db:
+    image: postgres:16-alpine
+    container_name: stayontrack_db
+    restart: unless-stopped
+    ports:
+      - "5450:5432"
+    environment:
+      POSTGRES_DB: stayontrack
+      POSTGRES_USER: stayontrack
+      POSTGRES_PASSWORD: stayontrack_dev_2024
+    volumes:
+      - stayontrack_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stayontrack"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  stayontrack_pgdata:
+    driver: local

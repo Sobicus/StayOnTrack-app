@@ -1,0 +1,30 @@
+{
+  "name": "stayontrack",
+  "version": "0.0.1",
+  "private": true,
+  "description": "StayOnTrack — behavior change app. Track what you avoided, not what you consumed.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "turbo dev --filter=@stayontrack/api",
+    "dev:web": "turbo dev --filter=@stayontrack/web",
+    "build": "turbo build",
+    "build:api": "turbo build --filter=@stayontrack/api",
+    "build:web": "turbo build --filter=@stayontrack/web",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.0.0"
+}
