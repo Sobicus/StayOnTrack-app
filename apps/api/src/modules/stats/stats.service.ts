@@ -11,6 +11,12 @@ import {
   getActivityEquivalent,
 } from '@stayontrack/contracts';
 
+export interface WeeklyTrendPoint {
+  week: string;
+  savedCalories: number;
+  savedMoney: number;
+}
+
 export interface UserStatsResult {
   totalSavedCalories: number;
   totalSavedMoney: number;
@@ -169,6 +175,42 @@ export class StatsService {
       startedAt: user.createdAt.toISOString(),
       dayEndHour: user.dayEndHour,
     };
+  }
+
+  /**
+   * Get weekly trends over a number of months.
+   * Returns saved calories and money grouped by ISO week.
+   */
+  async getWeeklyTrends(
+    userId: string,
+    months: number = 3,
+  ): Promise<WeeklyTrendPoint[]> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+
+    const rows = await this.logRepository
+      .createQueryBuilder('log')
+      .select(
+        "TO_CHAR(DATE_TRUNC('week', log.date::date), 'IYYY-\"W\"IW')",
+        'week',
+      )
+      .addSelect('SUM(log.savedCalories)', 'savedCalories')
+      .addSelect('SUM(log.savedMoney)', 'savedMoney')
+      .where('log.userId = :userId', { userId })
+      .andWhere('log.date >= :startStr', { startStr })
+      .andWhere('log.date <= :endStr', { endStr })
+      .groupBy("DATE_TRUNC('week', log.date::date)")
+      .orderBy("DATE_TRUNC('week', log.date::date)", 'ASC')
+      .getRawMany();
+
+    return rows.map((row) => ({
+      week: row.week,
+      savedCalories: parseFloat(row.savedCalories) || 0,
+      savedMoney: parseFloat(row.savedMoney) || 0,
+    }));
   }
 
   /**

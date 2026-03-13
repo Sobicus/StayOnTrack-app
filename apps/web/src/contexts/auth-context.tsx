@@ -18,6 +18,7 @@ interface User {
   currency: string;
   weekStartDay: string;
   onboardingCompleted: boolean;
+  monthlySavingsGoal: number | null;
   createdAt: string;
 }
 

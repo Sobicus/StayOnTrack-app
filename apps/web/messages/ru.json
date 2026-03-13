@@ -97,7 +97,9 @@
       "money": "Деньги",
       "weight": "Вес",
       "saved": "сэконом."
-    }
+    },
+    "savingsGoalProgress": "Цель экономии",
+    "ofGoal": "от цели"
   },
 
   "habits": {
@@ -133,6 +135,7 @@
     "frequencyWeekly": "раз/нед",
     "frequencyCustom": "{count}x/нед",
     "timesPerWeek": "Раз в неделю (1-7)",
+    "last7Days": "7д",
     "weeklyLimitReached": "Лимит на неделю достигнут — возвращайся на следующей!",
     "categories": {
       "SWEETS": "Сладости",
@@ -200,7 +203,11 @@
     "calendar": "Календарь активности",
     "allAvoided": "Всё избежано",
     "mixed": "Смешанно",
-    "allConsumed": "Потреблено"
+    "allConsumed": "Потреблено",
+    "less": "Меньше",
+    "more": "Больше",
+    "monthlyTrend": "Тренд за месяц",
+    "weeklyAverage": "Средняя за неделю"
   },
 
   "onboarding": {
@@ -324,6 +331,8 @@
       "UAH": "₴ UAH",
       "RUB": "₽ RUB"
     },
+    "monthlySavingsGoal": "Цель экономии в месяц",
+    "monthlySavingsGoalPlaceholder": "напр., 100",
     "weekStart": "Неделя начинается с",
     "weekStartDescription": "Первый день недели для статистики и серий",
     "weekDays": {

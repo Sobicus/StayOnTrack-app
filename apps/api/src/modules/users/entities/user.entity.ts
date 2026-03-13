@@ -65,6 +65,10 @@ export class User {
   @Column({ type: 'varchar', length: 5, default: 'EUR' })
   currency!: string;
 
+  /** Monthly savings goal amount in user's currency. Null means no goal set. */
+  @Column({ type: 'float', nullable: true })
+  monthlySavingsGoal!: number | null;
+
   /** Day the week starts on: 'monday' or 'sunday'. Default 'monday'. */
   @Column({ type: 'varchar', length: 10, default: 'monday' })
   weekStartDay!: string;

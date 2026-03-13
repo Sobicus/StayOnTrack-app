@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api } from '@/lib/api';
+import { api, HabitLog } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 import { HabitCatalog, CatalogItem } from '@/components/habits/habit-catalog';
+import { HabitSparkline } from '@/components/habits/habit-sparkline';
 import {
   Plus,
   Pencil,
@@ -60,6 +61,7 @@ export default function HabitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [todayLogs, setTodayLogs] = useState<any[]>([]);
+  const [rangeLogs, setRangeLogs] = useState<HabitLog[]>([]);
   const [freqStatus, setFreqStatus] = useState<FrequencyStatus[]>([]);
 
   // Form state
@@ -79,14 +81,22 @@ export default function HabitsPage() {
 
   const loadData = async () => {
     try {
-      const [h, logs, freq] = await Promise.all([
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      const startDate = sevenDaysAgo.toISOString().split('T')[0];
+      const endDate = today.toISOString().split('T')[0];
+
+      const [h, logs, freq, range] = await Promise.all([
         api.habits.list(token!),
         api.habitLogs.today(token!).catch(() => []),
         api.habitLogs.frequencyStatus(token!).catch(() => []),
+        api.habitLogs.range(token!, startDate, endDate).catch(() => []),
       ]);
       setHabits(h);
       setTodayLogs(logs);
       setFreqStatus(freq);
+      setRangeLogs(range);
     } catch {
     } finally {
       setLoading(false);
@@ -203,6 +213,35 @@ export default function HabitsPage() {
     return freq.remaining === 0;
   };
 
+  /** Build sparkline data (last 7 days) grouped by habitId */
+  const sparklineByHabit = useMemo(() => {
+    const today = new Date();
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+
+    const logsByHabitDate = new Map<string, Map<string, string>>();
+    for (const log of rangeLogs) {
+      if (!logsByHabitDate.has(log.habitId)) {
+        logsByHabitDate.set(log.habitId, new Map());
+      }
+      logsByHabitDate.get(log.habitId)!.set(log.date, log.status);
+    }
+
+    const result: Record<string, { date: string; status: string | null }[]> = {};
+    for (const habit of habits) {
+      const habitLogs = logsByHabitDate.get(habit.id);
+      result[habit.id] = days.map((date) => ({
+        date,
+        status: habitLogs?.get(date) ?? null,
+      }));
+    }
+    return result;
+  }, [rangeLogs, habits]);
+
   const handleQuickAdd = async (item: CatalogItem) => {
     try {
       await api.habits.create(token!, {
@@ -287,6 +326,9 @@ export default function HabitsPage() {
                           </span>
                         )}
                       </p>
+                      {sparklineByHabit[habit.id] && (
+                        <HabitSparkline days={sparklineByHabit[habit.id]} />
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

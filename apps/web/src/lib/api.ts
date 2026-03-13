@@ -44,6 +44,7 @@ export interface UserProfile {
   currency: string;
   weekStartDay: string;
   onboardingCompleted: boolean;
+  monthlySavingsGoal: number | null;
   createdAt: string;
 }
 
@@ -112,6 +113,12 @@ export interface EffortEquivalent {
   activityName: string;
   amount: number;
   unit: string;
+}
+
+export interface WeeklyTrendPoint {
+  week: string;
+  savedCalories: number;
+  savedMoney: number;
 }
 
 export interface Streak {
@@ -222,6 +229,7 @@ export interface UpdateProfileData {
   currency?: string;
   weekStartDay?: string;
   onboardingCompleted?: boolean;
+  monthlySavingsGoal?: number;
 }
 
 export interface CreateHabitData {
@@ -362,6 +370,10 @@ export const api = {
     },
     live: (token: string) =>
       request<LiveStats>('/stats/live', { token }),
+    trends: (token: string, months?: number) => {
+      const query = months ? `?months=${months}` : '';
+      return request<WeeklyTrendPoint[]>(`/stats/trends${query}`, { token });
+    },
   },
 
   streaks: {

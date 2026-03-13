@@ -17,6 +17,8 @@ import {
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -37,6 +39,12 @@ interface Equivalent {
   activityName: string;
   unit: string;
   amount: number;
+}
+
+interface TrendPoint {
+  week: string;
+  savedCalories: number;
+  savedMoney: number;
 }
 
 interface LogEntry {
@@ -96,6 +104,7 @@ export default function StatsPage() {
     return { year: now.getFullYear(), month: now.getMonth() };
   });
   const [calLogs, setCalLogs] = useState<LogEntry[]>([]);
+  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -114,12 +123,14 @@ export default function StatsPage() {
 
   const loadStats = async () => {
     try {
-      const [s, eq] = await Promise.all([
+      const [s, eq, trends] = await Promise.all([
         api.stats.get(token!),
         api.stats.equivalents(token!),
+        api.stats.trends(token!, 3),
       ]);
       setStats(s);
       setEquivalents(eq);
+      setTrendData(trends);
     } catch {
     } finally {
       setLoading(false);
@@ -153,14 +164,12 @@ export default function StatsPage() {
     });
   }, [weekLogs, weekOffset]);
 
-  // Calendar: build map of date -> status
+  // Calendar: build map of date -> total saved calories
   const calendarMap = useMemo(() => {
-    const map: Record<string, { total: number; avoided: number; consumed: number }> = {};
+    const map: Record<string, number> = {};
     for (const log of calLogs) {
-      if (!map[log.date]) map[log.date] = { total: 0, avoided: 0, consumed: 0 };
-      map[log.date].total++;
-      if (log.status === 'AVOIDED') map[log.date].avoided++;
-      if (log.status === 'CONSUMED') map[log.date].consumed++;
+      if (!map[log.date]) map[log.date] = 0;
+      map[log.date] += log.savedCalories || 0;
     }
     return map;
   }, [calLogs]);
@@ -286,6 +295,65 @@ export default function StatsPage() {
         </div>
       </div>
 
+      {/* Monthly Trend Line Chart */}
+      {trendData.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider">
+              {t('monthlyTrend')}
+            </h2>
+            {trendData.length > 0 && (
+              <span className="text-xs text-[var(--muted)]">
+                {t('weeklyAverage')}:{' '}
+                <span className="font-semibold text-[var(--foreground)]">
+                  {Math.round(
+                    trendData.reduce((s, d) => s + d.savedCalories, 0) / trendData.length,
+                  ).toLocaleString()}{' '}
+                  {tc('kcal')}
+                </span>
+              </span>
+            )}
+          </div>
+          <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: 10, fill: 'var(--muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--muted)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={45}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                  }}
+                  formatter={(val: any) => [`${Math.round(val)} ${tc('kcal')}`, t('caloriesSaved')]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="savedCalories"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: 'hsl(var(--primary))' }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Calendar Heatmap */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
@@ -334,46 +402,46 @@ export default function StatsPage() {
             {calGrid.cells.map((date, i) => {
               if (!date) return <div key={`empty-${i}`} />;
               const day = parseInt(date.slice(-2), 10);
-              const info = calendarMap[date];
+              const kcal = calendarMap[date] ?? 0;
               const isToday = date === today;
+              const hasData = date in calendarMap;
 
-              let bgClass = 'bg-[var(--background)]';
-              if (info) {
-                if (info.consumed === 0 && info.avoided > 0) {
-                  bgClass = 'bg-success/30'; // all avoided
-                } else if (info.consumed > 0 && info.avoided > 0) {
-                  bgClass = 'bg-warning/30'; // mixed
-                } else if (info.consumed > 0) {
-                  bgClass = 'bg-danger/30'; // all consumed
+              // 5-level intensity based on saved calories
+              let bgStyle = 'bg-[var(--background)]';
+              if (hasData) {
+                if (kcal >= 500) {
+                  bgStyle = 'bg-green-500'; // Level 4: full green
+                } else if (kcal >= 300) {
+                  bgStyle = 'bg-green-500/70'; // Level 3: strong green
+                } else if (kcal >= 100) {
+                  bgStyle = 'bg-green-500/40'; // Level 2: medium green
+                } else {
+                  bgStyle = 'bg-green-500/20'; // Level 1: light green
                 }
               }
 
               return (
                 <div
                   key={date}
-                  className={`aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-all ${bgClass} ${
+                  className={`aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-all ${bgStyle} ${
                     isToday ? 'ring-2 ring-primary' : ''
                   }`}
+                  title={hasData ? `${Math.round(kcal)} ${tc('kcal')}` : ''}
                 >
                   {day}
                 </div>
               );
             })}
           </div>
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-4 mt-3">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-success/30" />
-              <span className="text-[10px] text-[var(--muted)]">{t('allAvoided')}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-warning/30" />
-              <span className="text-[10px] text-[var(--muted)]">{t('mixed')}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-danger/30" />
-              <span className="text-[10px] text-[var(--muted)]">{t('allConsumed')}</span>
-            </div>
+          {/* Gradient legend */}
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            <span className="text-[10px] text-[var(--muted)] mr-1">{t('less')}</span>
+            <div className="w-3 h-3 rounded bg-[var(--background)] border border-[var(--border)]" />
+            <div className="w-3 h-3 rounded bg-green-500/20" />
+            <div className="w-3 h-3 rounded bg-green-500/40" />
+            <div className="w-3 h-3 rounded bg-green-500/70" />
+            <div className="w-3 h-3 rounded bg-green-500" />
+            <span className="text-[10px] text-[var(--muted)] ml-1">{t('more')}</span>
           </div>
         </div>
       </div>

@@ -77,4 +77,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   onboardingCompleted?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  monthlySavingsGoal?: number;
 }

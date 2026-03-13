@@ -212,6 +212,33 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Monthly Savings Goal */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Coins className="w-4 h-4 text-primary" />
+          <p className="font-medium text-[var(--foreground)]">{t('monthlySavingsGoal')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            defaultValue={user?.monthlySavingsGoal?.toString() || ''}
+            placeholder={t('monthlySavingsGoalPlaceholder')}
+            min="0"
+            step="any"
+            onBlur={(e) => {
+              const val = e.target.value ? parseFloat(e.target.value) : undefined;
+              const current = user?.monthlySavingsGoal ?? undefined;
+              if (val === current) return;
+              api.users.updateProfile(token!, { monthlySavingsGoal: val ?? 0 }).then(() => {
+                refreshUser();
+                showToast(t('saved'), 'success');
+              }).catch(() => showToast(tc('error'), 'error'));
+            }}
+            className="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+        </div>
+      </div>
+
       {/* Week Start */}
       <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
         <div className="flex items-center gap-2 mb-2">

@@ -46,6 +46,18 @@ export class StatsController {
   }
 
   /**
+   * GET /stats/trends?months=3 — Weekly trend data over N months
+   */
+  @Get('trends')
+  async getWeeklyTrends(
+    @CurrentUser() user: User,
+    @Query('months') months?: string,
+  ) {
+    const m = months ? parseInt(months, 10) : 3;
+    return this.statsService.getWeeklyTrends(user.id, m);
+  }
+
+  /**
    * GET /stats/range?start=2026-03-01&end=2026-03-13 — Stats for date range
    */
   @Get('range')

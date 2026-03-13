@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { OnboardingScreen, useOnboarding } from '@/components/onboarding';
 import { useTranslations } from 'next-intl';
 import { LiveHero } from '@/components/dashboard/live-hero';
+import { AnimatedCounter } from '@/components/dashboard/animated-counter';
 import {
   Flame,
   DollarSign,
@@ -140,30 +141,73 @@ export default function DashboardPage() {
           <StatCard
             icon={<Zap className="w-5 h-5 text-warning" />}
             label={t('caloriesSaved')}
-            value={Math.round(stats.totalSavedCalories).toLocaleString()}
+            value={
+              <AnimatedCounter value={Math.round(stats.totalSavedCalories)} />
+            }
             unit="kcal"
             color="warning"
           />
           <StatCard
             icon={<DollarSign className="w-5 h-5 text-success" />}
             label={t('moneySaved')}
-            value={`${CURRENCY_SYMBOLS[user?.currency || 'EUR'] || '€'}${stats.totalSavedMoney.toFixed(2)}`}
+            value={
+              <AnimatedCounter
+                value={stats.totalSavedMoney}
+                decimals={2}
+                prefix={CURRENCY_SYMBOLS[user?.currency || 'EUR'] || '€'}
+              />
+            }
             color="success"
           />
           <StatCard
             icon={<Scale className="w-5 h-5 text-primary" />}
             label={t('weightAvoided')}
-            value={stats.potentialWeightAvoidedKg.toFixed(2)}
+            value={
+              <AnimatedCounter
+                value={stats.potentialWeightAvoidedKg}
+                decimals={2}
+              />
+            }
             unit="kg"
             color="primary"
           />
           <StatCard
             icon={<CheckCircle2 className="w-5 h-5 text-streak" />}
             label={t('checkIns')}
-            value={stats.totalCheckIns.toString()}
+            value={<AnimatedCounter value={stats.totalCheckIns} />}
             unit="total"
             color="streak"
           />
+        </div>
+      )}
+
+      {/* Savings Goal Progress Bar */}
+      {stats && user?.monthlySavingsGoal && user.monthlySavingsGoal > 0 && (
+        <div className="mb-6 p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-success" />
+              <span className="text-sm font-semibold text-[var(--foreground)]">
+                {t('savingsGoalProgress')}
+              </span>
+            </div>
+            <span className="text-xs text-[var(--muted)]">
+              {CURRENCY_SYMBOLS[user.currency || 'EUR'] || '€'}
+              {stats.totalSavedMoney.toFixed(2)} / {CURRENCY_SYMBOLS[user.currency || 'EUR'] || '€'}
+              {user.monthlySavingsGoal.toFixed(2)} {t('ofGoal')}
+            </span>
+          </div>
+          <div className="w-full h-3 rounded-full bg-[var(--border)] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-success transition-all duration-500"
+              style={{
+                width: `${Math.min(100, (stats.totalSavedMoney / user.monthlySavingsGoal) * 100)}%`,
+              }}
+            />
+          </div>
+          <p className="text-xs text-[var(--muted)] mt-1 text-right">
+            {Math.min(100, Math.round((stats.totalSavedMoney / user.monthlySavingsGoal) * 100))}%
+          </p>
         </div>
       )}
 
@@ -243,7 +287,7 @@ function StatCard({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: React.ReactNode;
   unit?: string;
   color: string;
 }) {

@@ -13,6 +13,7 @@ export class UserResponseDto {
   streakShieldsRemaining!: number;
   dayEndHour!: number;
   timezone!: string;
+  monthlySavingsGoal!: number | null;
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {
@@ -29,6 +30,7 @@ export class UserResponseDto {
     dto.streakShieldsRemaining = user.streakShieldsRemaining;
     dto.dayEndHour = user.dayEndHour;
     dto.timezone = user.timezone;
+    dto.monthlySavingsGoal = user.monthlySavingsGoal;
     dto.createdAt = user.createdAt;
     return dto;
   }

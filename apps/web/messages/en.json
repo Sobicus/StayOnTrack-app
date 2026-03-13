@@ -97,7 +97,9 @@
       "money": "Money",
       "weight": "Weight",
       "saved": "saved"
-    }
+    },
+    "savingsGoalProgress": "Savings Goal",
+    "ofGoal": "of goal"
   },
 
   "habits": {
@@ -133,6 +135,7 @@
     "frequencyWeekly": "weekly",
     "frequencyCustom": "{count}x/week",
     "timesPerWeek": "Times per week (1-7)",
+    "last7Days": "7d",
     "weeklyLimitReached": "Weekly limit reached — check back next week!",
     "categories": {
       "SWEETS": "Sweets",
@@ -200,7 +203,11 @@
     "calendar": "Activity Calendar",
     "allAvoided": "All avoided",
     "mixed": "Mixed",
-    "allConsumed": "Consumed"
+    "allConsumed": "Consumed",
+    "less": "Less",
+    "more": "More",
+    "monthlyTrend": "Monthly Trend",
+    "weeklyAverage": "Weekly Average"
   },
 
   "onboarding": {
@@ -324,6 +331,8 @@
       "UAH": "₴ UAH",
       "RUB": "₽ RUB"
     },
+    "monthlySavingsGoal": "Monthly Savings Goal",
+    "monthlySavingsGoalPlaceholder": "e.g., 100",
     "weekStart": "Week starts on",
     "weekStartDescription": "First day of the week for stats and streaks",
     "weekDays": {
