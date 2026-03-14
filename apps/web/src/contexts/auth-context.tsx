@@ -21,6 +21,7 @@ interface User {
   monthlySavingsGoal: number | null;
   emailReminders: boolean;
   reminderHour: number;
+  timezone: string;
   createdAt: string;
 }
 
@@ -105,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await api.auth.me(stored);
       setUser(userData);
       setToken(stored);
+      syncTimezone(stored, userData);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         // Access token expired — try refresh
@@ -135,16 +137,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, [token, tryRefreshTokens]);
 
+  /** Sync browser timezone to backend if it differs from stored value */
+  const syncTimezone = async (accessToken: string, currentUser: User | null) => {
+    try {
+      const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (browserTz && currentUser && currentUser.timezone !== browserTz) {
+        await api.users.updateProfile(accessToken, { timezone: browserTz }).catch(() => {});
+      }
+    } catch { /* ignore */ }
+  };
+
   const login = async (email: string, password: string) => {
     const result = await api.auth.login({ email, password });
     saveTokens(result.accessToken, result.refreshToken);
     setUser(result.user);
+    syncTimezone(result.accessToken, result.user);
   };
 
   const register = async (email: string, password: string, username: string) => {
     const result = await api.auth.register({ email, password, username });
     saveTokens(result.accessToken, result.refreshToken);
     setUser(result.user);
+    syncTimezone(result.accessToken, result.user);
   };
 
   const logout = () => {

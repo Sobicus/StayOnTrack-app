@@ -47,6 +47,8 @@ export interface UserProfile {
   monthlySavingsGoal: number | null;
   emailReminders: boolean;
   reminderHour: number;
+  timezone: string;
+  totalXp: number;
   createdAt: string;
 }
 
@@ -269,6 +271,7 @@ export interface UpdateProfileData {
   monthlySavingsGoal?: number;
   emailReminders?: boolean;
   reminderHour?: number;
+  timezone?: string;
 }
 
 export interface CreateHabitData {
