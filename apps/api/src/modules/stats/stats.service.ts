@@ -10,6 +10,7 @@ import {
   getCaloriesPerRep,
   getActivityEquivalent,
 } from '@stayontrack/contracts';
+import { getTodayInTimezone } from '../../common/utils/date.utils';
 
 export interface WeeklyTrendPoint {
   week: string;
@@ -132,7 +133,7 @@ export class StatsService {
    * Returns past days total + today's data for frontend interpolation.
    */
   async getLiveStats(user: User): Promise<LiveStatsResult> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayInTimezone(user.timezone || 'UTC');
 
     // Past days (everything before today)
     const pastResult = await this.logRepository
