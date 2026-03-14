@@ -26,34 +26,50 @@ const METRIC_CONFIG: Record<
     icon: typeof Zap;
     cssColor: string;
     textColor: string;
-    glowClass: string;
-    ringClass: string;
     sparkleColor: string;
+    /** Conic gradient for the rotating ring ::before */
+    ringGradient: string;
+    /** Radial gradient background for outer glow */
+    glowBg: string;
+    /** Box-shadow for outer glow */
+    glowShadow: string;
   }
 > = {
   calories: {
     icon: Zap,
     cssColor: 'rgba(251,191,36,0.8)',
     textColor: 'text-amber-400',
-    glowClass: 'glow-calories',
-    ringClass: 'neon-calories',
     sparkleColor: '#fbbf24',
+    ringGradient:
+      'conic-gradient(from 0deg, rgba(251,191,36,0.05), rgba(251,191,36,0.9), rgba(245,158,11,0.6), rgba(251,191,36,0.05), rgba(251,191,36,0.8), rgba(251,191,36,0.05))',
+    glowBg:
+      'radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 70%)',
+    glowShadow:
+      '0 0 30px 8px rgba(251,191,36,0.2), 0 0 60px 20px rgba(251,191,36,0.1)',
   },
   money: {
     icon: DollarSign,
     cssColor: 'rgba(34,197,94,0.8)',
     textColor: 'text-emerald-400',
-    glowClass: 'glow-money',
-    ringClass: 'neon-money',
     sparkleColor: '#22c55e',
+    ringGradient:
+      'conic-gradient(from 0deg, rgba(34,197,94,0.05), rgba(34,197,94,0.9), rgba(22,163,74,0.6), rgba(34,197,94,0.05), rgba(34,197,94,0.8), rgba(34,197,94,0.05))',
+    glowBg:
+      'radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%)',
+    glowShadow:
+      '0 0 30px 8px rgba(34,197,94,0.2), 0 0 60px 20px rgba(34,197,94,0.1)',
   },
   weight: {
     icon: Scale,
     cssColor: 'rgba(168,85,247,0.8)',
     textColor: 'text-purple-400',
-    glowClass: 'glow-weight',
-    ringClass: 'neon-weight',
     sparkleColor: '#a855f7',
+    ringGradient:
+      'conic-gradient(from 0deg, rgba(99,102,241,0.05), rgba(168,85,247,0.9), rgba(99,102,241,0.6), rgba(139,92,246,0.05), rgba(168,85,247,0.8), rgba(99,102,241,0.05))',
+    glowBg:
+      'radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)',
+    glowShadow:
+      '0 0 30px 8px rgba(99,102,241,0.2), 0 0 60px 20px rgba(99,102,241,0.1)',
   },
 };
 
@@ -196,11 +212,20 @@ export function LiveHero() {
     <div className="flex flex-col items-center mb-6">
       {/* ===== Neon Ring Container ===== */}
       <div className="live-hero-container">
-        {/* Layer 1: Radial glow background */}
-        <div className={`live-hero-glow-layer ${config.glowClass}`} />
+        {/* Layer 1: Radial glow background (inline styles — immune to CSS purging) */}
+        <div
+          className="live-hero-glow-layer"
+          style={{
+            background: config.glowBg,
+            boxShadow: config.glowShadow,
+          }}
+        />
 
-        {/* Layer 2: Rotating conic-gradient ring */}
-        <div className={`live-hero-ring ${config.ringClass}`} />
+        {/* Layer 2: Rotating conic-gradient ring (inline gradient via CSS var) */}
+        <div
+          className="live-hero-ring"
+          style={{ '--ring-gradient': config.ringGradient } as React.CSSProperties}
+        />
 
         {/* Layer 3: Sparkles */}
         {[0, 1, 2, 3, 4].map((i) => (

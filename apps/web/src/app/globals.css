@@ -90,31 +90,13 @@
   height: 220px;
 }
 
-/* Multi-layer neon glow behind the ring */
+/* Multi-layer neon glow behind the ring — colors via inline styles */
 .live-hero-glow-layer {
   position: absolute;
   inset: -12px;
   border-radius: 50%;
   animation: hero-pulse 3s ease-in-out infinite;
   pointer-events: none;
-}
-.live-hero-glow-layer.glow-calories {
-  background: radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 70%);
-  box-shadow:
-    0 0 30px 8px rgba(251,191,36,0.2),
-    0 0 60px 20px rgba(251,191,36,0.1);
-}
-.live-hero-glow-layer.glow-money {
-  background: radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%);
-  box-shadow:
-    0 0 30px 8px rgba(34,197,94,0.2),
-    0 0 60px 20px rgba(34,197,94,0.1);
-}
-.live-hero-glow-layer.glow-weight {
-  background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-  box-shadow:
-    0 0 30px 8px rgba(99,102,241,0.2),
-    0 0 60px 20px rgba(99,102,241,0.1);
 }
 
 /* Rotating conic-gradient ring — using border approach for browser compat */
@@ -129,6 +111,8 @@
   position: absolute;
   inset: -50%;
   border-radius: 50%;
+  /* Color gradient is set via inline --ring-gradient CSS variable */
+  background: var(--ring-gradient);
   animation: hero-ring-spin 6s linear infinite;
 }
 .live-hero-ring::after {
@@ -137,39 +121,6 @@
   inset: 4px;
   border-radius: 50%;
   background: var(--background);
-}
-.live-hero-ring.neon-calories::before {
-  background: conic-gradient(
-    from 0deg,
-    rgba(251,191,36,0.05),
-    rgba(251,191,36,0.9),
-    rgba(245,158,11,0.6),
-    rgba(251,191,36,0.05),
-    rgba(251,191,36,0.8),
-    rgba(251,191,36,0.05)
-  );
-}
-.live-hero-ring.neon-money::before {
-  background: conic-gradient(
-    from 0deg,
-    rgba(34,197,94,0.05),
-    rgba(34,197,94,0.9),
-    rgba(22,163,74,0.6),
-    rgba(34,197,94,0.05),
-    rgba(34,197,94,0.8),
-    rgba(34,197,94,0.05)
-  );
-}
-.live-hero-ring.neon-weight::before {
-  background: conic-gradient(
-    from 0deg,
-    rgba(99,102,241,0.05),
-    rgba(168,85,247,0.9),
-    rgba(99,102,241,0.6),
-    rgba(139,92,246,0.05),
-    rgba(168,85,247,0.8),
-    rgba(99,102,241,0.05)
-  );
 }
 
 /* Pulsing glow dot at arc leading edge */

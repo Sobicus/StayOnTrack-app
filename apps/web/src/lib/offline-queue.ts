@@ -2,7 +2,7 @@ const STORAGE_KEY = 'stayontrack_pending_checkins';
 
 export interface PendingCheckin {
   habitId: string;
-  date: string;
+  date?: string;
   portionRatio: number;
   timestamp: number;
 }

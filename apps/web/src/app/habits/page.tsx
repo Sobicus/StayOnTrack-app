@@ -183,13 +183,12 @@ export default function HabitsPage() {
   };
 
   const handleCheckin = async (habitId: string, status: string, portionRatio: number = 0) => {
-    const date = new Date().toISOString().split('T')[0];
     try {
+      // Don't send date — backend determines "today" from user.timezone
       await api.habitLogs.checkin(token!, {
         habitId,
         status,
         portionRatio,
-        date,
       });
       if (status === 'AVOIDED') {
         setCelebratingId(habitId);
@@ -206,7 +205,7 @@ export default function HabitsPage() {
     } catch (err: any) {
       // Network error (not an API error) — save offline
       if (!(err instanceof ApiError)) {
-        addPendingCheckin({ habitId, date, portionRatio, timestamp: Date.now() });
+        addPendingCheckin({ habitId, portionRatio, timestamp: Date.now() });
         showToast(tc('savedOffline'), 'warning');
         return;
       }
