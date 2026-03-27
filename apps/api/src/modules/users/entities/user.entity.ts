@@ -31,6 +31,9 @@ export class User {
   @Column({ type: 'varchar', length: 500, nullable: true })
   avatarUrl!: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  googleId!: string | null;
+
   @Column({ type: 'float', nullable: true })
   weightKg!: number | null;
 
@@ -97,6 +100,16 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   passwordResetExpires!: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  emailVerified!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  emailVerificationCode!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerificationSentAt!: Date | null;
 
   @Column({ type: 'int', default: 0 })
   totalXp!: number;

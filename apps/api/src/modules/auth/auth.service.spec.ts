@@ -15,10 +15,7 @@ jest.mock('bcrypt', () => ({
   compare: jest.fn().mockResolvedValue(true),
 }));
 
-// Mock uuid
-jest.mock('uuid', () => ({
-  v4: jest.fn().mockReturnValue('mock-uuid-token'),
-}));
+// uuid mock no longer needed — forgotPassword now uses JWT
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -66,6 +63,7 @@ describe('AuthService', () => {
 
     emailService = {
       sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -123,11 +121,17 @@ describe('AuthService', () => {
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
     });
 
-    it('should store hashed refresh token on user after registration', async () => {
+    it('should store hashed refresh token and send verification email', async () => {
       const dto = { email: 'test@example.com', password: 'password123', username: 'testuser' };
 
       await service.register(dto);
 
+      // Should update with verification code
+      expect(usersService.update).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ emailVerificationCode: expect.any(String) }),
+      );
+      // Should update with refresh token hash
       expect(usersService.update).toHaveBeenCalledWith(
         'user-1',
         expect.objectContaining({ refreshTokenHash: 'hashed-password' }),
@@ -232,9 +236,14 @@ describe('AuthService', () => {
   });
 
   describe('forgotPassword', () => {
-    it('should generate a reset token and send email', async () => {
+    it('should generate a JWT reset token and send email', async () => {
       await service.forgotPassword('test@example.com');
 
+      // Should sign a JWT with userId and purpose
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'user-1', purpose: 'password-reset' }),
+        expect.objectContaining({ expiresIn: '1h' }),
+      );
       expect(usersService.update).toHaveBeenCalledWith(
         'user-1',
         expect.objectContaining({
@@ -244,7 +253,7 @@ describe('AuthService', () => {
       );
       expect(emailService.sendPasswordResetEmail).toHaveBeenCalledWith(
         'test@example.com',
-        'mock-uuid-token',
+        expect.any(String),
       );
     });
 
@@ -257,15 +266,17 @@ describe('AuthService', () => {
   });
 
   describe('resetPassword', () => {
-    it('should reset password when token is valid', async () => {
+    it('should reset password when JWT token is valid', async () => {
+      // jwtService.verify returns { userId, purpose }
+      jwtService.verify.mockReturnValue({ userId: 'user-1', purpose: 'password-reset' });
       const userWithResetToken = {
         ...mockUser,
-        passwordResetTokenHash: 'hashed-reset-token',
+        passwordResetTokenHash: 'valid-jwt-token',
+        passwordResetExpires: new Date(Date.now() + 3600000),
       };
-      usersService.findWithActiveResetToken.mockResolvedValue([userWithResetToken]);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      usersService.findById.mockResolvedValue(userWithResetToken);
 
-      await service.resetPassword('valid-token', 'newpassword123');
+      await service.resetPassword('valid-jwt-token', 'newpassword123');
 
       expect(usersService.update).toHaveBeenCalledWith(
         'user-1',
@@ -277,24 +288,20 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw if no matching reset token found', async () => {
-      usersService.findWithActiveResetToken.mockResolvedValue([]);
+    it('should throw if JWT verification fails', async () => {
+      jwtService.verify.mockImplementation(() => { throw new Error('invalid token'); });
 
       await expect(
         service.resetPassword('invalid-token', 'newpassword123'),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw if token does not match any user hash', async () => {
-      const userWithResetToken = {
-        ...mockUser,
-        passwordResetTokenHash: 'hashed-reset-token',
-      };
-      usersService.findWithActiveResetToken.mockResolvedValue([userWithResetToken]);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    it('should throw if user not found for token userId', async () => {
+      jwtService.verify.mockReturnValue({ userId: 'nonexistent', purpose: 'password-reset' });
+      usersService.findById.mockResolvedValue(null);
 
       await expect(
-        service.resetPassword('wrong-token', 'newpassword123'),
+        service.resetPassword('valid-jwt', 'newpassword123'),
       ).rejects.toThrow(BadRequestException);
     });
   });

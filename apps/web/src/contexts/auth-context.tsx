@@ -21,6 +21,7 @@ interface User {
   monthlySavingsGoal: number | null;
   emailReminders: boolean;
   reminderHour: number;
+  emailVerified: boolean;
   timezone: string;
   createdAt: string;
 }

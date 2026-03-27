@@ -47,6 +47,7 @@ export interface UserProfile {
   monthlySavingsGoal: number | null;
   emailReminders: boolean;
   reminderHour: number;
+  emailVerified: boolean;
   timezone: string;
   totalXp: number;
   createdAt: string;
@@ -361,6 +362,10 @@ export const api = {
       request<{ message: string }>('/auth/reset-password', { method: 'POST', body: { token, newPassword } }),
     me: (token: string) =>
       request<UserProfile>('/auth/me', { token }),
+    verifyEmail: (token: string, code: string) =>
+      request<{ verified: boolean }>('/auth/verify-email', { method: 'POST', body: { code }, token }),
+    resendVerification: (token: string) =>
+      request<{ sent: boolean }>('/auth/resend-verification', { method: 'POST', token }),
   },
 
   users: {

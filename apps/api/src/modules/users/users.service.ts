@@ -27,10 +27,17 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { username } });
   }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { googleId } });
+  }
+
   async create(data: {
     email: string;
     passwordHash: string;
     username: string;
+    avatarUrl?: string | null;
+    googleId?: string | null;
+    emailVerified?: boolean;
   }): Promise<User> {
     // Check email uniqueness
     const existingEmail = await this.findByEmail(data.email);

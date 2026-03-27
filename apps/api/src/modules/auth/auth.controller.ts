@@ -6,9 +6,12 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService, AuthResponse } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -67,6 +70,43 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
     await this.authService.resetPassword(dto.token, dto.newPassword);
     return { message: 'Password has been reset successfully.' };
+  }
+
+  @Post('verify-email')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @CurrentUser() user: User,
+    @Body() body: { code: string },
+  ): Promise<{ verified: boolean }> {
+    return this.authService.verifyEmail(user.id, body.code);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 1 } })
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(
+    @CurrentUser() user: User,
+  ): Promise<{ sent: boolean }> {
+    return this.authService.resendVerification(user.id);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Guard redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: any, @Res() res: any) {
+    const tokens = await this.authService.googleLogin(req.user);
+    const frontendUrl =
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:4801';
+    res.redirect(
+      `${frontendUrl}/auth/google/callback?token=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

@@ -6,6 +6,7 @@ import { api, LevelInfo, Quest } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { OnboardingScreen, useOnboarding } from '@/components/onboarding';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { LiveHero } from '@/components/dashboard/live-hero';
 import { AnimatedCounter } from '@/components/dashboard/animated-counter';
 import { XpProgressBar } from '@/components/gamification/xp-progress-bar';
@@ -113,6 +114,13 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
+      {/* Email Verification Banner */}
+      {user && !user.emailVerified && (
+        <Link href="/auth/verify-email" className="block mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm text-center hover:bg-amber-500/20 transition-all">
+          {t('verifyEmailBanner')} &rarr;
+        </Link>
+      )}
+
       {/* Live Progress Hero */}
       <LiveHero />
 

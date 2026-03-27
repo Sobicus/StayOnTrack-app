@@ -43,6 +43,50 @@ export class EmailService {
   }
 
   /**
+   * Send an email verification code.
+   */
+  async sendVerificationEmail(
+    email: string,
+    username: string,
+    code: string,
+  ): Promise<void> {
+    const subject = 'Verify your StayOnTrack email';
+    const html = `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #3b82f6;">Welcome to StayOnTrack, ${username}!</h2>
+        <p>Your verification code is:</p>
+        <div style="background: #1e293b; border-radius: 12px; padding: 24px; text-align: center; margin: 16px 0;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #f8fafc;">${code}</span>
+        </div>
+        <p style="color: #94a3b8;">Enter this code in the app to verify your email. The code is valid until you request a new one.</p>
+      </div>
+    `;
+
+    if (this.resend) {
+      try {
+        await this.resend.emails.send({
+          from: this.fromAddress,
+          to: email,
+          subject,
+          html,
+        });
+        this.logger.log(`Verification email sent to ${email}`);
+        return;
+      } catch (error) {
+        this.logger.error(`Failed to send verification email to ${email}`, error);
+        // Fall through to console logging
+      }
+    }
+
+    // Dev fallback: log to console
+    this.logger.log(`\n========== EMAIL VERIFICATION ==========`);
+    this.logger.log(`Email: ${email}`);
+    this.logger.log(`Username: ${username}`);
+    this.logger.log(`Code: ${code}`);
+    this.logger.log(`=========================================\n`);
+  }
+
+  /**
    * Send a password reset email.
    * If Resend is configured → sends real email.
    * Otherwise → logs to console (dev mode).

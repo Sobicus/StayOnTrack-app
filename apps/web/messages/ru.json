@@ -78,7 +78,17 @@
     "resetPasswordError": "Недействительный или просроченный токен.",
     "invalidResetToken": "Недействительный токен сброса.",
     "requestNewLink": "Запросить новую ссылку",
-    "goToLogin": "Перейти ко входу →"
+    "goToLogin": "Перейти ко входу →",
+    "verifyEmail": "Подтвердите email",
+    "verifyEmailDescription": "Введите 6-значный код, отправленный на вашу почту",
+    "verify": "Подтвердить",
+    "resendCode": "Отправить код повторно",
+    "resendIn": "Повторно через",
+    "verificationFailed": "Неверный код. Попробуйте снова.",
+    "resendFailed": "Не удалось отправить код. Попробуйте позже.",
+    "googleSignIn": "Войти через Google",
+    "googleSignUp": "Зарегистрироваться через Google",
+    "or": "или"
   },
 
   "dashboard": {
@@ -103,7 +113,8 @@
       "saved": "сэконом."
     },
     "savingsGoalProgress": "Цель экономии",
-    "ofGoal": "от цели"
+    "ofGoal": "от цели",
+    "verifyEmailBanner": "Подтвердите ваш email адрес"
   },
 
   "habits": {
@@ -424,6 +435,9 @@
     "deleteAccount": "Удалить аккаунт",
     "deleteAccountDescription": "Безвозвратно удалить аккаунт и все данные. Это действие нельзя отменить.",
     "deleteConfirm": "Вы уверены? Это безвозвратно удалит ваш аккаунт.",
-    "confirmDelete": "Да, удалить мой аккаунт"
+    "confirmDelete": "Да, удалить мой аккаунт",
+    "linkedAccounts": "Привязанные аккаунты",
+    "linkGoogle": "Привязать Google",
+    "googleLinked": "Google аккаунт привязан"
   }
 }

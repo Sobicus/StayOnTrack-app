@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -49,6 +49,17 @@ export class AuthService {
     this.analyticsService
       .trackEvent(user.id, 'user_registered')
       .catch(() => {});
+
+    // Generate 6-digit verification code and send email
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, BCRYPT_SALT_ROUNDS);
+    await this.usersService.update(user.id, {
+      emailVerificationCode: hashedCode,
+      emailVerificationSentAt: new Date(),
+    });
+
+    // Send verification email (don't block registration if it fails)
+    this.emailService.sendVerificationEmail(user.email, user.username, verificationCode).catch(() => {});
 
     return this.issueTokens(user);
   }
@@ -97,7 +108,58 @@ export class AuthService {
   }
 
   /**
-   * Forgot password: generate a reset token, store hash, send email.
+   * Verify email with 6-digit code.
+   */
+  async verifyEmail(userId: string, code: string): Promise<{ verified: boolean }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.emailVerified) return { verified: true };
+    if (!user.emailVerificationCode) {
+      throw new BadRequestException('No verification code found. Please request a new one.');
+    }
+
+    const isValid = await bcrypt.compare(code, user.emailVerificationCode);
+    if (!isValid) throw new BadRequestException('Invalid verification code');
+
+    await this.usersService.update(user.id, {
+      emailVerified: true,
+      emailVerificationCode: null,
+    });
+
+    return { verified: true };
+  }
+
+  /**
+   * Resend email verification code with 60-second cooldown.
+   */
+  async resendVerification(userId: string): Promise<{ sent: boolean }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.emailVerified) throw new BadRequestException('Email already verified');
+
+    // 60-second cooldown
+    if (user.emailVerificationSentAt) {
+      const elapsed = Date.now() - new Date(user.emailVerificationSentAt).getTime();
+      if (elapsed < 60000) {
+        const remaining = Math.ceil((60000 - elapsed) / 1000);
+        throw new BadRequestException(`Please wait ${remaining} seconds before requesting a new code`);
+      }
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, BCRYPT_SALT_ROUNDS);
+    await this.usersService.update(user.id, {
+      emailVerificationCode: hashedCode,
+      emailVerificationSentAt: new Date(),
+    });
+
+    await this.emailService.sendVerificationEmail(user.email, user.username, verificationCode);
+    return { sent: true };
+  }
+
+  /**
+   * Forgot password: generate a JWT reset token, store expiry, send email.
+   * Uses JWT so resetPassword() can do O(1) lookup by userId.
    * Always returns success to prevent email enumeration.
    */
   async forgotPassword(email: string): Promise<void> {
@@ -107,12 +169,16 @@ export class AuthService {
       return;
     }
 
-    const resetToken = uuidv4();
-    const resetTokenHash = await bcrypt.hash(resetToken, BCRYPT_SALT_ROUNDS);
+    // Use JWT as reset token — encodes userId for O(1) lookup in resetPassword()
+    const resetToken = this.jwtService.sign(
+      { userId: user.id, purpose: 'password-reset' },
+      { secret: this.configService.get('JWT_SECRET'), expiresIn: '1h' },
+    );
+
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await this.usersService.update(user.id, {
-      passwordResetTokenHash: resetTokenHash,
+      passwordResetTokenHash: resetToken, // Store the JWT directly (no bcrypt needed — it's signed)
       passwordResetExpires: expires,
     });
 
@@ -120,35 +186,109 @@ export class AuthService {
   }
 
   /**
-   * Reset password: validate token, update password, clear reset fields.
+   * Reset password: decode JWT to get userId (O(1)), validate, update password.
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    // Find user with non-expired reset token
-    // We need to check all users with reset tokens — not ideal but works for MVP
-    // A better approach would be encoding the user ID in the token
-    const users = await this.usersService.findWithActiveResetToken();
-
-    let matchedUser: User | null = null;
-    for (const user of users) {
-      if (!user.passwordResetTokenHash) continue;
-      const isValid = await bcrypt.compare(token, user.passwordResetTokenHash);
-      if (isValid) {
-        matchedUser = user;
-        break;
-      }
+    let payload: { userId: string; purpose: string };
+    try {
+      payload = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_SECRET'),
+      });
+    } catch {
+      throw new BadRequestException('Invalid or expired reset token');
     }
 
-    if (!matchedUser) {
+    if (payload.purpose !== 'password-reset') {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const user = await this.usersService.findById(payload.userId);
+    if (!user || !user.passwordResetTokenHash || !user.passwordResetExpires) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Verify that the stored token matches (prevents reuse after a new token is generated)
+    if (user.passwordResetTokenHash !== token) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Check expiry
+    if (new Date() > new Date(user.passwordResetExpires)) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
     // Update password and clear reset fields
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
-    await this.usersService.update(matchedUser.id, {
+    await this.usersService.update(user.id, {
       passwordHash,
       passwordResetTokenHash: null,
       passwordResetExpires: null,
     });
+  }
+
+  async googleLogin(googleProfile: {
+    googleId: string;
+    email: string;
+    displayName: string;
+    avatar?: string;
+  }): Promise<AuthResponse> {
+    const { googleId, email, displayName, avatar } = googleProfile;
+
+    if (!email) {
+      throw new BadRequestException('Google account must have an email');
+    }
+
+    // Check if user exists by googleId
+    let user = await this.usersService.findByGoogleId(googleId);
+
+    if (!user) {
+      // Check if user exists by email
+      user = await this.usersService.findByEmail(email);
+
+      if (user) {
+        // Link Google to existing account
+        await this.usersService.update(user.id, {
+          googleId,
+          emailVerified: true,
+          avatarUrl: user.avatarUrl || avatar || null,
+        });
+        user = await this.usersService.findById(user.id);
+      } else {
+        // Create new user
+        const username = await this.generateUniqueUsername(displayName);
+        user = await this.usersService.create({
+          email,
+          passwordHash: await bcrypt.hash(
+            crypto.randomBytes(32).toString('hex'),
+            BCRYPT_SALT_ROUNDS,
+          ),
+          username,
+          avatarUrl: avatar || null,
+          googleId,
+          emailVerified: true,
+        });
+      }
+    }
+
+    if (!user) {
+      throw new BadRequestException('Failed to create or find user');
+    }
+
+    return this.issueTokens(user);
+  }
+
+  private async generateUniqueUsername(displayName: string): Promise<string> {
+    let base =
+      displayName.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) || 'user';
+    let username = base;
+    let counter = 1;
+
+    while (await this.usersService.findByUsername(username)) {
+      username = `${base}${counter}`;
+      counter++;
+    }
+
+    return username;
   }
 
   private async validateUser(email: string, password: string): Promise<User> {

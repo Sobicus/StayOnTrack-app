@@ -78,7 +78,17 @@
     "resetPasswordError": "Invalid or expired reset token.",
     "invalidResetToken": "Invalid or missing reset token.",
     "requestNewLink": "Request a new link",
-    "goToLogin": "Go to login →"
+    "goToLogin": "Go to login →",
+    "verifyEmail": "Verify Your Email",
+    "verifyEmailDescription": "Enter the 6-digit code sent to your email",
+    "verify": "Verify",
+    "resendCode": "Resend Code",
+    "resendIn": "Resend in",
+    "verificationFailed": "Invalid code. Please try again.",
+    "resendFailed": "Could not resend code. Try again later.",
+    "googleSignIn": "Sign in with Google",
+    "googleSignUp": "Sign up with Google",
+    "or": "or"
   },
 
   "dashboard": {
@@ -103,7 +113,8 @@
       "saved": "saved"
     },
     "savingsGoalProgress": "Savings Goal",
-    "ofGoal": "of goal"
+    "ofGoal": "of goal",
+    "verifyEmailBanner": "Please verify your email address"
   },
 
   "habits": {
@@ -424,6 +435,9 @@
     "deleteAccount": "Delete Account",
     "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone.",
     "deleteConfirm": "Are you sure? This will permanently delete your account.",
-    "confirmDelete": "Yes, delete my account"
+    "confirmDelete": "Yes, delete my account",
+    "linkedAccounts": "Linked Accounts",
+    "linkGoogle": "Link Google Account",
+    "googleLinked": "Google Account Linked"
   }
 }

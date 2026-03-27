@@ -16,7 +16,9 @@ export class UserResponseDto {
   monthlySavingsGoal!: number | null;
   emailReminders!: boolean;
   reminderHour!: number;
+  emailVerified!: boolean;
   totalXp!: number;
+  googleId!: string | null;
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {
@@ -36,7 +38,9 @@ export class UserResponseDto {
     dto.monthlySavingsGoal = user.monthlySavingsGoal;
     dto.emailReminders = user.emailReminders;
     dto.reminderHour = user.reminderHour;
+    dto.emailVerified = user.emailVerified;
     dto.totalXp = user.totalXp;
+    dto.googleId = user.googleId ?? null;
     dto.createdAt = user.createdAt;
     return dto;
   }
