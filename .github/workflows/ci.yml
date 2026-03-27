@@ -48,6 +48,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build contracts package
+        run: cd packages/contracts && npm run build --if-present
+
       - name: Run API tests
         run: cd apps/api && npm test -- --passWithNoTests --ci
         env:
@@ -68,6 +71,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build contracts package
+        run: cd packages/contracts && npm run build --if-present
 
       - name: Build Next.js app
         run: cd apps/web && npx next build
