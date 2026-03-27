@@ -531,7 +531,7 @@ export const api = {
   },
 
   notifications: {
-    subscribe: (token: string, subscription: any) =>
+    subscribe: (token: string, subscription: PushSubscriptionJSON) =>
       request<{ subscribed: boolean }>('/notifications/subscribe', { method: 'POST', body: { subscription }, token }),
     unsubscribe: (token: string) =>
       request<void>('/notifications/unsubscribe', { method: 'POST', token }),

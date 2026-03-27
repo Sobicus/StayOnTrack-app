@@ -14,13 +14,17 @@
     "build": "turbo build",
     "build:api": "turbo build --filter=@stayontrack/api",
     "build:web": "turbo build --filter=@stayontrack/web",
-    "lint": "turbo lint",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,css,md}\"",
     "test": "turbo test",
     "clean": "turbo clean",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"
   },
   "devDependencies": {
+    "prettier": "^3.8.1",
     "turbo": "^2"
   },
   "engines": {
