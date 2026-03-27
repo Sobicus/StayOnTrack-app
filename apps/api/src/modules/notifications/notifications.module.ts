@@ -6,11 +6,13 @@ import { Habit } from '../habits/entities/habit.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
 import { StreaksModule } from '../streaks/streaks.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, HabitLog, Habit]),
     StreaksModule,
+    UsersModule,
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService],

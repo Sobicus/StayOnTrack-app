@@ -427,6 +427,14 @@
     "confirmDelete": "Да, удалить мой аккаунт",
     "linkedAccounts": "Привязанные аккаунты",
     "linkGoogle": "Привязать Google",
-    "googleLinked": "Google аккаунт привязан"
+    "googleLinked": "Google аккаунт привязан",
+    "telegram": "Telegram",
+    "telegramDescription": "Привяжите Telegram для уведомлений и просмотра статистики",
+    "linkTelegram": "Сгенерировать код привязки",
+    "telegramCode": "Ваш код привязки",
+    "telegramCodeInstructions": "Отправьте это @StayOnTrackBot в Telegram: /link",
+    "telegramLinked": "Telegram привязан",
+    "unlinkTelegram": "Отвязать Telegram",
+    "telegramCodeExpiry": "Код действует 10 минут"
   }
 }

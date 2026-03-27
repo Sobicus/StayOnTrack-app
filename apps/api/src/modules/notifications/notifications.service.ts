@@ -1,15 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import * as webpush from 'web-push';
 import { User } from '../users/entities/user.entity';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { Habit } from '../habits/entities/habit.entity';
 import { EmailService, WeeklyDigestStats } from '../../common/email/email.service';
 import { StreaksService } from '../streaks/streaks.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
   private readonly logger = new Logger(NotificationsService.name);
+  private pushEnabled = false;
 
   constructor(
     @InjectRepository(User)
@@ -20,7 +24,49 @@ export class NotificationsService {
     private readonly habitRepo: Repository<Habit>,
     private readonly emailService: EmailService,
     private readonly streaksService: StreaksService,
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
   ) {}
+
+  onModuleInit() {
+    const vapidPublic = this.configService.get<string>('VAPID_PUBLIC_KEY');
+    const vapidPrivate = this.configService.get<string>('VAPID_PRIVATE_KEY');
+    const vapidEmail = this.configService.get<string>('VAPID_EMAIL', 'mailto:noreply@stayontrack.app');
+    if (vapidPublic && vapidPrivate) {
+      webpush.setVapidDetails(vapidEmail!, vapidPublic, vapidPrivate);
+      this.pushEnabled = true;
+      this.logger.log('Web Push (VAPID) configured');
+    } else {
+      this.logger.warn('VAPID keys not set — push notifications disabled');
+    }
+  }
+
+  async subscribePush(userId: string, subscription: any): Promise<void> {
+    await this.usersService.update(userId, { pushSubscription: subscription });
+  }
+
+  async unsubscribePush(userId: string): Promise<void> {
+    await this.usersService.update(userId, { pushSubscription: null });
+  }
+
+  async sendPushNotification(userId: string, title: string, body: string): Promise<void> {
+    if (!this.pushEnabled) return;
+
+    const user = await this.usersService.findById(userId);
+    if (!user?.pushSubscription) return;
+
+    try {
+      await webpush.sendNotification(
+        user.pushSubscription,
+        JSON.stringify({ title, body, icon: '/icons/icon-192x192.png' }),
+      );
+    } catch (err: any) {
+      if (err.statusCode === 410) {
+        // Subscription expired, clean up
+        await this.usersService.update(userId, { pushSubscription: null });
+      }
+    }
+  }
 
   /**
    * Find users who:
@@ -110,6 +156,14 @@ export class NotificationsService {
           user.username,
           currentStreak,
         );
+
+        // Also send push notification if user has a subscription
+        await this.sendPushNotification(
+          user.id,
+          'Daily Reminder',
+          `Don't forget to check in today! Current streak: ${currentStreak} day(s).`,
+        ).catch(() => {});
+
         sent++;
       } catch (error) {
         this.logger.error(

@@ -427,6 +427,14 @@
     "confirmDelete": "Yes, delete my account",
     "linkedAccounts": "Linked Accounts",
     "linkGoogle": "Link Google Account",
-    "googleLinked": "Google Account Linked"
+    "googleLinked": "Google Account Linked",
+    "telegram": "Telegram",
+    "telegramDescription": "Link your Telegram account to receive notifications and check stats",
+    "linkTelegram": "Generate Link Code",
+    "telegramCode": "Your link code",
+    "telegramCodeInstructions": "Send this to @StayOnTrackBot in Telegram: /link",
+    "telegramLinked": "Telegram Linked",
+    "unlinkTelegram": "Unlink Telegram",
+    "telegramCodeExpiry": "Code expires in 10 minutes"
   }
 }

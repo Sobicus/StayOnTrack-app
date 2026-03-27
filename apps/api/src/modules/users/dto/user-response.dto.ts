@@ -22,6 +22,7 @@ export class UserResponseDto {
   emailVerified!: boolean;
   totalXp!: number;
   googleId!: string | null;
+  telegramLinked!: boolean;
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {
@@ -47,6 +48,7 @@ export class UserResponseDto {
     dto.emailVerified = user.emailVerified;
     dto.totalXp = user.totalXp;
     dto.googleId = user.googleId ?? null;
+    dto.telegramLinked = user.telegramLinked ?? false;
     dto.createdAt = user.createdAt;
     return dto;
   }

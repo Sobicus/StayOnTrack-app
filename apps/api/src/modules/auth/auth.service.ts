@@ -291,6 +291,46 @@ export class AuthService {
     return username;
   }
 
+  async telegramAuth(initData: string): Promise<AuthResponse> {
+    // Validate Telegram initData hash
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    params.delete('hash');
+
+    // Sort params and create check string
+    const sortedParams = Array.from(params.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    if (!botToken || !hash) {
+      throw new BadRequestException('Telegram auth not configured');
+    }
+
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const checkHash = crypto.createHmac('sha256', secretKey).update(sortedParams).digest('hex');
+
+    if (checkHash !== hash) {
+      throw new UnauthorizedException('Invalid Telegram auth data');
+    }
+
+    // Extract user data
+    const userData = JSON.parse(params.get('user') || '{}');
+    if (!userData.id) {
+      throw new BadRequestException('No user data in Telegram initData');
+    }
+
+    const chatId = userData.id.toString();
+    const user = await this.usersService.findByTelegramChatId(chatId);
+
+    if (!user) {
+      throw new BadRequestException('Telegram account not linked. Please link via the app first.');
+    }
+
+    return this.issueTokens(user);
+  }
+
   private async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {

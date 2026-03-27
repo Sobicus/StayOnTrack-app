@@ -18,6 +18,7 @@ import { ChallengesModule } from './modules/challenges/challenges.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { TelegramModule } from './modules/telegram/telegram.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { EmailModule } from './common/email/email.module';
 
@@ -77,6 +78,7 @@ import { EmailModule } from './common/email/email.module';
     GamificationModule,
     NotificationsModule,
     AnalyticsModule,
+    TelegramModule,
   ],
   providers: [
     {

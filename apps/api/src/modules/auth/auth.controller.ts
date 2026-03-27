@@ -92,6 +92,12 @@ export class AuthController {
     return this.authService.resendVerification(user.id);
   }
 
+  @Post('telegram')
+  @HttpCode(HttpStatus.OK)
+  async telegramAuth(@Body() body: { initData: string }) {
+    return this.authService.telegramAuth(body.initData);
+  }
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {

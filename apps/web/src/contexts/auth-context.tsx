@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api, ApiError } from '@/lib/api';
+import { isTelegramWebApp, getTelegramInitData } from '@/lib/telegram';
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ interface User {
   reminderHour: number;
   emailVerified: boolean;
   timezone: string;
+  telegramLinked: boolean;
   createdAt: string;
 }
 
@@ -126,7 +128,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(TOKEN_KEY);
     if (stored) {
       setToken(stored);
+      refreshUser();
+      return;
     }
+
+    // Auto-auth via Telegram Mini App if no stored token
+    if (isTelegramWebApp()) {
+      const initData = getTelegramInitData();
+      if (initData) {
+        api.auth.telegramAuth(initData)
+          .then((data) => {
+            saveTokens(data.accessToken, data.refreshToken);
+            setUser(data.user);
+            setIsLoading(false);
+          })
+          .catch(() => {
+            setIsLoading(false);
+          });
+        return;
+      }
+    }
+
     refreshUser();
   }, []);
 

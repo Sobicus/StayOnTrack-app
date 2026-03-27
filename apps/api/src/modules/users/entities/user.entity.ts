@@ -34,6 +34,19 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   googleId!: string | null;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  telegramChatId!: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  telegramLinked!: boolean;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  @Exclude()
+  telegramLinkCode!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  telegramLinkCodeExpiresAt!: Date | null;
+
   @Column({ type: 'float', nullable: true })
   weightKg!: number | null;
 
@@ -117,6 +130,10 @@ export class User {
 
   @Column({ type: 'int', default: 0 })
   totalXp!: number;
+
+  /** Push notification subscription (Web Push API). */
+  @Column({ type: 'jsonb', nullable: true })
+  pushSubscription!: any | null;
 
   @Column({ type: 'date', nullable: true })
   lastShieldReplenishDate!: Date | null;

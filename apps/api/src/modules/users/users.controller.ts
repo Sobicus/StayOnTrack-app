@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Body,
@@ -47,6 +48,20 @@ export class UsersController {
     @CurrentUser() user: User,
   ): Promise<Record<string, unknown>> {
     return this.usersService.exportUserData(user.id);
+  }
+
+  @Post('me/telegram-code')
+  @UseGuards(JwtAuthGuard)
+  async generateTelegramCode(@CurrentUser() user: User) {
+    const code = await this.usersService.generateTelegramLinkCode(user.id);
+    return { code, expiresIn: 600 };
+  }
+
+  @Delete('me/telegram')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unlinkTelegram(@CurrentUser() user: User) {
+    await this.usersService.unlinkTelegram(user.id);
   }
 
   @UseGuards(JwtAuthGuard)

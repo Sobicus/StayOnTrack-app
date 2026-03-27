@@ -9,7 +9,7 @@ import { ThemeSelector } from '@/components/settings/theme-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
-import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell, Shield, Link2, Ruler } from 'lucide-react';
+import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell, Shield, Link2, Ruler, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const VISIBILITY_OPTIONS = ['PRIVATE', 'FRIENDS', 'PUBLIC'] as const;
@@ -29,6 +29,8 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [userLevel, setUserLevel] = useState(1);
+  const [telegramCode, setTelegramCode] = useState<string | null>(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -291,6 +293,77 @@ export default function SettingsPage() {
             </a>
           )}
         </div>
+      </div>
+
+      {/* Telegram */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <MessageCircle className="w-4 h-4 text-primary" />
+          <p className="font-medium text-[var(--foreground)]">{t('telegram')}</p>
+        </div>
+        <p className="text-xs text-[var(--muted)] mb-3">{t('telegramDescription')}</p>
+
+        {user?.telegramLinked ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-green-500 font-medium">{t('telegramLinked')}</span>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await api.users.unlinkTelegram(token!);
+                  await refreshUser();
+                  showToast(t('saved'), 'success');
+                } catch {
+                  showToast(tc('error'), 'error');
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl border border-danger/30 text-danger text-xs font-medium hover:bg-danger/10 transition-all"
+            >
+              {t('unlinkTelegram')}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {telegramCode ? (
+              <div className="space-y-2">
+                <p className="text-sm text-[var(--foreground)]">{t('telegramCode')}:</p>
+                <div className="flex items-center gap-2">
+                  <code className="px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-lg font-mono font-bold tracking-widest text-primary">
+                    {telegramCode}
+                  </code>
+                </div>
+                <p className="text-xs text-[var(--muted)]">
+                  {t('telegramCodeInstructions')} {telegramCode}
+                </p>
+                <p className="text-xs text-[var(--muted)]">{t('telegramCodeExpiry')}</p>
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  setTelegramLoading(true);
+                  try {
+                    const result = await api.users.generateTelegramCode(token!);
+                    setTelegramCode(result.code);
+                  } catch {
+                    showToast(tc('error'), 'error');
+                  } finally {
+                    setTelegramLoading(false);
+                  }
+                }}
+                disabled={telegramLoading}
+                className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {telegramLoading ? (
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  <MessageCircle className="w-4 h-4" />
+                )}
+                {t('linkTelegram')}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Currency */}

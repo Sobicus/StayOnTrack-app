@@ -6,6 +6,8 @@ import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { Habit } from '../habits/entities/habit.entity';
 import { EmailService } from '../../common/email/email.service';
 import { StreaksService } from '../streaks/streaks.service';
+import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -76,6 +78,8 @@ describe('NotificationsService', () => {
         { provide: getRepositoryToken(Habit), useValue: habitRepo },
         { provide: EmailService, useValue: emailService },
         { provide: StreaksService, useValue: streaksService },
+        { provide: UsersService, useValue: { findById: jest.fn().mockResolvedValue(null), update: jest.fn().mockResolvedValue(undefined) } },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(undefined) } },
       ],
     }).compile();
 

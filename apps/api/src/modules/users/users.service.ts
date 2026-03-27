@@ -31,6 +31,10 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { googleId } });
   }
 
+  async findByTelegramChatId(chatId: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { telegramChatId: chatId } });
+  }
+
   async create(data: {
     email: string;
     passwordHash: string;
@@ -93,6 +97,32 @@ export class UsersService {
     if (!user) return;
     user.streakShieldsRemaining += count;
     await this.usersRepository.save(user);
+  }
+
+  async findByTelegramLinkCode(code: string): Promise<User | null> {
+    const user = await this.usersRepository.findOne({ where: { telegramLinkCode: code } });
+    if (!user || !user.telegramLinkCodeExpiresAt) return null;
+    if (new Date() > new Date(user.telegramLinkCodeExpiresAt)) return null;
+    return user;
+  }
+
+  async generateTelegramLinkCode(userId: string): Promise<string> {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await this.update(userId, {
+      telegramLinkCode: code,
+      telegramLinkCodeExpiresAt: expiresAt,
+    });
+    return code;
+  }
+
+  async unlinkTelegram(userId: string): Promise<void> {
+    await this.update(userId, {
+      telegramChatId: null,
+      telegramLinked: false,
+      telegramLinkCode: null,
+      telegramLinkCodeExpiresAt: null,
+    });
   }
 
   /**

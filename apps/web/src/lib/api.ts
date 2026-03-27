@@ -51,6 +51,7 @@ export interface UserProfile {
   emailVerified: boolean;
   timezone: string;
   totalXp: number;
+  telegramLinked: boolean;
   createdAt: string;
 }
 
@@ -379,6 +380,8 @@ export const api = {
       request<{ verified: boolean }>('/auth/verify-email', { method: 'POST', body: { code }, token }),
     resendVerification: (token: string) =>
       request<{ sent: boolean }>('/auth/resend-verification', { method: 'POST', token }),
+    telegramAuth: (initData: string) =>
+      request<AuthResponse>('/auth/telegram', { method: 'POST', body: { initData } }),
   },
 
   users: {
@@ -388,6 +391,10 @@ export const api = {
       request<void>('/users/me', { method: 'DELETE', token }),
     exportData: (token: string) =>
       request<Record<string, unknown>>('/users/me/export', { token }),
+    generateTelegramCode: (token: string) =>
+      request<{ code: string; expiresIn: number }>('/users/me/telegram-code', { method: 'POST', token }),
+    unlinkTelegram: (token: string) =>
+      request<void>('/users/me/telegram', { method: 'DELETE', token }),
   },
 
   habits: {
@@ -505,6 +512,13 @@ export const api = {
       request<Quest[]>('/gamification/quests', { token }),
     checkQuests: (token: string) =>
       request<QuestCheckResult>('/gamification/quests/check', { method: 'POST', token }),
+  },
+
+  notifications: {
+    subscribe: (token: string, subscription: any) =>
+      request<{ subscribed: boolean }>('/notifications/subscribe', { method: 'POST', body: { subscription }, token }),
+    unsubscribe: (token: string) =>
+      request<void>('/notifications/unsubscribe', { method: 'POST', token }),
   },
 
   activities: {
