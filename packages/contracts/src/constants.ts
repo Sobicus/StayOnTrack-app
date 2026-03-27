@@ -30,6 +30,7 @@ export const XP_REWARDS = {
   FULL_DAY_AVOIDED: 25,
   QUEST_COMPLETE: 50,
   STREAK_MILESTONE: 100,
+  INVITE_ACCEPT: 50,
 } as const;
 
 /**

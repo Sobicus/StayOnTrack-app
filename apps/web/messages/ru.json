@@ -189,8 +189,10 @@
       "CHECKINS": "Цели по отметкам",
       "MONEY": "Сэкономлено денег",
       "SOCIAL": "Социальные",
-      "CHALLENGES": "Челленджи"
-    }
+      "CHALLENGES": "Челленджи",
+      "DISCIPLINE": "Дисциплина"
+    },
+    "ALL": "Все"
   },
 
   "stats": {
@@ -249,7 +251,9 @@
     "requestAccepted": "Заявка принята!",
     "requestFailed": "Не удалось отправить заявку",
     "noLeaderboard": "Добавьте друзей, чтобы увидеть рейтинг!",
-    "you": "вы"
+    "you": "вы",
+    "rewardEarned": "+1 Streak Shield и 50 XP получены!",
+    "inviteRewardBoth": "Вы оба получили Streak Shield!"
   },
 
   "challenges": {
@@ -415,6 +419,7 @@
     "accentColor": "Цвет акцента",
     "lockedTheme": "Откроется на уровне {level}",
     "themeApplied": "Тема применена!",
+    "streakShields": "Щиты серии",
     "dangerZone": "Опасная зона",
     "deleteAccount": "Удалить аккаунт",
     "deleteAccountDescription": "Безвозвратно удалить аккаунт и все данные. Это действие нельзя отменить.",

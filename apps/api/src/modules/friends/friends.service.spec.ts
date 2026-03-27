@@ -9,12 +9,14 @@ import { FriendsService } from './friends.service';
 import { FriendRequest, FriendRequestStatus } from './entities/friend-request.entity';
 import { Friendship } from './entities/friendship.entity';
 import { UsersService } from '../users/users.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 describe('FriendsService', () => {
   let service: FriendsService;
   let requestRepository: any;
   let friendshipRepository: any;
   let usersService: any;
+  let gamificationService: any;
 
   const mockUser = {
     id: 'user-1',
@@ -61,12 +63,17 @@ describe('FriendsService', () => {
       addShields: jest.fn().mockResolvedValue(undefined),
     };
 
+    gamificationService = {
+      addXp: jest.fn().mockResolvedValue({ totalXp: 50, level: 1, levelUp: false }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FriendsService,
         { provide: getRepositoryToken(FriendRequest), useValue: requestRepository },
         { provide: getRepositoryToken(Friendship), useValue: friendshipRepository },
         { provide: UsersService, useValue: usersService },
+        { provide: GamificationService, useValue: gamificationService },
       ],
     }).compile();
 
@@ -131,12 +138,13 @@ describe('FriendsService', () => {
   });
 
   describe('acceptRequest', () => {
-    it('should accept a request and create bidirectional friendship', async () => {
+    it('should accept a request and create bidirectional friendship with rewards', async () => {
       const pendingRequest = {
         id: 'req-1',
         fromUserId: 'user-1',
         toUserId: 'user-2',
         status: FriendRequestStatus.PENDING,
+        inviteRewardClaimed: false,
       };
       requestRepository.findOne.mockResolvedValue(pendingRequest);
 
@@ -152,8 +160,12 @@ describe('FriendsService', () => {
           expect.objectContaining({ userId: 'user-2', friendId: 'user-1' }),
         ]),
       );
-      // Should award invite shield to the sender
+      // Should award invite shield to BOTH users
       expect(usersService.addShields).toHaveBeenCalledWith('user-1', 1);
+      expect(usersService.addShields).toHaveBeenCalledWith('user-2', 1);
+      // Should award XP to BOTH users
+      expect(gamificationService.addXp).toHaveBeenCalledWith('user-1', 50);
+      expect(gamificationService.addXp).toHaveBeenCalledWith('user-2', 50);
     });
 
     it('should throw if request not found', async () => {

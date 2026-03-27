@@ -9,7 +9,7 @@ import { ThemeSelector } from '@/components/settings/theme-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
-import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell } from 'lucide-react';
+import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const VISIBILITY_OPTIONS = ['PRIVATE', 'FRIENDS', 'PUBLIC'] as const;
@@ -76,6 +76,13 @@ export default function SettingsPage() {
             <p className="font-medium text-[var(--foreground)]">{user?.username}</p>
             <p className="text-xs text-[var(--muted)]">{user?.email}</p>
           </div>
+        </div>
+
+        {/* Streak Shields */}
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <Shield className="w-4 h-4 text-primary" />
+          <span className="text-sm text-[var(--foreground)]">{t('streakShields')}:</span>
+          <span className="text-sm font-semibold text-primary">{user?.streakShieldsRemaining ?? 0}</span>
         </div>
 
         <div className="space-y-3">

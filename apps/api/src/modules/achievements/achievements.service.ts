@@ -116,6 +116,13 @@ export class AchievementsService {
         if (def.unit === 'wins') return social.winCount;
         if (def.unit === 'weekend-challenges') return social.challengeCount > 0 ? 1 : 0;
         return social.challengeCount;
+      case 'DISCIPLINE':
+        const bestStreak = Math.max(streak.currentStreak || 0, streak.bestStreak || 0);
+        if (def.unit === 'weekends') return bestStreak >= 2 ? 1 : 0;
+        if (def.unit === 'clean-weeks') return bestStreak >= 7 ? 1 : 0;
+        if (def.unit === 'perfect-months') return bestStreak >= 30 ? 1 : 0;
+        if (def.unit === 'quarters') return bestStreak >= 90 ? 1 : 0;
+        return 0;
       default:
         return 0;
     }

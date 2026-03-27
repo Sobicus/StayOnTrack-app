@@ -44,6 +44,9 @@ export class FriendRequest {
   })
   status!: FriendRequestStatus;
 
+  @Column({ type: 'boolean', default: false })
+  inviteRewardClaimed!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

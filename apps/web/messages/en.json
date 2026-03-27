@@ -189,8 +189,10 @@
       "CHECKINS": "Check-in Goals",
       "MONEY": "Money Saved",
       "SOCIAL": "Social",
-      "CHALLENGES": "Challenges"
-    }
+      "CHALLENGES": "Challenges",
+      "DISCIPLINE": "Discipline"
+    },
+    "ALL": "All"
   },
 
   "stats": {
@@ -249,7 +251,9 @@
     "requestAccepted": "Friend request accepted!",
     "requestFailed": "Could not send friend request",
     "noLeaderboard": "Add friends to see the leaderboard!",
-    "you": "you"
+    "you": "you",
+    "rewardEarned": "+1 Streak Shield & 50 XP earned!",
+    "inviteRewardBoth": "You both received a Streak Shield!"
   },
 
   "challenges": {
@@ -415,6 +419,7 @@
     "accentColor": "Accent Color",
     "lockedTheme": "Unlock at level {level}",
     "themeApplied": "Theme applied!",
+    "streakShields": "Streak Shields",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "deleteAccountDescription": "Permanently delete your account and all data. This action cannot be undone.",

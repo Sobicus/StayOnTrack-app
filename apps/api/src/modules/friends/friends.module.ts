@@ -5,11 +5,13 @@ import { Friendship } from './entities/friendship.entity';
 import { FriendsService } from './friends.service';
 import { FriendsController } from './friends.controller';
 import { UsersModule } from '../users/users.module';
+import { GamificationModule } from '../gamification/gamification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([FriendRequest, Friendship]),
     UsersModule,
+    GamificationModule,
   ],
   controllers: [FriendsController],
   providers: [FriendsService],

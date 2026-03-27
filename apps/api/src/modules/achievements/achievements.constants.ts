@@ -13,7 +13,7 @@
 
 export interface AchievementDef {
   id: string;
-  category: 'CALORIES' | 'STREAK' | 'CHECKINS' | 'MONEY' | 'SOCIAL' | 'CHALLENGES';
+  category: 'CALORIES' | 'STREAK' | 'CHECKINS' | 'MONEY' | 'SOCIAL' | 'CHALLENGES' | 'DISCIPLINE';
   title: string;
   description: string;
   emoji: string;
@@ -68,4 +68,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'challenge-win', category: 'CHALLENGES', title: 'Challenge Winner', description: 'Won your first challenge', emoji: '🏆', threshold: 1, unit: 'wins' },
   { id: 'challenge-3wins', category: 'CHALLENGES', title: 'Triple Crown', description: 'Won 3 challenges', emoji: '👑', threshold: 3, unit: 'wins' },
   { id: 'challenge-weekend', category: 'CHALLENGES', title: 'Weekend Warrior', description: 'Completed a weekend challenge', emoji: '🛡️', threshold: 1, unit: 'weekend-challenges' },
+
+  // === DISCIPLINE ===
+  { id: 'disc-weekend', category: 'DISCIPLINE', title: 'Weekend Warrior', description: 'Avoided all habits on a full weekend', emoji: '🛡️', threshold: 1, unit: 'weekends' },
+  { id: 'disc-week', category: 'DISCIPLINE', title: 'Clean Week', description: '7 consecutive days of full avoidance', emoji: '🌟', threshold: 1, unit: 'clean-weeks' },
+  { id: 'disc-month', category: 'DISCIPLINE', title: 'Perfect Month', description: '30 consecutive days of full avoidance', emoji: '👑', threshold: 1, unit: 'perfect-months' },
+  { id: 'disc-3months', category: 'DISCIPLINE', title: 'Quarter Champion', description: '90 days of consistent avoidance', emoji: '🏆', threshold: 1, unit: 'quarters' },
 ];

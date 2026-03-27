@@ -9,7 +9,9 @@ import { Repository } from 'typeorm';
 import { FriendRequest, FriendRequestStatus } from './entities/friend-request.entity';
 import { Friendship } from './entities/friendship.entity';
 import { UsersService } from '../users/users.service';
+import { GamificationService } from '../gamification/gamification.service';
 import { LeaderboardEntryDto } from './dto/friend-response.dto';
+import { XP_REWARDS } from '@stayontrack/contracts';
 
 @Injectable()
 export class FriendsService {
@@ -19,6 +21,7 @@ export class FriendsService {
     @InjectRepository(Friendship)
     private readonly friendshipRepository: Repository<Friendship>,
     private readonly usersService: UsersService,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   /**
@@ -118,8 +121,15 @@ export class FriendsService {
 
     await this.friendshipRepository.save([friendship1, friendship2]);
 
-    // Invite reward: grant +1 streak shield to the sender (no limit)
-    await this.usersService.addShields(request.fromUserId, 1);
+    // Invite reward: grant shields + XP to both users (only once per request)
+    if (!request.inviteRewardClaimed) {
+      await this.usersService.addShields(request.fromUserId, 1);
+      await this.usersService.addShields(request.toUserId, 1);
+      await this.gamificationService.addXp(request.fromUserId, XP_REWARDS.INVITE_ACCEPT);
+      await this.gamificationService.addXp(request.toUserId, XP_REWARDS.INVITE_ACCEPT);
+      request.inviteRewardClaimed = true;
+      await this.requestRepository.save(request);
+    }
   }
 
   /**

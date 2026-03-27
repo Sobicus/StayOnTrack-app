@@ -8,13 +8,15 @@ import { useTranslations } from 'next-intl';
 import { Trophy, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY', 'SOCIAL', 'CHALLENGES'];
+const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY', 'SOCIAL', 'CHALLENGES', 'DISCIPLINE'];
+const ALL_TABS = ['ALL', ...CATEGORY_ORDER] as const;
 
 export default function AchievementsPage() {
   const { token } = useAuth();
   const t = useTranslations('achievements');
   const [data, setData] = useState<AchievementsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('ALL');
 
   useEffect(() => {
     if (!token) return;
@@ -64,9 +66,27 @@ export default function AchievementsPage() {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-2 mb-4 -mx-1 px-1 scrollbar-hide">
+        {ALL_TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
+              activeTab === tab
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)]',
+            )}
+          >
+            {tab === 'ALL' ? t('ALL') : t(`categories.${tab}`)}
+          </button>
+        ))}
+      </div>
+
       {/* Categories */}
       <div className="space-y-6">
-        {CATEGORY_ORDER.map((cat) => {
+        {CATEGORY_ORDER.filter((cat) => activeTab === 'ALL' || cat === activeTab).map((cat) => {
           const achievements = grouped[cat];
           if (!achievements) return null;
           const unlockedCount = achievements.filter((a) => a.unlocked).length;

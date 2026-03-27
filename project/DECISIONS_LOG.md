@@ -80,3 +80,47 @@ All architecture, product, and process decisions are recorded here with context 
 **Date:** 2026-03-13
 **Decision:** EUR, kg, m, km, L, g (metric system).
 **Rationale:** European market first. Conversion to imperial for US market in future.
+
+## DEC-016: LiveHero Neon Ring — Inline Styles Only (v3)
+**Date:** 2026-03-14
+**Decision:** All ring visual styles MUST be 100% inline in JSX. Only `@keyframes` live in globals.css. Ring container has `data-ring-v="3"` attribute.
+**Alternatives tried (all failed):**
+1. CSS classes (`ring-calories`, `ring-money`, `ring-weight`) — broken by Tailwind `ring-*` utility conflict
+2. `mask-composite: exclude` + conic-gradient — does NOT render in Chromium
+3. `::before`/`::after` pseudo-elements with CSS class selectors — breaks on Tailwind purge and `.next` cache
+**Rationale:** Ring was broken 4+ times by CSS-dependent approaches. Inline styles are immune to Tailwind purging, CSS class conflicts, and build cache issues.
+
+### Ring Architecture (5 layers inside 220x220 container)
+```
+Layer 1: Radial glow    — config.glowBg + config.glowShadow + animation: hero-pulse 3s
+Layer 2: Rotating ring   — overflow:hidden div with two children:
+  - Child A: spinning gradient (inset -50%, background: config.ringGradient, animation: hero-ring-spin 6s)
+  - Child B: center cutout (inset 4px, background: var(--background), z-index 1)
+Layer 3: Sparkles        — 5 dots, config.sparkleColor, sparkle-1/2/3 animations
+Layer 4: SVG progress    — z-index 5, track circle + active arc + glow dot
+Layer 5: Center content  — z-index 10, icon + value + unit + timer
+```
+
+### Color Palette per Metric
+| Metric | Ring gradient | CSS color | Sparkle |
+|--------|-------------|-----------|---------|
+| calories | amber conic `rgba(251,191,36)` | `rgba(251,191,36,0.8)` | `#fbbf24` |
+| money | green conic `rgba(34,197,94)` | `rgba(34,197,94,0.8)` | `#22c55e` |
+| weight | purple conic `rgba(168,85,247)` | `rgba(168,85,247,0.8)` | `#a855f7` |
+
+### Required @keyframes in globals.css
+- `hero-ring-spin` — 360deg rotation, 6s linear infinite
+- `hero-pulse` — opacity 0.6→1, scale 1→1.04, 3s ease-in-out infinite
+- `dot-pulse` — opacity 0.8→1, r 5→7, 1.5s ease-in-out infinite
+- `sparkle-1`, `sparkle-2`, `sparkle-3` — translate + scale + opacity
+
+### NEVER DO
+- Use CSS class names starting with `ring-` (Tailwind conflict)
+- Use `mask-composite` (Chromium bug)
+- Put ring gradient/glow styles in CSS classes (purging risk)
+- Reload with F5 after ring changes (use Ctrl+Shift+R)
+
+## DEC-017: Timezone Handling — User-Local via IANA
+**Date:** 2026-03-14
+**Decision:** Store IANA timezone string in `users.timezone`. Auto-sync from browser on login via `Intl.DateTimeFormat().resolvedOptions().timeZone`. All date queries use `getTodayInTimezone(user.timezone)`.
+**Rationale:** User in Europe/Madrid was seeing UTC dates, causing check-ins to appear on wrong day. Browser-detected timezone is always correct.

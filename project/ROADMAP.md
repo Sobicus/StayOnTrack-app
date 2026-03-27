@@ -24,46 +24,75 @@
 
 ## Phase 2: Basic Social ✅ COMPLETED
 - [x] Friends (requests, friendships, remove)
-- [x] Privacy settings (private/friends/public)
-- [x] Friend leaderboard (calories, streak, money)
+- [x] Privacy settings (visibility)
+- [x] Friend leaderboard
 - [x] Frontend: Friends page (3 tabs), Settings privacy section
 
-## Infrastructure ✅ COMPLETED
-- [x] Unit tests (24 tests: habit-logs + friends services)
-- [x] CI/CD (GitHub Actions: typecheck, test, build)
+## Wave 2: Code Quality ✅ COMPLETED
+- [x] Input validation, TypeScript strict, frontend type safety
+- [x] Timezone-aware utilities
+- [x] Unit tests (118), E2E tests (20)
+- [x] Rich seed data
 
-## Phase 3: Challenges + Social Rewards 🔵 IN PROGRESS
-- [ ] Challenges backend (1-on-1, scalable for groups via participants[])
-  - Entity: Challenge + ChallengeParticipant
-  - 5 types: habit, calories, streak, money, effort
-  - Statuses: pending → active → completed / cancelled
-  - CRUD + invite + accept/decline + progress + winner
-- [ ] Challenges frontend (/challenges page, create, progress, leaderboard)
+## Wave 3A: Visualization ✅ COMPLETED
+- [x] Monthly trend LineChart, calorie heatmap, count-up counters, sparklines, goals
+
+## Wave 3B: Gamification ✅ COMPLETED
+- [x] XP & Levels, daily quests, streak recovery, unlockable themes
+
+## Wave 3C: Group Challenges ✅ COMPLETED
+- [x] Extended challenges, invite codes, group flow, leaderboard, public browse
+
+## Wave 3D: PWA + Notifications ✅ COMPLETED
+- [x] Offline queue, daily reminder email, streak warning, weekly digest, settings UI
+
+## Wave 4A: Critical Fixes ✅ COMPLETED
+- [x] LiveHero neon ring v3 (inline styles, DEC-016)
+- [x] Timezone auto-sync (DEC-017)
+- [x] Tailwind ring-* conflict fix
+
+---
+
+## Batch 5: Social Rewards + Extended Achievements 🟡 NEXT
 - [ ] Invite rewards (shield on friend accept, no limit)
 - [ ] Extended achievements (SOCIAL + CHALLENGES categories)
   - First Friend, 5 Friends, First Challenge, Challenge Winner
   - Weekend Warrior, No Sugar Week, Invite Champion
 
-## Phase 4: Auth Upgrade
+## Batch 6: Auth Hardening
 - [ ] Email verification (non-blocking, banner, 7-day grace for social)
 - [ ] Google OAuth (passport-google-oauth20, account merge by email)
 
-## Phase 5: Settings & UX
+## Batch 7: Settings & Catalog
 - [ ] Extended settings (currency €/$, weekStartDay, imperial units)
-- [ ] Habit catalog seed (20+ popular items with calories/prices)
+- [ ] Habit catalog seed (20+ popular items with calories/prices, quick-add)
 
-## Phase 6: Telegram Integration
+## Batch 8: Telegram Integration
 - [ ] Telegram Bot basic (/link, /start, /stats)
 - [ ] Push notifications (Web Push + Telegram, daily reminder, streak at risk)
 - [ ] Telegram Mini App (reuse web frontend)
 
-## Phase 7: Polish & Analytics
+## Batch 9: Analytics & Reports
 - [ ] Simple analytics (pattern analysis — day of week, time, category)
 - [ ] Annual/Monthly report (Wrapped style)
 - [ ] Positive habits (habitType: ACHIEVEMENT — sport, water, meditation)
 
+## Batch 10: Production Readiness 🔒 BEFORE LAUNCH
+- [ ] Security hardening (rate limiting, CORS, Helmet headers)
+- [ ] DB optimization (strategic indexes, query analysis, N+1 fix)
+- [ ] E2E tests expansion (habits, challenges, gamification flows)
+- [ ] Error boundaries + loading states (frontend resilience)
+- [ ] Deployment (domain, VPS, CI/CD pipeline, SSL, monitoring)
+
+## Batch 11: Code Refactoring 🧹 FINAL POLISH
+- [ ] Code style unification (ESLint + Prettier strict config)
+- [ ] Architecture patterns audit (services, DTOs, hooks, naming)
+- [ ] Dead code cleanup + unused imports
+- [ ] CSS/Tailwind cleanup + design system tokens
+- [ ] API response format standardization
+- [ ] Shared types audit (contracts ↔ api ↔ web sync)
+
 ## Deferred
-- ❌ Group challenges — start 1-on-1 first (code is scalable)
 - ❌ React Native / Expo — PWA sufficient for now
 - ❌ AI Coach — too expensive without monetization
 - ❌ Premium/monetization — need audience first

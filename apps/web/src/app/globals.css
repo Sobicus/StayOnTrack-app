@@ -63,83 +63,23 @@
   animation: fade-in 0.3s ease-out;
 }
 
-/* ===== Live Hero — Neon Ring ===== */
+/* ===== Live Hero — Keyframe animations only (all styles are inline in the component) ===== */
 
-/* Rotating conic gradient for the outer glow ring */
 @keyframes hero-ring-spin {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Pulsing glow intensity */
 @keyframes hero-pulse {
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50%      { opacity: 1;   transform: scale(1.04); }
 }
 
-/* Shimmer sweep across the ring */
-@keyframes hero-shimmer {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Outer glow wrapper */
-.live-hero-container {
-  position: relative;
-  width: 220px;
-  height: 220px;
-}
-
-/* Multi-layer neon glow behind the ring — colors via inline styles */
-.live-hero-glow-layer {
-  position: absolute;
-  inset: -12px;
-  border-radius: 50%;
-  animation: hero-pulse 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Rotating conic-gradient ring — using border approach for browser compat */
-.live-hero-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  overflow: hidden;
-}
-.live-hero-ring::before {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  border-radius: 50%;
-  /* Color gradient is set via inline --ring-gradient CSS variable */
-  background: var(--ring-gradient);
-  animation: hero-ring-spin 6s linear infinite;
-}
-.live-hero-ring::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--background);
-}
-
-/* Pulsing glow dot at arc leading edge */
 @keyframes dot-pulse {
   0%, 100% { opacity: 0.8; r: 5; }
   50%      { opacity: 1;   r: 7; }
 }
-.live-hero-dot-pulse {
-  animation: dot-pulse 1.5s ease-in-out infinite;
-}
 
-/* Inner progress arc glow */
-.live-hero-progress-glow {
-  filter:
-    drop-shadow(0 0 4px var(--hero-color, rgba(99,102,241,0.8)))
-    drop-shadow(0 0 10px var(--hero-color, rgba(99,102,241,0.4)));
-}
-
-/* Subtle particles / sparkles */
 @keyframes sparkle-1 {
   0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
   50%      { opacity: 1; transform: translate(-8px, -12px) scale(1); }
@@ -151,34 +91,6 @@
 @keyframes sparkle-3 {
   0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
   50%      { opacity: 1; transform: translate(-5px, 10px) scale(1); }
-}
-
-.live-hero-sparkle {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.live-hero-sparkle:nth-child(1) {
-  top: 8%; left: 20%;
-  animation: sparkle-1 2.5s ease-in-out infinite;
-}
-.live-hero-sparkle:nth-child(2) {
-  top: 15%; right: 12%;
-  animation: sparkle-2 3s ease-in-out infinite 0.5s;
-}
-.live-hero-sparkle:nth-child(3) {
-  bottom: 18%; left: 15%;
-  animation: sparkle-3 2.8s ease-in-out infinite 1s;
-}
-.live-hero-sparkle:nth-child(4) {
-  bottom: 10%; right: 20%;
-  animation: sparkle-1 3.2s ease-in-out infinite 1.5s;
-}
-.live-hero-sparkle:nth-child(5) {
-  top: 50%; left: 2%;
-  animation: sparkle-2 2.6s ease-in-out infinite 0.8s;
 }
 
 /* Safe area for iOS notch / home indicator */

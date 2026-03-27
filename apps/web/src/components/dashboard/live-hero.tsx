@@ -75,6 +75,15 @@ const METRIC_CONFIG: Record<
 
 const METRICS: MetricKey[] = ['calories', 'money', 'weight'];
 
+/** Sparkle positions & animations — inline so no CSS dependency */
+const SPARKLE_STYLES: React.CSSProperties[] = [
+  { top: '8%', left: '20%', animation: 'sparkle-1 2.5s ease-in-out infinite' },
+  { top: '15%', right: '12%', animation: 'sparkle-2 3s ease-in-out infinite 0.5s' },
+  { bottom: '18%', left: '15%', animation: 'sparkle-3 2.8s ease-in-out infinite 1s' },
+  { bottom: '10%', right: '20%', animation: 'sparkle-1 3.2s ease-in-out infinite 1.5s' },
+  { top: '50%', left: '2%', animation: 'sparkle-2 2.6s ease-in-out infinite 0.8s' },
+];
+
 const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€',
   USD: '$',
@@ -210,39 +219,69 @@ export function LiveHero() {
 
   return (
     <div className="flex flex-col items-center mb-6">
-      {/* ===== Neon Ring Container ===== */}
-      <div className="live-hero-container">
-        {/* Layer 1: Radial glow background (inline styles — immune to CSS purging) */}
+      {/* ===== Neon Ring Container — ALL STYLES INLINE, NO CSS CLASS DEPS ===== */}
+      <div data-ring-v="3" style={{ position: 'relative', width: 220, height: 220 }}>
+        {/* Layer 1: Radial glow background */}
         <div
-          className="live-hero-glow-layer"
           style={{
+            position: 'absolute',
+            inset: -12,
+            borderRadius: '50%',
             background: config.glowBg,
             boxShadow: config.glowShadow,
+            animation: 'hero-pulse 3s ease-in-out infinite',
+            pointerEvents: 'none',
           }}
         />
 
-        {/* Layer 2: Rotating conic-gradient ring (inline gradient via CSS var) */}
-        <div
-          className="live-hero-ring"
-          style={{ '--ring-gradient': config.ringGradient } as React.CSSProperties}
-        />
+        {/* Layer 2: Rotating conic-gradient ring (real divs, not pseudo-elements) */}
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
+          {/* Spinning gradient — replaces ::before */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: '-50%',
+              borderRadius: '50%',
+              background: config.ringGradient,
+              animation: 'hero-ring-spin 6s linear infinite',
+            }}
+          />
+          {/* Center cutout — replaces ::after */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 4,
+              borderRadius: '50%',
+              background: 'var(--background)',
+              zIndex: 1,
+            }}
+          />
+        </div>
 
         {/* Layer 3: Sparkles */}
-        {[0, 1, 2, 3, 4].map((i) => (
+        {SPARKLE_STYLES.map((sp, i) => (
           <div
             key={i}
-            className="live-hero-sparkle"
-            style={{ backgroundColor: config.sparkleColor }}
+            style={{
+              position: 'absolute',
+              width: 3,
+              height: 3,
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              backgroundColor: config.sparkleColor,
+              ...sp,
+            }}
           />
         ))}
 
         {/* Layer 4: SVG Progress Arc */}
-        <div className="absolute inset-[10px] z-[5]">
+        <div style={{ position: 'absolute', inset: 10, zIndex: 5 }}>
           <svg
             width={SIZE}
             height={SIZE}
-            className="live-hero-progress-glow"
-            style={{ '--hero-color': config.cssColor } as React.CSSProperties}
+            style={{
+              filter: `drop-shadow(0 0 4px ${config.cssColor}) drop-shadow(0 0 10px ${config.cssColor.replace('0.8', '0.4')})`,
+            }}
           >
             {/* Track circle (dim) */}
             <circle
@@ -285,13 +324,13 @@ export function LiveHero() {
               r={5}
               fill={config.cssColor}
               filter="url(#dot-glow)"
-              className="live-hero-dot-pulse"
+              style={{ animation: 'dot-pulse 1.5s ease-in-out infinite' }}
             />
           </svg>
         </div>
 
         {/* Layer 5: Center content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ zIndex: 10 }}>
           <Icon className={`w-5 h-5 ${config.textColor} mb-1 drop-shadow-lg`} />
           <p className="text-2xl font-bold text-[var(--foreground)] tabular-nums leading-tight drop-shadow-sm">
             {formatValue(activeMetric)}

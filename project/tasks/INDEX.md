@@ -64,41 +64,124 @@
 | OPS-011 | Unit tests (24) + CI/CD (GitHub Actions) | 🟢 COMPLETED | — |
 | OPS-012 | Dark mode + mobile-first UI | 🟢 COMPLETED | — |
 
-## Phase 3: Challenges + Social Rewards
+## Wave 2: Code Quality (TASK-200–213)
 
-| ID | Title | Status | Phase |
-|---|---|---|---|
-| TASK-030 | Challenges backend (1-on-1, scalable) | 🟡 CREATED | 3.1 |
-| TASK-031 | Challenges frontend | 🟡 CREATED | 3.1 |
-| TASK-040 | Invite rewards (shield on friend accept) | 🟡 CREATED | 3.2 |
-| TASK-041 | Extended achievements (SOCIAL, CHALLENGES) | 🟡 CREATED | 3.2 |
+| ID | Title | Status |
+|---|---|---|
+| TASK-200 | Input validation (@MaxLength on all DTOs) | 🟢 COMPLETED |
+| TASK-201 | TypeScript strict (remove all `any` from backend) | 🟢 COMPLETED |
+| TASK-202 | Frontend type safety (shared types from api.ts) | 🟢 COMPLETED |
+| TASK-203 | Timezone-aware utilities (user.timezone column) | 🟢 COMPLETED |
+| TASK-210 | Unit tests expansion (118 tests) | 🟢 COMPLETED |
+| TASK-211 | E2E tests (20 auth flow tests) | 🟢 COMPLETED |
+| TASK-213 | Rich seed data (2 demo users, friendship, challenge) | 🟢 COMPLETED |
 
-## Phase 4: Auth Upgrade
+## Wave 3A: Visualization (TASK-300–304)
 
-| ID | Title | Status | Phase |
-|---|---|---|---|
-| TASK-050 | Email verification (non-blocking) | 🟡 CREATED | 4.1 |
-| TASK-051 | Google OAuth (account merge) | 🟡 CREATED | 4.2 |
+| ID | Title | Status |
+|---|---|---|
+| TASK-300 | Monthly trend LineChart with weekly averages | 🟢 COMPLETED |
+| TASK-301 | GitHub-style calorie intensity heatmap | 🟢 COMPLETED |
+| TASK-302 | Animated count-up counters on stat cards | 🟢 COMPLETED |
+| TASK-303 | Per-habit 7-dot sparkline | 🟢 COMPLETED |
+| TASK-304 | Monthly savings goal with progress bar | 🟢 COMPLETED |
 
-## Phase 5: Settings & UX
+## Wave 3B: Gamification (TASK-305–311)
 
-| ID | Title | Status | Phase |
-|---|---|---|---|
-| TASK-060 | Extended settings (currency, units, week start) | 🟡 CREATED | 5.1 |
-| TASK-061 | Habit catalog seed (20+ popular items) | 🟡 CREATED | 5.2 |
+| ID | Title | Status |
+|---|---|---|
+| TASK-305 | XP & Level system (17 levels, 0–50000 XP) | 🟢 COMPLETED |
+| TASK-306 | XP progress bar + level badges | 🟢 COMPLETED |
+| TASK-307 | Award XP on check-in, avoidance, streaks | 🟢 COMPLETED |
+| TASK-308 | Daily quests system (3/day, 50 XP each) | 🟢 COMPLETED |
+| TASK-309 | Streak recovery for 200 XP | 🟢 COMPLETED |
+| TASK-311 | 6 unlockable accent themes by level | 🟢 COMPLETED |
 
-## Phase 6: Telegram Integration
+## Wave 3C: Group Challenges (TASK-312–316)
 
-| ID | Title | Status | Phase |
-|---|---|---|---|
-| TASK-070 | Telegram Bot (basic) | 🟡 CREATED | 6.1 |
-| TASK-071 | Push notifications (Web Push + Telegram) | 🟡 CREATED | 6.2 |
-| TASK-072 | Telegram Mini App | 🟡 CREATED | 6.3 |
+| ID | Title | Status |
+|---|---|---|
+| TASK-312 | Extended challenge entity (maxParticipants, inviteCode) | 🟢 COMPLETED |
+| TASK-313 | Join by invite code, invite multiple users | 🟢 COMPLETED |
+| TASK-314 | Group challenge create flow (1v1 vs Group) | 🟢 COMPLETED |
+| TASK-315 | Challenge detail page with leaderboard | 🟢 COMPLETED |
+| TASK-316 | Browse public challenges tab | 🟢 COMPLETED |
 
-## Phase 7: Polish & Analytics
+## Wave 3D: PWA + Notifications (TASK-317–321)
 
-| ID | Title | Status | Phase |
-|---|---|---|---|
-| TASK-080 | Simple analytics (pattern analysis) | 🟡 CREATED | 7.1 |
-| TASK-081 | Annual/Monthly report (Wrapped style) | 🟡 CREATED | 7.2 |
-| TASK-082 | Positive habits (habitType: ACHIEVEMENT) | 🟡 CREATED | 7.3 |
+| ID | Title | Status |
+|---|---|---|
+| TASK-317 | Offline check-in queue with auto-sync | 🟢 COMPLETED |
+| TASK-318 | Daily reminder email | 🟢 COMPLETED |
+| TASK-319 | Streak warning email | 🟢 COMPLETED |
+| TASK-320 | Weekly digest email | 🟢 COMPLETED |
+| TASK-321 | Notification settings UI | 🟢 COMPLETED |
+
+## Wave 4A: Critical Fixes
+
+| ID | Title | Status |
+|---|---|---|
+| FIX-401 | LiveHero neon ring v3 — inline styles (DEC-016) | 🟢 COMPLETED |
+| FIX-402 | Timezone auto-sync from browser (DEC-017) | 🟢 COMPLETED |
+| FIX-403 | Rename ring-* to neon-* (Tailwind conflict) | 🟢 COMPLETED |
+| FIX-404 | LiveStats uses user.timezone not UTC | 🟢 COMPLETED |
+
+---
+
+## Batch 5: Social Rewards + Extended Achievements
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-040 | Invite rewards (shield on friend accept) | 🟡 CREATED |
+| TASK-041 | Extended achievements (SOCIAL, CHALLENGES) | 🟡 CREATED |
+
+## Batch 6: Auth Hardening
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-050 | Email verification (non-blocking, 7-day grace) | 🟡 CREATED |
+| TASK-051 | Google OAuth (passport-google-oauth20, merge) | 🟡 CREATED |
+
+## Batch 7: Settings & Catalog
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-060 | Extended settings (currency, weekStartDay, units) | 🟡 CREATED |
+| TASK-061 | Habit catalog seed (20+ popular items, quick-add) | 🟡 CREATED |
+
+## Batch 8: Telegram Integration
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-070 | Telegram Bot (/link, /start, /stats) | 🟡 CREATED |
+| TASK-071 | Push notifications (Web Push + Telegram) | 🟡 CREATED |
+| TASK-072 | Telegram Mini App | 🟡 CREATED |
+
+## Batch 9: Analytics & Reports
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-080 | Simple analytics (pattern analysis, SQL) | 🟡 CREATED |
+| TASK-081 | Annual/Monthly report (Wrapped style) | 🟡 CREATED |
+| TASK-082 | Positive habits (habitType: ACHIEVEMENT) | 🟡 CREATED |
+
+## Batch 10: Production Readiness
+
+| ID | Title | Status |
+|---|---|---|
+| OPS-020 | Security hardening (rate limiting, CORS, Helmet) | 🟡 CREATED |
+| OPS-021 | DB optimization (indexes, query analysis) | 🟡 CREATED |
+| OPS-022 | E2E tests expansion (habits, challenges, gamification) | 🟡 CREATED |
+| OPS-023 | Error boundaries + loading states (frontend) | 🟡 CREATED |
+| OPS-024 | Deployment (domain, VPS, CI/CD pipeline) | 🟡 CREATED |
+
+## Batch 11: Code Refactoring
+
+| ID | Title | Status |
+|---|---|---|
+| OPS-030 | Code style unification (ESLint + Prettier config) | 🟡 CREATED |
+| OPS-031 | Architecture patterns audit (services, DTOs, hooks) | 🟡 CREATED |
+| OPS-032 | Dead code cleanup + unused imports | 🟡 CREATED |
+| OPS-033 | CSS/Tailwind cleanup + design system tokens | 🟡 CREATED |
+| OPS-034 | API response format standardization | 🟡 CREATED |
+| OPS-035 | Shared types audit (contracts ↔ api ↔ web sync) | 🟡 CREATED |

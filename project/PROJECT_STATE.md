@@ -1,6 +1,6 @@
 # StayOnTrack — Project State
 
-## Last Updated: 2026-03-13
+## Last Updated: 2026-03-14
 
 ## Current Phase: Pre-Deployment (Feature-Complete MVP)
 
@@ -76,11 +76,22 @@
 - ✅ 118 unit tests pass
 - ✅ 20 E2E tests pass
 
+### Wave 4A — Critical Fixes (2026-03-14)
+- ✅ LiveHero neon ring v3 — fully inline styles, immune to Tailwind/cache issues (DEC-016)
+- ✅ Timezone auto-sync from browser on login (DEC-017)
+- ✅ Renamed ring CSS classes from `ring-*` to `neon-*` to avoid Tailwind conflict
+- ✅ LiveStats endpoint uses user.timezone instead of UTC
+
 ## Known Issues
 - ⚠️ AccentThemeProvider + OfflineBanner cause webpack runtime error in layout.tsx — need page-level integration instead
-- ⚠️ TypeORM SQL logging too verbose in dev (set logging: ['error'] or 'warn')
+- ⚠️ After API server restart, users must re-login (JWT tokens invalidated)
 
 ## Git History (dev branch)
+- `09a4f93` fix: inline ring gradients + remove UTC date from frontend check-ins
+- `42302b2` fix: use user timezone in getLiveStats instead of UTC
+- `362453a` fix: auto-detect and sync browser timezone to backend
+- `d23ef8e` fix: rename ring-* classes to neon-* to avoid Tailwind ring- conflict
+- `a737c0f` fix: use --background for ring inner fill, not --card
 - `8d46b23` fix: restore LiveHero ring colors
 - `25f6529` fix: dynamic import OfflineBanner
 - `bd74bdb` fix: use uppercase ChallengeVisibility enum
