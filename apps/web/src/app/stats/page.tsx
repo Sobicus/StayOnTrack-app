@@ -13,12 +13,18 @@ import {
   Dumbbell,
   ChevronLeft,
   ChevronRight,
+  Lightbulb,
+  FileText,
 } from 'lucide-react';
+import Link from 'next/link';
 import {
   BarChart,
   Bar,
   LineChart,
   Line,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -89,6 +95,7 @@ function getMonthDates(year: number, month: number) {
 
 const SHORT_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const SHORT_DAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const PIE_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899'];
 
 export default function StatsPage() {
   const { token, user } = useAuth();
@@ -105,6 +112,8 @@ export default function StatsPage() {
   });
   const [calLogs, setCalLogs] = useState<LogEntry[]>([]);
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
+  const [insights, setInsights] = useState<string[]>([]);
+  const [patterns, setPatterns] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -123,14 +132,18 @@ export default function StatsPage() {
 
   const loadStats = async () => {
     try {
-      const [s, eq, trends] = await Promise.all([
+      const [s, eq, trends, pat, ins] = await Promise.all([
         api.stats.get(token!),
         api.stats.equivalents(token!),
         api.stats.trends(token!, 3),
+        api.stats.patterns(token!),
+        api.stats.insights(token!),
       ]);
       setStats(s);
       setEquivalents(eq);
       setTrendData(trends);
+      setPatterns(pat);
+      setInsights(ins);
     } catch {
     } finally {
       setLoading(false);
@@ -448,7 +461,7 @@ export default function StatsPage() {
 
       {/* Effort equivalents */}
       {equivalents.length > 0 && (
-        <div>
+        <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Dumbbell className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold text-[var(--foreground)]">
@@ -476,6 +489,121 @@ export default function StatsPage() {
           </div>
         </div>
       )}
+
+      {/* Insights & Patterns */}
+      {patterns ? (
+        <div className="mb-6">
+          {/* Insights */}
+          {insights.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb className="w-5 h-5 text-warning" />
+                <h2 className="text-lg font-bold text-[var(--foreground)]">
+                  {t('insights')}
+                </h2>
+              </div>
+              <div className="space-y-2">
+                {insights.map((insight, i) => (
+                  <div
+                    key={i}
+                    className="p-3 rounded-xl bg-warning/10 border border-warning/20 text-sm text-[var(--foreground)]"
+                  >
+                    {insight}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Avoidance by Day of Week */}
+          {patterns.dayRates && (
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
+                {t('avoidanceByDay')}
+              </h2>
+              <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart
+                    data={(patterns.dayRates as { day: number; rate: number; total: number }[]).map((d) => ({
+                      name: (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])[d.day],
+                      rate: d.rate,
+                    }))}
+                    barSize={28}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} width={35} domain={[0, 100]} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                      }}
+                      formatter={(val: unknown) => [`${val}%`, t('avoidanceRate')]}
+                    />
+                    <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Category Breakdown Pie */}
+          {patterns.categories && (patterns.categories as { category: string; calories: number }[]).length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
+                {t('categoryBreakdown')}
+              </h2>
+              <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={(patterns.categories as { category: string; calories: number }[]).map((c) => ({
+                        name: c.category.replace('_', ' '),
+                        value: Math.round(c.calories),
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    >
+                      {(patterns.categories as { category: string; calories: number }[]).map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                      }}
+                      formatter={(val: any) => [`${val} ${tc('kcal')}`, t('caloriesSaved')]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mb-6 p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] text-center">
+          <p className="text-sm text-[var(--muted)]">{t('noInsights')}</p>
+        </div>
+      )}
+
+      {/* View Monthly Report Link */}
+      <div className="mb-6">
+        <Link
+          href="/stats/report"
+          className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-semibold hover:bg-primary/20 transition-all"
+        >
+          <FileText className="w-5 h-5" />
+          {t('viewReport')}
+        </Link>
+      </div>
     </AppShell>
   );
 }

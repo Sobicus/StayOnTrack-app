@@ -8,6 +8,7 @@ export class HabitLogResponseDto {
   portionRatio!: number;
   savedCalories!: number;
   savedMoney!: number;
+  completedAmount!: number | null;
   createdAt!: Date;
   xpEarned?: number;
   levelUp?: boolean;
@@ -24,6 +25,7 @@ export class HabitLogResponseDto {
     dto.portionRatio = log.portionRatio;
     dto.savedCalories = log.savedCalories;
     dto.savedMoney = log.savedMoney;
+    dto.completedAmount = log.completedAmount ?? null;
     dto.createdAt = log.createdAt;
     if (xpInfo) {
       dto.xpEarned = xpInfo.xpEarned;

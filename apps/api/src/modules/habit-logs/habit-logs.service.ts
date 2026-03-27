@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
 import { HabitsService } from '../habits/habits.service';
-import { Habit, HabitFrequencyType } from '../habits/entities/habit.entity';
+import { Habit, HabitFrequencyType, HabitType } from '../habits/entities/habit.entity';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { BatchCheckinDto } from './dto/batch-checkin.dto';
 import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto';
@@ -50,12 +50,15 @@ export class HabitLogsService {
       where: { habitId: dto.habitId, date },
     });
 
+    const isAchievement = habit.habitType === HabitType.ACHIEVEMENT;
+
     if (existing) {
       // Update existing log instead of throwing error (user can change their mind)
       existing.status = dto.status;
       existing.portionRatio = portionRatio;
-      existing.savedCalories = getSavedCalories(habit.caloriesPerOccurrence, portionRatio);
-      existing.savedMoney = getSavedMoney(habit.pricePerOccurrence, portionRatio);
+      existing.savedCalories = isAchievement ? 0 : getSavedCalories(habit.caloriesPerOccurrence, portionRatio);
+      existing.savedMoney = isAchievement ? 0 : getSavedMoney(habit.pricePerOccurrence, portionRatio);
+      existing.completedAmount = isAchievement ? (dto.completedAmount ?? null) : null;
       const saved = await this.logRepository.save(existing);
       // No XP on updates — only first check-in earns XP
       return { log: saved, xpEarned: 0, levelUp: false };
@@ -68,10 +71,11 @@ export class HabitLogsService {
       habitId: dto.habitId,
       userId,
       date,
-      status: dto.status,
-      portionRatio,
-      savedCalories: getSavedCalories(habit.caloriesPerOccurrence, portionRatio),
-      savedMoney: getSavedMoney(habit.pricePerOccurrence, portionRatio),
+      status: isAchievement ? HabitLogStatus.AVOIDED : dto.status,
+      portionRatio: isAchievement ? 0 : portionRatio,
+      savedCalories: isAchievement ? 0 : getSavedCalories(habit.caloriesPerOccurrence, portionRatio),
+      savedMoney: isAchievement ? 0 : getSavedMoney(habit.pricePerOccurrence, portionRatio),
+      completedAmount: isAchievement ? (dto.completedAmount ?? null) : null,
     });
 
     const saved = await this.logRepository.save(log);
@@ -88,8 +92,8 @@ export class HabitLogsService {
     totalXpEarned += XP_REWARDS.CHECK_IN;
     levelUp = checkinResult.levelUp;
 
-    // Bonus XP if fully avoided (portionRatio === 0)
-    if (portionRatio === 0) {
+    // Bonus XP if fully avoided (portionRatio === 0) or achievement habit completed
+    if (isAchievement || portionRatio === 0) {
       const bonusResult = await this.gamificationService.addXp(userId, XP_REWARDS.FULL_DAY_AVOIDED);
       totalXpEarned += XP_REWARDS.FULL_DAY_AVOIDED;
       if (bonusResult.levelUp) levelUp = true;

@@ -61,6 +61,9 @@ export class Habit {
   })
   habitType!: HabitType;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  targetUnit!: string | null;
+
   @Column({ type: 'float', default: 0 })
   caloriesPerOccurrence!: number;
 

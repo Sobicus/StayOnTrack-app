@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
+import { Habit } from '../habits/entities/habit.entity';
 import { ActivitiesService } from '../activities/activities.service';
 import { User } from '../users/entities/user.entity';
 import {
@@ -55,6 +56,8 @@ export class StatsService {
   constructor(
     @InjectRepository(HabitLog)
     private readonly logRepository: Repository<HabitLog>,
+    @InjectRepository(Habit)
+    private readonly habitRepository: Repository<Habit>,
     private readonly activitiesService: ActivitiesService,
   ) {}
 
@@ -244,6 +247,224 @@ export class StatsService {
       ),
       totalCheckIns: parseInt(result?.totalCheckIns) || 0,
       totalDaysTracked: parseInt(result?.totalDaysTracked) || 0,
+    };
+  }
+
+  /**
+   * Get pattern analysis for a user (day-of-week rates, category breakdown, top habits).
+   */
+  async getPatterns(userId: string): Promise<Record<string, unknown> | null> {
+    const logs = await this.logRepository.find({ where: { userId } });
+
+    if (logs.length < 7) return null;
+
+    // Day of week analysis (0=Sun, 6=Sat)
+    const dayStats: Record<number, { total: number; avoided: number }> = {};
+    for (let i = 0; i < 7; i++) dayStats[i] = { total: 0, avoided: 0 };
+
+    for (const log of logs) {
+      const day = new Date(log.date + 'T12:00:00Z').getUTCDay();
+      dayStats[day].total++;
+      if (log.status === 'AVOIDED') dayStats[day].avoided++;
+    }
+
+    const dayRates = Object.entries(dayStats).map(([day, s]) => ({
+      day: parseInt(day),
+      rate: s.total > 0 ? Math.round((s.avoided / s.total) * 100) : 0,
+      total: s.total,
+    }));
+
+    const bestDay = dayRates.reduce((a, b) => (a.rate > b.rate ? a : b));
+    const worstDay = dayRates.reduce((a, b) => (a.rate < b.rate ? a : b));
+
+    // Category breakdown
+    const habits = await this.habitRepository.find({ where: { userId } });
+    const habitMap = new Map(habits.map((h) => [h.id, h]));
+    const categoryStats: Record<string, number> = {};
+
+    for (const log of logs) {
+      if (log.status === 'AVOIDED') {
+        const habit = habitMap.get(log.habitId);
+        if (habit) {
+          categoryStats[habit.category] =
+            (categoryStats[habit.category] || 0) + log.savedCalories;
+        }
+      }
+    }
+
+    const categories = Object.entries(categoryStats)
+      .map(([category, calories]) => ({ category, calories }))
+      .sort((a, b) => b.calories - a.calories);
+
+    // Top habits by saved calories
+    const habitCalories: Record<string, number> = {};
+    for (const log of logs) {
+      if (log.status === 'AVOIDED') {
+        habitCalories[log.habitId] =
+          (habitCalories[log.habitId] || 0) + log.savedCalories;
+      }
+    }
+
+    const topHabits = Object.entries(habitCalories)
+      .map(([habitId, calories]) => ({
+        habitId,
+        title: habitMap.get(habitId)?.title || 'Unknown',
+        calories,
+      }))
+      .sort((a, b) => b.calories - a.calories)
+      .slice(0, 3);
+
+    return {
+      dayRates,
+      bestDay,
+      worstDay,
+      categories,
+      topHabits,
+      totalLogs: logs.length,
+    };
+  }
+
+  /**
+   * Get human-readable insight strings for a user.
+   */
+  async getInsights(userId: string): Promise<string[]> {
+    const patterns = await this.getPatterns(userId);
+    if (!patterns) return [];
+
+    const dayNames = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const insights: string[] = [];
+    const bestDay = patterns.bestDay as {
+      day: number;
+      rate: number;
+      total: number;
+    };
+    const worstDay = patterns.worstDay as {
+      day: number;
+      rate: number;
+      total: number;
+    };
+    const topHabits = patterns.topHabits as {
+      habitId: string;
+      title: string;
+      calories: number;
+    }[];
+    const categories = patterns.categories as {
+      category: string;
+      calories: number;
+    }[];
+
+    if (bestDay.rate > 0) {
+      insights.push(
+        `Your strongest day is ${dayNames[bestDay.day]} with ${bestDay.rate}% avoidance rate`,
+      );
+    }
+    if (worstDay.rate < 100 && worstDay.total > 0) {
+      insights.push(
+        `${dayNames[worstDay.day]} is your most challenging day (${worstDay.rate}%)`,
+      );
+    }
+    if (topHabits.length > 0) {
+      insights.push(
+        `Most avoided: ${topHabits[0].title} (${topHabits[0].calories.toLocaleString()} kcal saved)`,
+      );
+    }
+    if (categories.length > 0) {
+      insights.push(
+        `You save most on ${categories[0].category.replace('_', ' ')}`,
+      );
+    }
+
+    return insights;
+  }
+
+  /**
+   * Get a monthly or yearly report (Wrapped style).
+   */
+  async getReport(
+    userId: string,
+    period: 'month' | 'year',
+    date: string,
+  ): Promise<Record<string, unknown> | null> {
+    const d = new Date(date + '-01');
+    let startDate: string;
+    let endDate: string;
+
+    if (period === 'month') {
+      startDate = `${date}-01`;
+      const lastDay = new Date(
+        d.getFullYear(),
+        d.getMonth() + 1,
+        0,
+      ).getDate();
+      endDate = `${date}-${String(lastDay).padStart(2, '0')}`;
+    } else {
+      startDate = `${date.slice(0, 4)}-01-01`;
+      endDate = `${date.slice(0, 4)}-12-31`;
+    }
+
+    const logs = await this.logRepository
+      .createQueryBuilder('log')
+      .where('log.userId = :userId', { userId })
+      .andWhere('log.date >= :startDate AND log.date <= :endDate', {
+        startDate,
+        endDate,
+      })
+      .getMany();
+
+    if (logs.length === 0) return null;
+
+    const avoidedLogs = logs.filter((l) => l.status === 'AVOIDED');
+    const totalCalories = avoidedLogs.reduce(
+      (sum, l) => sum + l.savedCalories,
+      0,
+    );
+    const totalMoney = avoidedLogs.reduce((sum, l) => sum + l.savedMoney, 0);
+    const totalWeight = totalCalories / 7700;
+    const totalCheckIns = logs.length;
+    const avoidedCount = avoidedLogs.length;
+    const avoidanceRate = Math.round((avoidedCount / totalCheckIns) * 100);
+
+    // Top habits
+    const habits = await this.habitRepository.find({ where: { userId } });
+    const habitMap = new Map(habits.map((h) => [h.id, h]));
+    const habitCals: Record<string, number> = {};
+    for (const log of avoidedLogs) {
+      habitCals[log.habitId] =
+        (habitCals[log.habitId] || 0) + log.savedCalories;
+    }
+    const topHabits = Object.entries(habitCals)
+      .map(([id, cal]) => ({
+        title: habitMap.get(id)?.title || '?',
+        calories: cal,
+      }))
+      .sort((a, b) => b.calories - a.calories)
+      .slice(0, 3);
+
+    // Fun equivalents
+    const marathons = (totalCalories / 2600).toFixed(1);
+    const bigMacs = Math.floor(totalCalories / 550);
+
+    return {
+      period,
+      date,
+      startDate,
+      endDate,
+      totalCalories,
+      totalMoney,
+      totalWeight,
+      totalCheckIns,
+      avoidanceRate,
+      topHabits,
+      marathons,
+      bigMacs,
     };
   }
 }

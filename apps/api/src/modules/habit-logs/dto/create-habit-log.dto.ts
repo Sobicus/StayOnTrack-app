@@ -33,4 +33,12 @@ export class CreateHabitLogDto {
   @IsDateString()
   @IsOptional()
   date?: string;
+
+  /**
+   * For ACHIEVEMENT habits: how much was completed (e.g., 30 minutes, 8 glasses).
+   */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  completedAmount?: number;
 }

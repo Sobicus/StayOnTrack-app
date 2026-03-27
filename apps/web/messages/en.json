@@ -160,6 +160,23 @@
       "DRINKS": "Drinks",
       "CUSTOM": "Custom"
     },
+    "avoiding": "Avoiding",
+    "doing": "Doing",
+    "habitTypeLabel": "Habit Type",
+    "achievementHabit": "Positive Habit",
+    "avoidanceHabit": "Avoidance Habit",
+    "didIt": "Did it!",
+    "targetUnit": "Unit",
+    "completedAmount": "Amount",
+    "achievementNamePlaceholder": "e.g., Morning run",
+    "noAchievementHabitsYet": "No positive habits yet",
+    "units": {
+      "minutes": "minutes",
+      "glasses": "glasses",
+      "km": "km",
+      "pages": "pages",
+      "times": "times"
+    },
     "catalog": {
       "title": "Quick Add",
       "addedToast": "Added!",
@@ -209,7 +226,22 @@
     "less": "Less",
     "more": "More",
     "monthlyTrend": "Monthly Trend",
-    "weeklyAverage": "Weekly Average"
+    "weeklyAverage": "Weekly Average",
+    "insights": "Insights",
+    "patterns": "Patterns",
+    "noInsights": "Check in for 7+ days to see insights",
+    "avoidanceByDay": "Avoidance by Day",
+    "categoryBreakdown": "Category Breakdown",
+    "avoidanceRate": "Avoidance Rate",
+    "monthlyReport": "Monthly Report",
+    "viewReport": "View Monthly Report",
+    "reportTitle": "Your Month in Review",
+    "totalSaved": "Total Saved",
+    "topHabit": "Top Habit",
+    "funFacts": "Fun Facts",
+    "equivalentMarathons": "marathon equivalents",
+    "equivalentBigMacs": "Big Macs worth of calories",
+    "noReportData": "No data for this period yet"
   },
 
   "onboarding": {

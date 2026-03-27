@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { StatsService } from './stats.service';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { ActivitiesService } from '../activities/activities.service';
+import { Habit } from '../habits/entities/habit.entity';
 import { ProfileVisibility } from '../users/entities/user.entity';
 
 describe('StatsService', () => {
@@ -55,6 +56,7 @@ describe('StatsService', () => {
       providers: [
         StatsService,
         { provide: getRepositoryToken(HabitLog), useValue: logRepository },
+        { provide: getRepositoryToken(Habit), useValue: { find: jest.fn().mockResolvedValue([]) } },
         { provide: ActivitiesService, useValue: activitiesService },
       ],
     }).compile();

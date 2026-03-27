@@ -30,6 +30,11 @@ export class CreateHabitDto {
   @IsOptional()
   habitType?: HabitType;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  targetUnit?: string;
+
   @IsNumber()
   @Min(0)
   @Max(50000)

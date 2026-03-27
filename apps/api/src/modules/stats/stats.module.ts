@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
+import { Habit } from '../habits/entities/habit.entity';
 import { StatsService } from './stats.service';
 import { StatsController } from './stats.controller';
 import { ActivitiesModule } from '../activities/activities.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([HabitLog]),
+    TypeOrmModule.forFeature([HabitLog, Habit]),
     ActivitiesModule,
   ],
   controllers: [StatsController],

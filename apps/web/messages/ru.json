@@ -160,6 +160,23 @@
       "DRINKS": "Напитки",
       "CUSTOM": "Другое"
     },
+    "avoiding": "Избегаю",
+    "doing": "Делаю",
+    "habitTypeLabel": "Тип привычки",
+    "achievementHabit": "Позитивная привычка",
+    "avoidanceHabit": "Привычка избегания",
+    "didIt": "Сделал!",
+    "targetUnit": "Единица",
+    "completedAmount": "Количество",
+    "achievementNamePlaceholder": "напр., Утренняя пробежка",
+    "noAchievementHabitsYet": "Позитивных привычек пока нет",
+    "units": {
+      "minutes": "минут",
+      "glasses": "стаканов",
+      "km": "км",
+      "pages": "страниц",
+      "times": "раз"
+    },
     "catalog": {
       "title": "Быстрое добавление",
       "addedToast": "Добавлено!",
@@ -209,7 +226,22 @@
     "less": "Меньше",
     "more": "Больше",
     "monthlyTrend": "Тренд за месяц",
-    "weeklyAverage": "Средняя за неделю"
+    "weeklyAverage": "Средняя за неделю",
+    "insights": "Аналитика",
+    "patterns": "Паттерны",
+    "noInsights": "Проверяйте привычки 7+ дней для аналитики",
+    "avoidanceByDay": "Воздержание по дням",
+    "categoryBreakdown": "Разбивка по категориям",
+    "avoidanceRate": "Процент воздержания",
+    "monthlyReport": "Отчёт за месяц",
+    "viewReport": "Посмотреть отчёт",
+    "reportTitle": "Ваш месяц в обзоре",
+    "totalSaved": "Всего сэкономлено",
+    "topHabit": "Топ привычка",
+    "funFacts": "Интересные факты",
+    "equivalentMarathons": "эквивалентов марафона",
+    "equivalentBigMacs": "Биг Маков по калориям",
+    "noReportData": "Нет данных за этот период"
   },
 
   "onboarding": {

@@ -65,6 +65,10 @@ export class HabitLog {
   @Column({ type: 'float', default: 0 })
   savedMoney!: number;
 
+  /** For ACHIEVEMENT habits: how much was completed (e.g., 30 minutes, 8 glasses) */
+  @Column({ type: 'float', nullable: true })
+  completedAmount!: number | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

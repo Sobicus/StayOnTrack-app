@@ -68,4 +68,34 @@ export class StatsController {
   ) {
     return this.statsService.getStatsByDateRange(user.id, start, end);
   }
+
+  /**
+   * GET /stats/patterns — Pattern analysis (day-of-week, categories, top habits)
+   */
+  @Get('patterns')
+  async getPatterns(@CurrentUser() user: User) {
+    return this.statsService.getPatterns(user.id);
+  }
+
+  /**
+   * GET /stats/insights — Human-readable insight strings
+   */
+  @Get('insights')
+  async getInsights(@CurrentUser() user: User) {
+    return this.statsService.getInsights(user.id);
+  }
+
+  /**
+   * GET /stats/report?period=month&date=2026-03 — Monthly/yearly report (Wrapped style)
+   */
+  @Get('report')
+  async getReport(
+    @CurrentUser() user: User,
+    @Query('period') period: 'month' | 'year' = 'month',
+    @Query('date') date?: string,
+  ) {
+    const reportDate =
+      date || new Date().toISOString().slice(0, 7); // YYYY-MM
+    return this.statsService.getReport(user.id, period, reportDate);
+  }
 }

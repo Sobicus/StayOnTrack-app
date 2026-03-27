@@ -66,7 +66,8 @@ export interface Habit {
   title: string;
   emoji: string;
   category: string;
-  habitType: string;
+  habitType: 'AVOIDANCE' | 'ACHIEVEMENT';
+  targetUnit: string | null;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;
@@ -85,6 +86,7 @@ export interface HabitLog {
   portionRatio: number;
   savedCalories: number;
   savedMoney: number;
+  completedAmount: number | null;
   habit?: { title: string; emoji: string };
 }
 
@@ -293,6 +295,8 @@ export interface CreateHabitData {
   title: string;
   emoji: string;
   category: string;
+  habitType?: 'AVOIDANCE' | 'ACHIEVEMENT';
+  targetUnit?: string;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;
@@ -305,6 +309,7 @@ export interface CheckinData {
   status: string;
   date?: string;
   portionRatio?: number;
+  completedAmount?: number;
 }
 
 export interface CreateChallengeData {
@@ -444,6 +449,17 @@ export const api = {
     trends: (token: string, months?: number) => {
       const query = months ? `?months=${months}` : '';
       return request<WeeklyTrendPoint[]>(`/stats/trends${query}`, { token });
+    },
+    patterns: (token: string) =>
+      request<Record<string, unknown> | null>('/stats/patterns', { token }),
+    insights: (token: string) =>
+      request<string[]>('/stats/insights', { token }),
+    report: (token: string, period?: string, date?: string) => {
+      const params = new URLSearchParams();
+      if (period) params.set('period', period);
+      if (date) params.set('date', date);
+      const qs = params.toString();
+      return request<Record<string, unknown> | null>(`/stats/report${qs ? '?' + qs : ''}`, { token });
     },
   },
 
