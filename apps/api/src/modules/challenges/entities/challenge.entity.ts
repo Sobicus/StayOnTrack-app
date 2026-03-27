@@ -17,6 +17,7 @@ import { ChallengeType, ChallengeStatus, ChallengeVisibility } from '@stayontrac
 
 @Entity('challenges')
 @Index(['status', 'visibility'])
+@Index(['creatorUserId'])
 export class Challenge {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

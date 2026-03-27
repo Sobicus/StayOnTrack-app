@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -30,6 +31,7 @@ export enum HabitFrequencyType {
 }
 
 @Entity('habits')
+@Index(['userId'])
 export class Habit {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

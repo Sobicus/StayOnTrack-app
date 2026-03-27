@@ -2,9 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
+import * as express from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { SanitizePipe } from './common/pipes/sanitize.pipe';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -14,14 +16,19 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
+  // Request size limits
+  app.use(express.json({ limit: '10kb' }));
+  app.use(express.urlencoded({ limit: '10kb', extended: true }));
+
   // Global exception filter — safe error responses, no stack trace leaks
   app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global API prefix
   app.setGlobalPrefix('api/v1');
 
-  // Global validation pipe
+  // Global pipes: sanitize first, then validate
   app.useGlobalPipes(
+    new SanitizePipe(),
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,

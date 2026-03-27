@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { Search, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
       <div className="text-center max-w-md">
-        <div className="text-6xl mb-4">🔍</div>
+        <Search className="w-12 h-12 text-[var(--muted)] mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">
           Page not found
         </h1>
@@ -13,8 +14,9 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="inline-block px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-all"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-all"
         >
+          <Home className="w-4 h-4" />
           Go home
         </Link>
       </div>

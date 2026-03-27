@@ -6,11 +6,14 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('friendships')
 @Unique(['userId', 'friendId'])
+@Index(['userId', 'friendId'])
+@Index(['friendId', 'userId'])
 export class Friendship {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

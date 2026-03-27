@@ -19,6 +19,7 @@ export enum HabitLogStatus {
 
 @Entity('habit_logs')
 @Unique(['habitId', 'date'])
+@Index(['habitId'])
 @Index(['userId', 'date'])
 export class HabitLog {
   @PrimaryGeneratedColumn('uuid')

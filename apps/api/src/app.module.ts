@@ -19,6 +19,7 @@ import { GamificationModule } from './modules/gamification/gamification.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TelegramModule } from './modules/telegram/telegram.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { EmailModule } from './common/email/email.module';
 
@@ -57,6 +58,11 @@ import { EmailModule } from './common/email/email.module';
         migrationsRun: config.get<string>('NODE_ENV') === 'production',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: config.get<string>('NODE_ENV') === 'production' ? ['error'] : ['error', 'warn'],
+        maxQueryExecutionTime: 1000,
+        extra: {
+          max: 20,
+          idleTimeoutMillis: 30000,
+        },
       }),
     }),
 
@@ -79,6 +85,7 @@ import { EmailModule } from './common/email/email.module';
     NotificationsModule,
     AnalyticsModule,
     TelegramModule,
+    AuditModule,
   ],
   providers: [
     {
