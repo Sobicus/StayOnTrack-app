@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
+import { api, HabitTemplate } from '@/lib/api';
 
 export interface CatalogItem {
   emoji: string;
@@ -12,37 +13,16 @@ export interface CatalogItem {
   price: number;
 }
 
-const CATALOG: CatalogItem[] = [
-  // Fast food
-  { emoji: '🍔', titleKey: 'bigMac', category: 'FASTFOOD', calories: 550, price: 5.50 },
-  { emoji: '🍟', titleKey: 'fries', category: 'FASTFOOD', calories: 365, price: 2.50 },
-  { emoji: '🍕', titleKey: 'pizzaSlice', category: 'FASTFOOD', calories: 285, price: 3.00 },
-  { emoji: '🌯', titleKey: 'burrito', category: 'FASTFOOD', calories: 450, price: 7.00 },
-  { emoji: '🌭', titleKey: 'hotDog', category: 'FASTFOOD', calories: 290, price: 3.50 },
-  { emoji: '🍗', titleKey: 'friedChicken', category: 'FASTFOOD', calories: 400, price: 5.00 },
-  // Sweets
-  { emoji: '🍩', titleKey: 'donut', category: 'SWEETS', calories: 250, price: 2.00 },
-  { emoji: '🍫', titleKey: 'chocolate', category: 'SWEETS', calories: 230, price: 2.50 },
-  { emoji: '🍪', titleKey: 'cookies', category: 'SWEETS', calories: 200, price: 1.50 },
-  { emoji: '🍰', titleKey: 'cakeSlice', category: 'SWEETS', calories: 350, price: 4.50 },
-  { emoji: '🧁', titleKey: 'cupcake', category: 'SWEETS', calories: 300, price: 3.00 },
-  // Drinks
-  { emoji: '🥤', titleKey: 'cola', category: 'DRINKS', calories: 140, price: 2.00 },
-  { emoji: '☕', titleKey: 'latte', category: 'DRINKS', calories: 190, price: 4.50 },
-  { emoji: '🧃', titleKey: 'juice', category: 'DRINKS', calories: 120, price: 3.00 },
-  { emoji: '🥤', titleKey: 'energyDrink', category: 'DRINKS', calories: 110, price: 3.00 },
-  // Alcohol
-  { emoji: '🍺', titleKey: 'beer', category: 'ALCOHOL', calories: 150, price: 4.00 },
-  { emoji: '🍷', titleKey: 'wine', category: 'ALCOHOL', calories: 125, price: 6.00 },
-  { emoji: '🍸', titleKey: 'cocktail', category: 'ALCOHOL', calories: 200, price: 10.00 },
-  // Snacks
-  { emoji: '🥐', titleKey: 'croissant', category: 'SNACKS', calories: 230, price: 2.50 },
-  { emoji: '🍿', titleKey: 'popcorn', category: 'SNACKS', calories: 400, price: 5.00 },
-  { emoji: '🧀', titleKey: 'nachos', category: 'SNACKS', calories: 350, price: 4.00 },
-  // Other
-  { emoji: '🚬', titleKey: 'cigarette', category: 'CUSTOM', calories: 0, price: 0.50 },
-  { emoji: '📱', titleKey: 'onlineShopping', category: 'CUSTOM', calories: 0, price: 30.00 },
-];
+const CATEGORY_KEYS = [
+  'allCategories',
+  'fast_food',
+  'sweets',
+  'drinks',
+  'alcohol',
+  'snacks',
+  'smoking',
+  'shopping',
+] as const;
 
 interface HabitCatalogProps {
   onQuickAdd: (item: CatalogItem) => void;
@@ -50,51 +30,125 @@ interface HabitCatalogProps {
 
 export function HabitCatalog({ onQuickAdd }: HabitCatalogProps) {
   const t = useTranslations('habits');
-  const [expanded, setExpanded] = useState(false);
-  const displayItems = expanded ? CATALOG : CATALOG.slice(0, 8);
+  const [templates, setTemplates] = useState<HabitTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('allCategories');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    api.habits
+      .templates()
+      .then(setTemplates)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = templates.filter((tmpl) => {
+    if (activeCategory !== 'allCategories' && tmpl.category !== activeCategory) return false;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      return (
+        tmpl.nameEn.toLowerCase().includes(q) ||
+        tmpl.nameRu.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  const getDisplayName = (tmpl: HabitTemplate): string => {
+    // Detect locale from document lang or default to English
+    const locale =
+      typeof document !== 'undefined' ? document.documentElement.lang : 'en';
+    return locale === 'ru' ? tmpl.nameRu : tmpl.nameEn;
+  };
+
+  const handleAdd = (tmpl: HabitTemplate) => {
+    onQuickAdd({
+      emoji: tmpl.emoji,
+      titleKey: getDisplayName(tmpl),
+      category: tmpl.category.toUpperCase(),
+      calories: tmpl.defaultCalories,
+      price: tmpl.defaultMoney,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="mb-6">
+        <div className="h-6 w-32 bg-[var(--border)] rounded animate-pulse mb-3" />
+        <div className="grid grid-cols-2 gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-16 bg-[var(--border)] rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (templates.length === 0) return null;
 
   return (
     <div className="mb-6">
       <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
         {t('catalog.title')}
       </h2>
-      <div className="grid grid-cols-2 gap-2">
-        {displayItems.map((item, idx) => (
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('catalog.searchTemplates')}
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+      </div>
+
+      {/* Category tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none">
+        {CATEGORY_KEYS.map((key) => (
           <button
-            key={`${item.titleKey}-${idx}`}
-            onClick={() => onQuickAdd(item)}
+            key={key}
+            onClick={() => setActiveCategory(key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              activeCategory === key
+                ? 'bg-primary text-white'
+                : 'bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)]'
+            }`}
+          >
+            {t(`catalog.${key}`)}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {filtered.map((tmpl) => (
+          <button
+            key={tmpl.id}
+            onClick={() => handleAdd(tmpl)}
             className="flex items-center gap-2.5 p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-primary/40 hover:bg-primary/5 transition-all text-left group"
           >
-            <span className="text-xl flex-shrink-0">{item.emoji}</span>
+            <span className="text-xl flex-shrink-0">{tmpl.emoji}</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--foreground)] truncate">
-                {t(`catalog.${item.titleKey}`)}
+                {getDisplayName(tmpl)}
               </p>
               <p className="text-[10px] text-[var(--muted)]">
-                {item.calories > 0 ? `${item.calories} kcal · ` : ''}€{item.price.toFixed(2)}
+                {tmpl.defaultCalories > 0 ? `${tmpl.defaultCalories} kcal · ` : ''}
+                €{tmpl.defaultMoney.toFixed(2)}
               </p>
             </div>
             <Plus className="w-4 h-4 text-[var(--muted)] group-hover:text-primary flex-shrink-0 transition-colors" />
           </button>
         ))}
       </div>
-      {CATALOG.length > 8 && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 mx-auto mt-3 text-xs text-[var(--muted)] hover:text-primary transition-colors"
-        >
-          {expanded ? (
-            <>
-              <ChevronUp className="w-3.5 h-3.5" />
-              {t('catalog.showLess')}
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-3.5 h-3.5" />
-              {t('catalog.showAll', { count: CATALOG.length })}
-            </>
-          )}
-        </button>
+
+      {filtered.length === 0 && (
+        <p className="text-center text-sm text-[var(--muted)] py-4">
+          {search.trim() ? t('catalog.noResults') : t('catalog.noResults')}
+        </p>
       )}
     </div>
   );

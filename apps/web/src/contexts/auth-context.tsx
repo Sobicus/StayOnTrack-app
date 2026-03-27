@@ -17,6 +17,7 @@ interface User {
   dayEndHour: number;
   currency: string;
   weekStartDay: string;
+  unitSystem: string;
   onboardingCompleted: boolean;
   monthlySavingsGoal: number | null;
   emailReminders: boolean;

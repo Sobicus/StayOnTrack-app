@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Habit } from './entities/habit.entity';
+import { HabitTemplate } from './entities/habit-template.entity';
 import { HabitsService } from './habits.service';
 import { HabitsController } from './habits.controller';
 import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Habit]), AnalyticsModule],
+  imports: [TypeOrmModule.forFeature([Habit, HabitTemplate]), AnalyticsModule],
   controllers: [HabitsController],
   providers: [HabitsService],
   exports: [HabitsService],

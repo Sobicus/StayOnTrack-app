@@ -75,6 +75,12 @@ export class UpdateUserDto {
   weekStartDay?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @IsIn(['metric', 'imperial'])
+  unitSystem?: string;
+
+  @IsOptional()
   @IsBoolean()
   onboardingCompleted?: boolean;
 

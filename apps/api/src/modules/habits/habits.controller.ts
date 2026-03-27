@@ -24,10 +24,15 @@ import { HabitResponseDto } from './dto/habit-response.dto';
 @ApiTags('Habits')
 @ApiBearerAuth('access-token')
 @Controller('habits')
-@UseGuards(JwtAuthGuard)
 export class HabitsController {
   constructor(private readonly habitsService: HabitsService) {}
 
+  @Get('templates')
+  async getTemplates() {
+    return this.habitsService.getTemplates();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
     @CurrentUser() user: User,
@@ -37,6 +42,7 @@ export class HabitsController {
     return HabitResponseDto.fromEntity(habit);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(
     @CurrentUser() user: User,
@@ -49,6 +55,7 @@ export class HabitsController {
     return habits.map(HabitResponseDto.fromEntity);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(
     @CurrentUser() user: User,
@@ -58,6 +65,7 @@ export class HabitsController {
     return HabitResponseDto.fromEntity(habit);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @CurrentUser() user: User,
@@ -68,6 +76,7 @@ export class HabitsController {
     return HabitResponseDto.fromEntity(habit);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
@@ -77,6 +86,7 @@ export class HabitsController {
     await this.habitsService.remove(id, user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('reorder/bulk')
   async reorder(
     @CurrentUser() user: User,

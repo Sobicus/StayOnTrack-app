@@ -260,7 +260,7 @@ export default function HabitsPage() {
   const handleQuickAdd = async (item: CatalogItem) => {
     try {
       await api.habits.create(token!, {
-        title: t(`catalog.${item.titleKey}`),
+        title: item.titleKey,
         emoji: item.emoji,
         category: item.category,
         caloriesPerOccurrence: item.calories,

@@ -22,6 +22,20 @@ export const PARTIAL_SUCCESS_THRESHOLD = 0.5;
 /** Currently supported locales */
 export const SUPPORTED_LOCALES = ['en', 'ru'] as const;
 
+/** Supported currencies */
+export const CURRENCIES = ['EUR', 'USD', 'GBP', 'PLN', 'UAH', 'RUB'] as const;
+
+/** Currency code → display symbol */
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '\u20ac', USD: '$', GBP: '\u00a3', PLN: 'z\u0142', UAH: '\u20b4', RUB: '\u20bd',
+};
+
+/** Supported unit systems */
+export const UNIT_SYSTEMS = ['metric', 'imperial'] as const;
+
+/** Supported UI languages */
+export const SUPPORTED_LANGUAGES = ['en', 'ru'] as const;
+
 // ── XP & Level System ──────────────────────────────────────────────
 
 /** XP rewards for various actions */

@@ -9,7 +9,7 @@ import { ThemeSelector } from '@/components/settings/theme-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
-import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell, Shield, Link2 } from 'lucide-react';
+import { Save, User, Eye, Trash2, Clock, Coins, Calendar, Download, Bell, Shield, Link2, Ruler } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const VISIBILITY_OPTIONS = ['PRIVATE', 'FRIENDS', 'PUBLIC'] as const;
@@ -317,6 +317,35 @@ export default function SettingsPage() {
               }`}
             >
               {t(`currencies.${cur}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Unit System */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Ruler className="w-4 h-4 text-primary" />
+          <p className="font-medium text-[var(--foreground)]">{t('unitSystem')}</p>
+        </div>
+        <p className="text-xs text-[var(--muted)] mb-3">{t('unitSystemDescription')}</p>
+        <div className="flex items-center gap-2">
+          {(['metric', 'imperial'] as const).map((sys) => (
+            <button
+              key={sys}
+              onClick={() => {
+                api.users.updateProfile(token!, { unitSystem: sys }).then(() => {
+                  refreshUser();
+                  showToast(t('saved'), 'success');
+                }).catch(() => showToast(tc('error'), 'error'));
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${
+                (user?.unitSystem || 'metric') === sys
+                  ? 'bg-primary text-white'
+                  : 'bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]'
+              }`}
+            >
+              {t(sys)}
             </button>
           ))}
         </div>

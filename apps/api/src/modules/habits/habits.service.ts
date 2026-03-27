@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Habit } from './entities/habit.entity';
+import { HabitTemplate } from './entities/habit-template.entity';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -15,8 +16,14 @@ export class HabitsService {
   constructor(
     @InjectRepository(Habit)
     private readonly habitRepository: Repository<Habit>,
+    @InjectRepository(HabitTemplate)
+    private readonly templateRepository: Repository<HabitTemplate>,
     private readonly analyticsService: AnalyticsService,
   ) {}
+
+  async getTemplates(): Promise<HabitTemplate[]> {
+    return this.templateRepository.find({ order: { category: 'ASC', sortOrder: 'ASC' } });
+  }
 
   async create(userId: string, dto: CreateHabitDto): Promise<Habit> {
     // Get the next sort order for this user

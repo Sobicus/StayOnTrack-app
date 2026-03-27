@@ -43,6 +43,7 @@ export interface UserProfile {
   dayEndHour: number;
   currency: string;
   weekStartDay: string;
+  unitSystem: string;
   onboardingCompleted: boolean;
   monthlySavingsGoal: number | null;
   emailReminders: boolean;
@@ -240,6 +241,17 @@ export interface FrequencyStatus {
   remaining: number | null;
 }
 
+export interface HabitTemplate {
+  id: string;
+  nameEn: string;
+  nameRu: string;
+  defaultCalories: number;
+  defaultMoney: number;
+  emoji: string;
+  category: string;
+  sortOrder: number;
+}
+
 export interface Quest {
   id: string;
   questType: string;
@@ -268,6 +280,7 @@ export interface UpdateProfileData {
   dayEndHour?: number;
   currency?: string;
   weekStartDay?: string;
+  unitSystem?: string;
   onboardingCompleted?: boolean;
   monthlySavingsGoal?: number;
   emailReminders?: boolean;
@@ -380,6 +393,8 @@ export const api = {
   habits: {
     list: (token: string) =>
       request<Habit[]>('/habits', { token }),
+    templates: () =>
+      request<HabitTemplate[]>('/habits/templates'),
     create: (token: string, data: CreateHabitData) =>
       request<Habit>('/habits', { method: 'POST', body: data, token }),
     update: (token: string, id: string, data: Partial<CreateHabitData>) =>

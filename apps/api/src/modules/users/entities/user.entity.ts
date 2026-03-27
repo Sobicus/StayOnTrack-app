@@ -76,6 +76,10 @@ export class User {
   @Column({ type: 'varchar', length: 10, default: 'monday' })
   weekStartDay!: string;
 
+  /** Unit system: 'metric' or 'imperial'. Default 'metric'. */
+  @Column({ type: 'varchar', length: 10, default: 'metric' })
+  unitSystem!: string;
+
   /** Whether the user has completed the onboarding wizard. */
   @Column({ type: 'boolean', default: false })
   onboardingCompleted!: boolean;

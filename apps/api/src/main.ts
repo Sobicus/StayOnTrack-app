@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DataSource } from 'typeorm';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -66,6 +67,11 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4800;
   await app.listen(port);
+
+  // Seed habit templates
+  const dataSource = app.get(DataSource);
+  const { seedHabitTemplates } = await import('./modules/habits/seed/habit-templates.seed');
+  await seedHabitTemplates(dataSource).catch(e => console.warn('Template seed skipped:', e.message));
 
   logger.log(`StayOnTrack API running on http://localhost:${port}`);
   logger.log(`API Docs: http://localhost:${port}/api/docs`);

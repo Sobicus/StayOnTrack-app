@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { HabitsService } from './habits.service';
 import { Habit, HabitCategory, HabitFrequencyType, HabitType } from './entities/habit.entity';
+import { HabitTemplate } from './entities/habit-template.entity';
 import { AnalyticsService } from '../analytics/analytics.service';
 
 describe('HabitsService', () => {
@@ -45,6 +46,7 @@ describe('HabitsService', () => {
       providers: [
         HabitsService,
         { provide: getRepositoryToken(Habit), useValue: habitRepository },
+        { provide: getRepositoryToken(HabitTemplate), useValue: { find: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) } },
         { provide: AnalyticsService, useValue: { trackEvent: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();

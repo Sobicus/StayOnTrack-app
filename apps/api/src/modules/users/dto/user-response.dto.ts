@@ -14,6 +14,9 @@ export class UserResponseDto {
   dayEndHour!: number;
   timezone!: string;
   monthlySavingsGoal!: number | null;
+  currency!: string;
+  weekStartDay!: string;
+  unitSystem!: string;
   emailReminders!: boolean;
   reminderHour!: number;
   emailVerified!: boolean;
@@ -35,6 +38,9 @@ export class UserResponseDto {
     dto.streakShieldsRemaining = user.streakShieldsRemaining;
     dto.dayEndHour = user.dayEndHour;
     dto.timezone = user.timezone;
+    dto.currency = user.currency;
+    dto.weekStartDay = user.weekStartDay;
+    dto.unitSystem = user.unitSystem;
     dto.monthlySavingsGoal = user.monthlySavingsGoal;
     dto.emailReminders = user.emailReminders;
     dto.reminderHour = user.reminderHour;
