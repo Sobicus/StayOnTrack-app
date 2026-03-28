@@ -1,31 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Activity, ActivityCategory, ActivityUnit } from './entities/activity.entity';
+import { Activity, ActivityCategory, ActivityUnit } from '../entities/activity.entity';
+import { ActivitiesQueryRepository } from '../repositories/activities.query.repository';
+import { ActivitiesCommandRepository } from '../repositories/activities.command.repository';
 
 @Injectable()
 export class ActivitiesService {
   constructor(
-    @InjectRepository(Activity)
-    private readonly activityRepository: Repository<Activity>,
+    private readonly queryRepo: ActivitiesQueryRepository,
+    private readonly commandRepo: ActivitiesCommandRepository,
   ) {}
 
   async findAll(): Promise<Activity[]> {
-    return this.activityRepository.find({
-      where: { isActive: true },
-      order: { category: 'ASC', name: 'ASC' },
-    });
+    return this.queryRepo.findAll();
   }
 
   async findByCategory(category: ActivityCategory): Promise<Activity[]> {
-    return this.activityRepository.find({
-      where: { category, isActive: true },
-      order: { name: 'ASC' },
-    });
+    return this.queryRepo.findByCategory(category);
   }
 
   async findBySlug(slug: string): Promise<Activity | null> {
-    return this.activityRepository.findOne({ where: { slug } });
+    return this.queryRepo.findBySlug(slug);
   }
 
   /**
@@ -33,11 +27,11 @@ export class ActivitiesService {
    * Only inserts if the table is empty.
    */
   async seed(): Promise<number> {
-    const count = await this.activityRepository.count();
+    const count = await this.queryRepo.count();
     if (count > 0) return 0;
 
     const activities = this.getSeedData();
-    await this.activityRepository.save(activities);
+    await this.commandRepo.saveMany(activities);
     return activities.length;
   }
 

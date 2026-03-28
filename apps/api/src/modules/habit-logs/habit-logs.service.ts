@@ -15,7 +15,7 @@ import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto
 import { getSavedCalories, getSavedMoney, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone } from '../../common/utils/date.utils';
 import { GamificationService, AddXpResult } from '../gamification/gamification.service';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 export interface CreateLogResult {
   log: HabitLog;

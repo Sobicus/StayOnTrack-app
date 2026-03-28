@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AchievementsService } from './achievements.service';
+import { AchievementsService } from './services/achievements.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { FriendsService } from '../friends/friends.service';

@@ -13,7 +13,7 @@ import { FriendsService } from '../friends/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { ChallengeType, ChallengeStatus, ChallengeParticipantStatus } from '@stayontrack/contracts';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 describe('ChallengesService', () => {
   let service: ChallengesService;

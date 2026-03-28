@@ -1,6 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { AchievementsService } from './achievements.service';
-import { AchievementsController } from './achievements.controller';
+import { Module } from '@nestjs/common';
+import { AchievementsService } from './services/achievements.service';
+import { AchievementsController } from './controllers/achievements.controller';
 import { StatsModule } from '../stats/stats.module';
 import { StreaksModule } from '../streaks/streaks.module';
 import { FriendsModule } from '../friends/friends.module';

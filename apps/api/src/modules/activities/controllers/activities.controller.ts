@@ -6,9 +6,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ActivitiesService } from './activities.service';
-import { Activity, ActivityCategory } from './entities/activity.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ActivitiesService } from '../services/activities.service';
+import { Activity, ActivityCategory } from '../entities/activity.entity';
 
 @ApiTags('Activities')
 @ApiBearerAuth('access-token')

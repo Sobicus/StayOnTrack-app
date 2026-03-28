@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
 import { Habit } from '../habits/entities/habit.entity';
-import { ActivitiesService } from '../activities/activities.service';
+import { ActivitiesService } from '../activities/services/activities.service';
 import { User } from '../users/entities/user.entity';
 import {
   getPotentialWeightAvoided,

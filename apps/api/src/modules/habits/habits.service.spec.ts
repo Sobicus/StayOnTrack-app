@@ -4,7 +4,7 @@ import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { HabitsService } from './habits.service';
 import { Habit, HabitCategory, HabitFrequencyType, HabitType } from './entities/habit.entity';
 import { HabitTemplate } from './entities/habit-template.entity';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 describe('HabitsService', () => {
   let service: HabitsService;

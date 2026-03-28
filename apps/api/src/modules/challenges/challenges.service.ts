@@ -18,7 +18,7 @@ import { FriendsService } from '../friends/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 @Injectable()
 export class ChallengesService {

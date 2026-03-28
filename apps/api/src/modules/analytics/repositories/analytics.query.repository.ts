@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AnalyticsEvent } from './entities/analytics-event.entity';
+import { AnalyticsEvent } from '../entities/analytics-event.entity';
 
 export interface RetentionCohort {
   registrationDate: string;
@@ -24,44 +24,17 @@ export interface UserFunnel {
 }
 
 @Injectable()
-export class AnalyticsService {
-  private readonly logger = new Logger(AnalyticsService.name);
-
+export class AnalyticsQueryRepository {
   constructor(
     @InjectRepository(AnalyticsEvent)
-    private readonly eventRepository: Repository<AnalyticsEvent>,
+    private readonly repo: Repository<AnalyticsEvent>,
   ) {}
 
-  /**
-   * Fire-and-forget event tracking. Never throws.
-   */
-  async trackEvent(
-    userId: string | null,
-    eventType: string,
-    eventData?: Record<string, unknown>,
-  ): Promise<void> {
-    try {
-      const event = this.eventRepository.create({
-        userId,
-        eventType,
-        eventData: eventData ?? null,
-      });
-      await this.eventRepository.save(event);
-    } catch (error) {
-      this.logger.warn(`Failed to track event "${eventType}": ${error}`);
-    }
-  }
-
-  /**
-   * Calculate day-1, day-7, day-30 retention cohorts.
-   * For each registration date in the range, counts how many users
-   * had checkin_completed events on day+1, day+7, day+30.
-   */
   async getRetentionCohorts(
     startDate: Date,
     endDate: Date,
   ): Promise<RetentionCohort[]> {
-    const result = await this.eventRepository.query(
+    const result = await this.repo.query(
       `
       WITH registrations AS (
         SELECT
@@ -116,11 +89,8 @@ export class AnalyticsService {
     }));
   }
 
-  /**
-   * Count distinct users with checkin_completed events on a given date.
-   */
   async getDailyActiveUsers(date: Date): Promise<number> {
-    const result = await this.eventRepository.query(
+    const result = await this.repo.query(
       `
       SELECT COUNT(DISTINCT "userId") AS count
       FROM analytics_events
@@ -133,14 +103,11 @@ export class AnalyticsService {
     return parseInt(result[0]?.count, 10) || 0;
   }
 
-  /**
-   * Get daily event counts for a given event type over N days.
-   */
   async getEventCounts(
     eventType: string,
     days: number,
   ): Promise<EventCount[]> {
-    const result = await this.eventRepository.query(
+    const result = await this.repo.query(
       `
       SELECT
         DATE("createdAt") AS date,
@@ -160,11 +127,8 @@ export class AnalyticsService {
     }));
   }
 
-  /**
-   * Conversion funnel: registered -> created habit -> first checkin -> active on day 7.
-   */
   async getUserFunnel(): Promise<UserFunnel> {
-    const result = await this.eventRepository.query(
+    const result = await this.repo.query(
       `
       SELECT
         (SELECT COUNT(DISTINCT "userId")

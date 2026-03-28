@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { StatsService } from './stats.service';
 import { HabitLog } from '../habit-logs/entities/habit-log.entity';
-import { ActivitiesService } from '../activities/activities.service';
+import { ActivitiesService } from '../activities/services/activities.service';
 import { Habit } from '../habits/entities/habit.entity';
 import { ProfileVisibility } from '../users/entities/user.entity';
 

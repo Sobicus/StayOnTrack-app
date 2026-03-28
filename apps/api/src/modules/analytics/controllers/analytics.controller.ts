@@ -8,8 +8,8 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AnalyticsService } from './analytics.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { AnalyticsService } from '../services/analytics.service';
 
 @ApiTags('Analytics')
 @ApiBearerAuth('access-token')

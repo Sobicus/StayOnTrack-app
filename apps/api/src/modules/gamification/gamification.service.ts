@@ -7,7 +7,7 @@ import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entit
 import { Habit } from '../habits/entities/habit.entity';
 import { QUEST_DEFINITIONS, getQuestDefinitionMap } from './quest-definitions';
 import { getLevel, getXpForNextLevel, XP_REWARDS } from '@stayontrack/contracts';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 export interface LevelInfo {
   level: number;

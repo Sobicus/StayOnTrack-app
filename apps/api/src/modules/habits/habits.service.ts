@@ -9,7 +9,7 @@ import { Habit } from './entities/habit.entity';
 import { HabitTemplate } from './entities/habit-template.entity';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 @Injectable()
 export class HabitsService {

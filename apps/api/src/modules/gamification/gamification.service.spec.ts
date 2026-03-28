@@ -7,7 +7,7 @@ import { Quest, QuestType } from './entities/quest.entity';
 import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { Habit } from '../habits/entities/habit.entity';
 import { XP_REWARDS } from '@stayontrack/contracts';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 
 describe('GamificationService', () => {
   let service: GamificationService;

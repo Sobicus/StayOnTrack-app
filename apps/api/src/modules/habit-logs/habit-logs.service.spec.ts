@@ -5,7 +5,7 @@ import { HabitLogsService } from './habit-logs.service';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
 import { HabitsService } from '../habits/habits.service';
 import { GamificationService } from '../gamification/gamification.service';
-import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsService } from '../analytics/services/analytics.service';
 import { HabitFrequencyType } from '../habits/entities/habit.entity';
 
 describe('HabitLogsService', () => {
