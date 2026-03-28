@@ -1,16 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { HabitLogsService } from './habit-logs.service';
-import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
+import { HabitLogsService } from './services/habit-logs.service';
+import { HabitLogStatus } from './entities/habit-log.entity';
 import { HabitsService } from '../habits/services/habits.service';
 import { GamificationService } from '../gamification/services/gamification.service';
 import { AnalyticsService } from '../analytics/services/analytics.service';
 import { HabitFrequencyType } from '../habits/entities/habit.entity';
+import { HabitLogsQueryRepository } from './repositories/habit-logs.query.repository';
+import { HabitLogsCommandRepository } from './repositories/habit-logs.command.repository';
 
 describe('HabitLogsService', () => {
   let service: HabitLogsService;
-  let logRepository: any;
+  let queryRepo: any;
+  let commandRepo: any;
   let habitsService: any;
 
   const mockHabit = {
@@ -25,10 +27,16 @@ describe('HabitLogsService', () => {
   };
 
   beforeEach(async () => {
-    logRepository = {
+    queryRepo = {
+      findByHabitAndDate: jest.fn(),
+      findByUserAndDate: jest.fn(),
+      findByDateRange: jest.fn(),
+      findByHabit: jest.fn(),
       findOne: jest.fn(),
-      find: jest.fn(),
-      count: jest.fn(),
+      countByHabitAndDateRange: jest.fn(),
+    };
+
+    commandRepo = {
       create: jest.fn((data) => ({ ...data, id: 'log-1', createdAt: new Date() })),
       save: jest.fn((data) => Promise.resolve({ ...data, id: data.id || 'log-1' })),
       remove: jest.fn(),
@@ -42,7 +50,8 @@ describe('HabitLogsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HabitLogsService,
-        { provide: getRepositoryToken(HabitLog), useValue: logRepository },
+        { provide: HabitLogsQueryRepository, useValue: queryRepo },
+        { provide: HabitLogsCommandRepository, useValue: commandRepo },
         { provide: HabitsService, useValue: habitsService },
         { provide: GamificationService, useValue: { addXp: jest.fn().mockResolvedValue({ totalXp: 10, xpEarned: 10, levelUp: false, newLevel: 1 }) } },
         { provide: AnalyticsService, useValue: { trackEvent: jest.fn().mockResolvedValue(undefined) } },
@@ -54,7 +63,7 @@ describe('HabitLogsService', () => {
 
   describe('createLog', () => {
     it('should create a new log for a daily habit', async () => {
-      logRepository.findOne.mockResolvedValue(null);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       const result = await service.createLog('user-1', {
         habitId: 'habit-1',
@@ -63,8 +72,8 @@ describe('HabitLogsService', () => {
       });
 
       expect(result).toBeDefined();
-      expect(logRepository.create).toHaveBeenCalled();
-      expect(logRepository.save).toHaveBeenCalled();
+      expect(commandRepo.create).toHaveBeenCalled();
+      expect(commandRepo.save).toHaveBeenCalled();
     });
 
     it('should update an existing log if one exists for the same date', async () => {
@@ -77,7 +86,7 @@ describe('HabitLogsService', () => {
         savedCalories: 0,
         savedMoney: 0,
       };
-      logRepository.findOne.mockResolvedValue(existingLog);
+      queryRepo.findByHabitAndDate.mockResolvedValue(existingLog);
 
       await service.createLog('user-1', {
         habitId: 'habit-1',
@@ -85,7 +94,7 @@ describe('HabitLogsService', () => {
         date: '2026-03-13',
       });
 
-      expect(logRepository.save).toHaveBeenCalledWith(
+      expect(commandRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'log-existing',
           status: HabitLogStatus.AVOIDED,
@@ -95,7 +104,7 @@ describe('HabitLogsService', () => {
     });
 
     it('should throw if portionRatio is missing for PARTIAL status', async () => {
-      logRepository.findOne.mockResolvedValue(null);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       await expect(
         service.createLog('user-1', {
@@ -107,7 +116,7 @@ describe('HabitLogsService', () => {
     });
 
     it('should calculate saved calories correctly for AVOIDED', async () => {
-      logRepository.findOne.mockResolvedValue(null);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       await service.createLog('user-1', {
         habitId: 'habit-1',
@@ -115,7 +124,7 @@ describe('HabitLogsService', () => {
         date: '2026-03-13',
       });
 
-      expect(logRepository.create).toHaveBeenCalledWith(
+      expect(commandRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           savedCalories: 500, // 500 * (1 - 0)
           savedMoney: 5, // 5 * (1 - 0)
@@ -124,7 +133,7 @@ describe('HabitLogsService', () => {
     });
 
     it('should calculate saved calories correctly for PARTIAL', async () => {
-      logRepository.findOne.mockResolvedValue(null);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       await service.createLog('user-1', {
         habitId: 'habit-1',
@@ -133,7 +142,7 @@ describe('HabitLogsService', () => {
         date: '2026-03-13',
       });
 
-      expect(logRepository.create).toHaveBeenCalledWith(
+      expect(commandRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           savedCalories: 250, // 500 * (1 - 0.5)
           savedMoney: 2.5, // 5 * (1 - 0.5)
@@ -142,7 +151,7 @@ describe('HabitLogsService', () => {
     });
 
     it('should calculate zero savings for CONSUMED', async () => {
-      logRepository.findOne.mockResolvedValue(null);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       await service.createLog('user-1', {
         habitId: 'habit-1',
@@ -150,7 +159,7 @@ describe('HabitLogsService', () => {
         date: '2026-03-13',
       });
 
-      expect(logRepository.create).toHaveBeenCalledWith(
+      expect(commandRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           savedCalories: 0,
           savedMoney: 0,
@@ -161,8 +170,8 @@ describe('HabitLogsService', () => {
 
   describe('frequency enforcement', () => {
     it('should allow check-in for daily habits without limits', async () => {
-      logRepository.findOne.mockResolvedValue(null);
-      logRepository.count.mockResolvedValue(5);
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
+      queryRepo.countByHabitAndDateRange.mockResolvedValue(5);
 
       await expect(
         service.createLog('user-1', {
@@ -180,8 +189,8 @@ describe('HabitLogsService', () => {
         occurrencesPerWeek: 2,
       };
       habitsService.findOneByUser.mockResolvedValue(weeklyHabit);
-      logRepository.findOne.mockResolvedValue(null); // No existing log for today
-      logRepository.count.mockResolvedValue(2); // Already 2 this week
+      queryRepo.findByHabitAndDate.mockResolvedValue(null); // No existing log for today
+      queryRepo.countByHabitAndDateRange.mockResolvedValue(2); // Already 2 this week
 
       await expect(
         service.createLog('user-1', {
@@ -199,8 +208,8 @@ describe('HabitLogsService', () => {
         occurrencesPerWeek: 3,
       };
       habitsService.findOneByUser.mockResolvedValue(weeklyHabit);
-      logRepository.findOne.mockResolvedValue(null);
-      logRepository.count.mockResolvedValue(1); // Only 1 this week, limit is 3
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
+      queryRepo.countByHabitAndDateRange.mockResolvedValue(1); // Only 1 this week, limit is 3
 
       await expect(
         service.createLog('user-1', {
@@ -218,8 +227,8 @@ describe('HabitLogsService', () => {
         occurrencesPerWeek: 4,
       };
       habitsService.findOneByUser.mockResolvedValue(customHabit);
-      logRepository.findOne.mockResolvedValue(null);
-      logRepository.count.mockResolvedValue(4); // Already 4 this week
+      queryRepo.findByHabitAndDate.mockResolvedValue(null);
+      queryRepo.countByHabitAndDateRange.mockResolvedValue(4); // Already 4 this week
 
       await expect(
         service.createLog('user-1', {
@@ -251,7 +260,7 @@ describe('HabitLogsService', () => {
         occurrencesPerWeek: 3,
       };
       habitsService.findActiveByUser.mockResolvedValue([weeklyHabit]);
-      logRepository.count.mockResolvedValue(1);
+      queryRepo.countByHabitAndDateRange.mockResolvedValue(1);
 
       const result = await service.getFrequencyStatus('user-1');
 

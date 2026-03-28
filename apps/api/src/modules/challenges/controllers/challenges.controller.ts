@@ -11,14 +11,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
-import { ChallengesService } from './challenges.service';
-import { CreateChallengeDto } from './dto/create-challenge.dto';
-import { JoinChallengeDto } from './dto/join-challenge.dto';
-import { InviteMultipleDto } from './dto/invite-multiple.dto';
-import { ChallengeResponseDto } from './dto/challenge-response.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
+import { ChallengesService } from '../services/challenges.service';
+import { CreateChallengeDto } from '../dto/create-challenge.dto';
+import { JoinChallengeDto } from '../dto/join-challenge.dto';
+import { InviteMultipleDto } from '../dto/invite-multiple.dto';
+import { ChallengeResponseDto } from '../dto/challenge-response.dto';
 
 @ApiTags('Challenges')
 @ApiBearerAuth('access-token')

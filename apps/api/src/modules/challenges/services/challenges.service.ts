@@ -4,29 +4,27 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Not } from 'typeorm';
 import * as crypto from 'crypto';
-import { Challenge, ChallengeStatus, ChallengeVisibility } from './entities/challenge.entity';
+import { Challenge, ChallengeStatus, ChallengeVisibility } from '../entities/challenge.entity';
 import {
   ChallengeParticipant,
   ChallengeParticipantStatus,
-} from './entities/challenge-participant.entity';
+} from '../entities/challenge-participant.entity';
 import { ChallengeType } from '@stayontrack/contracts';
-import { UsersService } from '../users/services/users.service';
-import { FriendsService } from '../friends/services/friends.service';
-import { StatsService } from '../stats/stats.service';
-import { StreaksService } from '../streaks/streaks.service';
-import { CreateChallengeDto } from './dto/create-challenge.dto';
-import { AnalyticsService } from '../analytics/services/analytics.service';
+import { UsersService } from '../../users/services/users.service';
+import { FriendsService } from '../../friends/services/friends.service';
+import { StatsService } from '../../stats/services/stats.service';
+import { StreaksService } from '../../streaks/services/streaks.service';
+import { CreateChallengeDto } from '../dto/create-challenge.dto';
+import { AnalyticsService } from '../../analytics/services/analytics.service';
+import { ChallengesQueryRepository } from '../repositories/challenges.query.repository';
+import { ChallengesCommandRepository } from '../repositories/challenges.command.repository';
 
 @Injectable()
 export class ChallengesService {
   constructor(
-    @InjectRepository(Challenge)
-    private readonly challengeRepository: Repository<Challenge>,
-    @InjectRepository(ChallengeParticipant)
-    private readonly participantRepository: Repository<ChallengeParticipant>,
+    private readonly challengesQueryRepository: ChallengesQueryRepository,
+    private readonly challengesCommandRepository: ChallengesCommandRepository,
     private readonly usersService: UsersService,
     private readonly friendsService: FriendsService,
     private readonly statsService: StatsService,
@@ -79,7 +77,7 @@ export class ChallengesService {
 
     // Create challenge
     const inviteCode = crypto.randomBytes(4).toString('hex');
-    const challenge = this.challengeRepository.create({
+    const challenge = this.challengesCommandRepository.createChallenge({
       creatorUserId: creatorId,
       title: dto.title,
       description: dto.description || null,
@@ -94,60 +92,44 @@ export class ChallengesService {
       visibility: dto.visibility ?? ChallengeVisibility.PRIVATE,
     });
 
-    const savedChallenge = await this.challengeRepository.save(challenge);
+    const savedChallenge = await this.challengesCommandRepository.saveChallenge(challenge);
 
     // Add creator as ACCEPTED participant
-    const creatorParticipant = this.participantRepository.create({
+    const creatorParticipant = this.challengesCommandRepository.createParticipant({
       challengeId: savedChallenge.id,
       userId: creatorId,
       status: ChallengeParticipantStatus.ACCEPTED,
     });
 
     // Add invited user as INVITED participant
-    const invitedParticipant = this.participantRepository.create({
+    const invitedParticipant = this.challengesCommandRepository.createParticipant({
       challengeId: savedChallenge.id,
       userId: invitedUser.id,
       status: ChallengeParticipantStatus.INVITED,
     });
 
-    await this.participantRepository.save([
+    await this.challengesCommandRepository.saveParticipants([
       creatorParticipant,
       invitedParticipant,
     ]);
 
-    return this.findOneWithRelations(savedChallenge.id);
+    return this.challengesQueryRepository.findOneWithRelations(savedChallenge.id);
   }
 
   /**
    * Get all challenges for a user (as creator or participant).
    */
   async findAllByUser(userId: string): Promise<Challenge[]> {
-    // Find all challenge IDs where user is a participant
-    const participations = await this.participantRepository.find({
-      where: { userId },
-      select: ['challengeId'],
-    });
+    const participations = await this.challengesQueryRepository.findParticipationsByUser(userId);
     const challengeIds = participations.map((p) => p.challengeId);
-
-    if (challengeIds.length === 0) return [];
-
-    return this.challengeRepository.find({
-      where: { id: In(challengeIds) },
-      relations: [
-        'creator',
-        'winner',
-        'participants',
-        'participants.user',
-      ],
-      order: { createdAt: 'DESC' },
-    });
+    return this.challengesQueryRepository.findByIds(challengeIds);
   }
 
   /**
    * Get a single challenge by ID (with authorization check).
    */
   async findOneByUser(challengeId: string, userId: string): Promise<Challenge> {
-    const challenge = await this.findOneWithRelations(challengeId);
+    const challenge = await this.challengesQueryRepository.findOneWithRelations(challengeId);
 
     // Check if user is a participant
     const isParticipant = challenge.participants.some(
@@ -164,49 +146,43 @@ export class ChallengesService {
    * Accept a challenge invitation.
    */
   async acceptChallenge(challengeId: string, userId: string): Promise<void> {
-    const participant = await this.participantRepository.findOne({
-      where: {
-        challengeId,
-        userId,
-        status: ChallengeParticipantStatus.INVITED,
-      },
-    });
+    const participant = await this.challengesQueryRepository.findParticipant(
+      challengeId,
+      userId,
+      ChallengeParticipantStatus.INVITED,
+    );
 
     if (!participant) {
       throw new NotFoundException('Challenge invitation not found');
     }
 
     participant.status = ChallengeParticipantStatus.ACCEPTED;
-    await this.participantRepository.save(participant);
+    await this.challengesCommandRepository.saveParticipant(participant);
   }
 
   /**
    * Decline a challenge invitation.
    */
   async declineChallenge(challengeId: string, userId: string): Promise<void> {
-    const participant = await this.participantRepository.findOne({
-      where: {
-        challengeId,
-        userId,
-        status: ChallengeParticipantStatus.INVITED,
-      },
-    });
+    const participant = await this.challengesQueryRepository.findParticipant(
+      challengeId,
+      userId,
+      ChallengeParticipantStatus.INVITED,
+    );
 
     if (!participant) {
       throw new NotFoundException('Challenge invitation not found');
     }
 
     participant.status = ChallengeParticipantStatus.DECLINED;
-    await this.participantRepository.save(participant);
+    await this.challengesCommandRepository.saveParticipant(participant);
   }
 
   /**
    * Cancel a challenge (only creator can cancel).
    */
   async cancelChallenge(challengeId: string, userId: string): Promise<void> {
-    const challenge = await this.challengeRepository.findOne({
-      where: { id: challengeId },
-    });
+    const challenge = await this.challengesQueryRepository.findById(challengeId);
 
     if (!challenge) {
       throw new NotFoundException('Challenge not found');
@@ -221,7 +197,7 @@ export class ChallengesService {
     }
 
     challenge.status = ChallengeStatus.CANCELLED;
-    await this.challengeRepository.save(challenge);
+    await this.challengesCommandRepository.saveChallenge(challenge);
   }
 
   /**
@@ -258,32 +234,20 @@ export class ChallengesService {
       );
 
       participant.currentValue = value;
-      await this.participantRepository.save(participant);
+      await this.challengesCommandRepository.saveParticipant(participant);
     }
 
     // Check if challenge should be completed (end date passed)
     await this.checkAndCompleteChallenge(challenge);
 
-    return this.findOneWithRelations(challengeId);
+    return this.challengesQueryRepository.findOneWithRelations(challengeId);
   }
 
   /**
    * Get pending invitations for a user.
    */
   async getPendingInvitations(userId: string): Promise<Challenge[]> {
-    const invitations = await this.participantRepository.find({
-      where: { userId, status: ChallengeParticipantStatus.INVITED },
-      select: ['challengeId'],
-    });
-
-    const challengeIds = invitations.map((p) => p.challengeId);
-    if (challengeIds.length === 0) return [];
-
-    return this.challengeRepository.find({
-      where: { id: In(challengeIds), status: ChallengeStatus.ACTIVE },
-      relations: ['creator', 'winner', 'participants', 'participants.user'],
-      order: { createdAt: 'DESC' },
-    });
+    return this.challengesQueryRepository.findPendingInvitations(userId);
   }
 
   /**
@@ -320,17 +284,12 @@ export class ChallengesService {
       case ChallengeType.HABIT: {
         // Count days where this specific habit was AVOIDED within date range
         if (!challenge.habitId) return 0;
-        const result = await this.challengeRepository.manager.query(
-          `SELECT COUNT(*) as count
-           FROM habit_logs
-           WHERE "userId" = $1
-             AND "habitId" = $2
-             AND date >= $3
-             AND date <= $4
-             AND status = 'AVOIDED'`,
-          [userId, challenge.habitId, challenge.startDate, challenge.endDate],
+        return this.challengesQueryRepository.countAvoidedHabitLogs(
+          userId,
+          challenge.habitId,
+          challenge.startDate,
+          challenge.endDate,
         );
-        return parseInt(result[0]?.count) || 0;
       }
 
       default:
@@ -355,7 +314,7 @@ export class ChallengesService {
 
     if (acceptedParticipants.length === 0) {
       challenge.status = ChallengeStatus.CANCELLED;
-      await this.challengeRepository.save(challenge);
+      await this.challengesCommandRepository.saveChallenge(challenge);
       return;
     }
 
@@ -373,35 +332,28 @@ export class ChallengesService {
     }
 
     challenge.status = ChallengeStatus.COMPLETED;
-    await this.challengeRepository.save(challenge);
+    await this.challengesCommandRepository.saveChallenge(challenge);
   }
 
   /**
    * Get challenge count for a user.
    */
   async getChallengeCount(userId: string): Promise<number> {
-    return this.participantRepository.count({
-      where: { userId, status: ChallengeParticipantStatus.ACCEPTED },
-    });
+    return this.challengesQueryRepository.countAcceptedParticipations(userId);
   }
 
   /**
    * Get completed challenge count where user is the winner.
    */
   async getWinCount(userId: string): Promise<number> {
-    return this.challengeRepository.count({
-      where: { winnerId: userId, status: ChallengeStatus.COMPLETED },
-    });
+    return this.challengesQueryRepository.countWins(userId);
   }
 
   /**
    * Join a challenge by invite code.
    */
   async joinByCode(userId: string, code: string): Promise<Challenge> {
-    const challenge = await this.challengeRepository.findOne({
-      where: { inviteCode: code },
-      relations: ['participants'],
-    });
+    const challenge = await this.challengesQueryRepository.findByInviteCode(code);
 
     if (!challenge) {
       throw new NotFoundException('Challenge not found');
@@ -428,18 +380,18 @@ export class ChallengesService {
       throw new BadRequestException('Challenge has reached the maximum number of participants');
     }
 
-    const participant = this.participantRepository.create({
+    const participant = this.challengesCommandRepository.createParticipant({
       challengeId: challenge.id,
       userId,
       status: ChallengeParticipantStatus.ACCEPTED,
     });
-    await this.participantRepository.save(participant);
+    await this.challengesCommandRepository.saveParticipant(participant);
 
     this.analyticsService
       .trackEvent(userId, 'challenge_joined', { challengeId: challenge.id })
       .catch(() => {});
 
-    return this.findOneWithRelations(challenge.id);
+    return this.challengesQueryRepository.findOneWithRelations(challenge.id);
   }
 
   /**
@@ -450,10 +402,7 @@ export class ChallengesService {
     creatorUserId: string,
     usernames: string[],
   ): Promise<ChallengeParticipant[]> {
-    const challenge = await this.challengeRepository.findOne({
-      where: { id: challengeId },
-      relations: ['participants'],
-    });
+    const challenge = await this.challengesQueryRepository.findByIdWithParticipants(challengeId);
 
     if (!challenge) {
       throw new NotFoundException('Challenge not found');
@@ -492,14 +441,14 @@ export class ChallengesService {
 
     // Create participant entries
     const participants = newUsers.map((u) =>
-      this.participantRepository.create({
+      this.challengesCommandRepository.createParticipant({
         challengeId: challenge.id,
         userId: u.id,
         status: ChallengeParticipantStatus.INVITED,
       }),
     );
 
-    return this.participantRepository.save(participants);
+    return this.challengesCommandRepository.saveParticipants(participants) as Promise<ChallengeParticipant[]>;
   }
 
   /**
@@ -507,41 +456,7 @@ export class ChallengesService {
    */
   async findPublicChallenges(userId: string): Promise<Challenge[]> {
     const today = this.getTodayDate();
-
-    // Get IDs of challenges the user is already participating in
-    const participations = await this.participantRepository.find({
-      where: { userId },
-      select: ['challengeId'],
-    });
-    const joinedIds = participations.map((p) => p.challengeId);
-
-    const qb = this.challengeRepository
-      .createQueryBuilder('challenge')
-      .leftJoinAndSelect('challenge.creator', 'creator')
-      .leftJoinAndSelect('challenge.participants', 'participants')
-      .leftJoinAndSelect('participants.user', 'participantUser')
-      .where('challenge.visibility = :visibility', {
-        visibility: ChallengeVisibility.PUBLIC,
-      })
-      .andWhere('challenge.status = :status', {
-        status: ChallengeStatus.ACTIVE,
-      })
-      .andWhere('challenge.endDate > :today', { today })
-      .orderBy('challenge.createdAt', 'DESC')
-      .take(20);
-
-    if (joinedIds.length > 0) {
-      qb.andWhere('challenge.id NOT IN (:...joinedIds)', { joinedIds });
-    }
-
-    return qb.getMany();
-  }
-
-  private findOneWithRelations(challengeId: string): Promise<Challenge> {
-    return this.challengeRepository.findOneOrFail({
-      where: { id: challengeId },
-      relations: ['creator', 'winner', 'participants', 'participants.user'],
-    });
+    return this.challengesQueryRepository.findPublicChallenges(userId, today);
   }
 
   private getTodayDate(): string {

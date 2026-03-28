@@ -4,18 +4,18 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsWhere } from 'typeorm';
-import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
-import { HabitsService } from '../habits/services/habits.service';
-import { Habit, HabitFrequencyType, HabitType } from '../habits/entities/habit.entity';
-import { CreateHabitLogDto } from './dto/create-habit-log.dto';
-import { BatchCheckinDto } from './dto/batch-checkin.dto';
-import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto';
+import { HabitLog, HabitLogStatus } from '../entities/habit-log.entity';
+import { HabitsService } from '../../habits/services/habits.service';
+import { Habit, HabitFrequencyType, HabitType } from '../../habits/entities/habit.entity';
+import { CreateHabitLogDto } from '../dto/create-habit-log.dto';
+import { BatchCheckinDto } from '../dto/batch-checkin.dto';
+import { DaySummaryDto, HabitLogResponseDto } from '../dto/habit-log-response.dto';
 import { getSavedCalories, getSavedMoney, XP_REWARDS } from '@stayontrack/contracts';
-import { getTodayInTimezone } from '../../common/utils/date.utils';
-import { GamificationService, AddXpResult } from '../gamification/services/gamification.service';
-import { AnalyticsService } from '../analytics/services/analytics.service';
+import { getTodayInTimezone } from '../../../common/utils/date.utils';
+import { GamificationService, AddXpResult } from '../../gamification/services/gamification.service';
+import { AnalyticsService } from '../../analytics/services/analytics.service';
+import { HabitLogsQueryRepository } from '../repositories/habit-logs.query.repository';
+import { HabitLogsCommandRepository } from '../repositories/habit-logs.command.repository';
 
 export interface CreateLogResult {
   log: HabitLog;
@@ -26,8 +26,8 @@ export interface CreateLogResult {
 @Injectable()
 export class HabitLogsService {
   constructor(
-    @InjectRepository(HabitLog)
-    private readonly logRepository: Repository<HabitLog>,
+    private readonly habitLogsQueryRepository: HabitLogsQueryRepository,
+    private readonly habitLogsCommandRepository: HabitLogsCommandRepository,
     private readonly habitsService: HabitsService,
     private readonly gamificationService: GamificationService,
     private readonly analyticsService: AnalyticsService,
@@ -46,9 +46,7 @@ export class HabitLogsService {
     const portionRatio = this.resolvePortionRatio(dto.status, dto.portionRatio);
 
     // Check for duplicate
-    const existing = await this.logRepository.findOne({
-      where: { habitId: dto.habitId, date },
-    });
+    const existing = await this.habitLogsQueryRepository.findByHabitAndDate(dto.habitId, date);
 
     const isAchievement = habit.habitType === HabitType.ACHIEVEMENT;
 
@@ -59,7 +57,7 @@ export class HabitLogsService {
       existing.savedCalories = isAchievement ? 0 : getSavedCalories(habit.caloriesPerOccurrence, portionRatio);
       existing.savedMoney = isAchievement ? 0 : getSavedMoney(habit.pricePerOccurrence, portionRatio);
       existing.completedAmount = isAchievement ? (dto.completedAmount ?? null) : null;
-      const saved = await this.logRepository.save(existing);
+      const saved = await this.habitLogsCommandRepository.save(existing);
       // No XP on updates — only first check-in earns XP
       return { log: saved, xpEarned: 0, levelUp: false };
     }
@@ -67,7 +65,7 @@ export class HabitLogsService {
     // Enforce frequency limits for non-daily habits
     await this.enforceFrequencyLimit(habit, date);
 
-    const log = this.logRepository.create({
+    const log = this.habitLogsCommandRepository.create({
       habitId: dto.habitId,
       userId,
       date,
@@ -78,7 +76,7 @@ export class HabitLogsService {
       completedAmount: isAchievement ? (dto.completedAmount ?? null) : null,
     });
 
-    const saved = await this.logRepository.save(log);
+    const saved = await this.habitLogsCommandRepository.save(log);
 
     this.analyticsService
       .trackEvent(userId, 'checkin_completed', { habitId: dto.habitId, status: dto.status })
@@ -129,10 +127,7 @@ export class HabitLogsService {
    * Get all logs for a specific date with summary.
    */
   async getDaySummary(userId: string, date: string): Promise<DaySummaryDto> {
-    const logs = await this.logRepository.find({
-      where: { userId, date },
-      order: { createdAt: 'ASC' },
-    });
+    const logs = await this.habitLogsQueryRepository.findByUserAndDate(userId, date);
 
     const activeHabits = await this.habitsService.findActiveByUser(userId);
 
@@ -158,13 +153,7 @@ export class HabitLogsService {
     startDate: string,
     endDate: string,
   ): Promise<HabitLog[]> {
-    return this.logRepository.find({
-      where: {
-        userId,
-        date: Between(startDate, endDate),
-      },
-      order: { date: 'ASC', createdAt: 'ASC' },
-    });
+    return this.habitLogsQueryRepository.findByDateRange(userId, startDate, endDate);
   }
 
   /**
@@ -179,30 +168,20 @@ export class HabitLogsService {
     // Verify ownership
     await this.habitsService.findOneByUser(habitId, userId);
 
-    const where: FindOptionsWhere<HabitLog> = { userId, habitId };
-    if (startDate && endDate) {
-      where.date = Between(startDate, endDate);
-    }
-
-    return this.logRepository.find({
-      where,
-      order: { date: 'DESC' },
-    });
+    return this.habitLogsQueryRepository.findByHabit(userId, habitId, startDate, endDate);
   }
 
   /**
    * Delete a log (undo check-in).
    */
   async deleteLog(logId: string, userId: string): Promise<void> {
-    const log = await this.logRepository.findOne({
-      where: { id: logId, userId },
-    });
+    const log = await this.habitLogsQueryRepository.findOne(logId, userId);
 
     if (!log) {
       throw new NotFoundException('Habit log not found');
     }
 
-    await this.logRepository.remove(log);
+    await this.habitLogsCommandRepository.remove(log);
   }
 
   /**
@@ -256,7 +235,7 @@ export class HabitLogsService {
       }
 
       const weeklyLimit = this.getWeeklyLimit(habit);
-      const used = await this.countWeeklyLogs(habit.id, start, end);
+      const used = await this.habitLogsQueryRepository.countByHabitAndDateRange(habit.id, start, end);
 
       results.push({
         habitId: habit.id,
@@ -280,7 +259,7 @@ export class HabitLogsService {
 
     const weeklyLimit = this.getWeeklyLimit(habit);
     const { start, end } = this.getIsoWeekBounds(date);
-    const used = await this.countWeeklyLogs(habit.id, start, end);
+    const used = await this.habitLogsQueryRepository.countByHabitAndDateRange(habit.id, start, end);
 
     if (used >= weeklyLimit) {
       throw new BadRequestException(
@@ -299,22 +278,6 @@ export class HabitLogsService {
     }
     // CUSTOM
     return habit.occurrencesPerWeek ?? 7;
-  }
-
-  /**
-   * Count how many logs exist for a habit within a date range.
-   */
-  private async countWeeklyLogs(
-    habitId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<number> {
-    return this.logRepository.count({
-      where: {
-        habitId,
-        date: Between(startDate, endDate),
-      },
-    });
   }
 
   /**

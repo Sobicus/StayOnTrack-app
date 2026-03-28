@@ -1,23 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { StatsService } from './stats.service';
-import { HabitLog } from '../habit-logs/entities/habit-log.entity';
+import { StatsService } from './services/stats.service';
 import { ActivitiesService } from '../activities/services/activities.service';
-import { Habit } from '../habits/entities/habit.entity';
 import { ProfileVisibility } from '../users/entities/user.entity';
+import { StatsQueryRepository } from './repositories/stats.query.repository';
 
 describe('StatsService', () => {
   let service: StatsService;
-  let logRepository: any;
+  let statsQueryRepository: any;
   let activitiesService: any;
-
-  const mockQueryBuilder = {
-    select: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    getRawOne: jest.fn(),
-  };
 
   const mockUser = {
     id: 'user-1',
@@ -44,8 +34,15 @@ describe('StatsService', () => {
   };
 
   beforeEach(async () => {
-    logRepository = {
-      createQueryBuilder: jest.fn().mockReturnValue({ ...mockQueryBuilder }),
+    statsQueryRepository = {
+      getAggregatedStats: jest.fn(),
+      getAggregatedStatsByDateRange: jest.fn(),
+      getPastDaysSums: jest.fn(),
+      getDaySums: jest.fn(),
+      getWeeklyTrendRows: jest.fn(),
+      findAllLogsByUser: jest.fn(),
+      findLogsByDateRange: jest.fn(),
+      findHabitsByUser: jest.fn().mockResolvedValue([]),
     };
 
     activitiesService = {
@@ -55,8 +52,7 @@ describe('StatsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StatsService,
-        { provide: getRepositoryToken(HabitLog), useValue: logRepository },
-        { provide: getRepositoryToken(Habit), useValue: { find: jest.fn().mockResolvedValue([]) } },
+        { provide: StatsQueryRepository, useValue: statsQueryRepository },
         { provide: ActivitiesService, useValue: activitiesService },
       ],
     }).compile();
@@ -66,18 +62,12 @@ describe('StatsService', () => {
 
   describe('getUserStats', () => {
     it('should calculate totals from habit logs', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: '1500',
-          totalSavedMoney: '75.50',
-          totalCheckIns: '30',
-          totalDaysTracked: '15',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStats.mockResolvedValue({
+        totalSavedCalories: '1500',
+        totalSavedMoney: '75.50',
+        totalCheckIns: '30',
+        totalDaysTracked: '15',
+      });
 
       const result = await service.getUserStats('user-1');
 
@@ -90,18 +80,12 @@ describe('StatsService', () => {
     });
 
     it('should return zeros for user with no logs', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: null,
-          totalSavedMoney: null,
-          totalCheckIns: '0',
-          totalDaysTracked: '0',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStats.mockResolvedValue({
+        totalSavedCalories: null,
+        totalSavedMoney: null,
+        totalCheckIns: '0',
+        totalDaysTracked: '0',
+      });
 
       const result = await service.getUserStats('user-no-logs');
 
@@ -115,19 +99,12 @@ describe('StatsService', () => {
 
   describe('getEffortEquivalents', () => {
     it('should return activity-based equivalents', async () => {
-      // Set up getUserStats to return saved calories
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: '500',
-          totalSavedMoney: '25',
-          totalCheckIns: '10',
-          totalDaysTracked: '5',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStats.mockResolvedValue({
+        totalSavedCalories: '500',
+        totalSavedMoney: '25',
+        totalCheckIns: '10',
+        totalDaysTracked: '5',
+      });
 
       activitiesService.findAll.mockResolvedValue([
         {
@@ -168,18 +145,12 @@ describe('StatsService', () => {
     });
 
     it('should return empty array when no saved calories', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: '0',
-          totalSavedMoney: '0',
-          totalCheckIns: '0',
-          totalDaysTracked: '0',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStats.mockResolvedValue({
+        totalSavedCalories: '0',
+        totalSavedMoney: '0',
+        totalCheckIns: '0',
+        totalDaysTracked: '0',
+      });
 
       const result = await service.getEffortEquivalents('user-1');
 
@@ -187,18 +158,12 @@ describe('StatsService', () => {
     });
 
     it('should use default weight of 75kg when not specified', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: '100',
-          totalSavedMoney: '5',
-          totalCheckIns: '2',
-          totalDaysTracked: '1',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStats.mockResolvedValue({
+        totalSavedCalories: '100',
+        totalSavedMoney: '5',
+        totalCheckIns: '2',
+        totalDaysTracked: '1',
+      });
 
       activitiesService.findAll.mockResolvedValue([
         {
@@ -223,21 +188,8 @@ describe('StatsService', () => {
 
   describe('getLiveStats', () => {
     it('should return past and today stats separately', async () => {
-      let callCount = 0;
-      logRepository.createQueryBuilder.mockImplementation(() => {
-        callCount++;
-        return {
-          select: jest.fn().mockReturnThis(),
-          addSelect: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          getRawOne: jest.fn().mockResolvedValue(
-            callCount === 1
-              ? { cal: '1000', money: '50' }  // past
-              : { cal: '200', money: '10' },    // today
-          ),
-        };
-      });
+      statsQueryRepository.getPastDaysSums.mockResolvedValue({ cal: '1000', money: '50' });
+      statsQueryRepository.getDaySums.mockResolvedValue({ cal: '200', money: '10' });
 
       const result = await service.getLiveStats(mockUser as any);
 
@@ -253,13 +205,8 @@ describe('StatsService', () => {
     });
 
     it('should return zeros when user has no logs', async () => {
-      logRepository.createQueryBuilder.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ cal: null, money: null }),
-      });
+      statsQueryRepository.getPastDaysSums.mockResolvedValue({ cal: null, money: null });
+      statsQueryRepository.getDaySums.mockResolvedValue({ cal: null, money: null });
 
       const result = await service.getLiveStats(mockUser as any);
 
@@ -273,25 +220,20 @@ describe('StatsService', () => {
 
   describe('getStatsByDateRange', () => {
     it('should return stats filtered by date range', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: '770',
-          totalSavedMoney: '38.5',
-          totalCheckIns: '14',
-          totalDaysTracked: '7',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStatsByDateRange.mockResolvedValue({
+        totalSavedCalories: '770',
+        totalSavedMoney: '38.5',
+        totalCheckIns: '14',
+        totalDaysTracked: '7',
+      });
 
       const result = await service.getStatsByDateRange('user-1', '2026-03-01', '2026-03-07');
 
-      expect(qb.where).toHaveBeenCalledWith('log.userId = :userId', { userId: 'user-1' });
-      expect(qb.andWhere).toHaveBeenCalledWith('log.date >= :startDate', { startDate: '2026-03-01' });
-      expect(qb.andWhere).toHaveBeenCalledWith('log.date <= :endDate', { endDate: '2026-03-07' });
+      expect(statsQueryRepository.getAggregatedStatsByDateRange).toHaveBeenCalledWith(
+        'user-1',
+        '2026-03-01',
+        '2026-03-07',
+      );
       expect(result.totalSavedCalories).toBe(770);
       expect(result.totalSavedMoney).toBe(38.5);
       expect(result.totalCheckIns).toBe(14);
@@ -301,19 +243,12 @@ describe('StatsService', () => {
     });
 
     it('should return zeros for date range with no logs', async () => {
-      const qb = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({
-          totalSavedCalories: null,
-          totalSavedMoney: null,
-          totalCheckIns: '0',
-          totalDaysTracked: '0',
-        }),
-      };
-      logRepository.createQueryBuilder.mockReturnValue(qb);
+      statsQueryRepository.getAggregatedStatsByDateRange.mockResolvedValue({
+        totalSavedCalories: null,
+        totalSavedMoney: null,
+        totalCheckIns: '0',
+        totalDaysTracked: '0',
+      });
 
       const result = await service.getStatsByDateRange('user-1', '2025-01-01', '2025-01-07');
 

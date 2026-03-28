@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AchievementsService } from './services/achievements.service';
-import { StatsService } from '../stats/stats.service';
-import { StreaksService } from '../streaks/streaks.service';
+import { StatsService } from '../stats/services/stats.service';
+import { StreaksService } from '../streaks/services/streaks.service';
 import { FriendsService } from '../friends/services/friends.service';
-import { ChallengesService } from '../challenges/challenges.service';
+import { ChallengesService } from '../challenges/services/challenges.service';
 import { ACHIEVEMENTS } from './achievements.constants';
 
 describe('AchievementsService', () => {

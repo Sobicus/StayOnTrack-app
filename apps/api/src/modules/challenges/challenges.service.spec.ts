@@ -1,24 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { ChallengesService } from './challenges.service';
-import { Challenge } from './entities/challenge.entity';
-import { ChallengeParticipant } from './entities/challenge-participant.entity';
+import { ChallengesService } from './services/challenges.service';
 import { UsersService } from '../users/services/users.service';
 import { FriendsService } from '../friends/services/friends.service';
-import { StatsService } from '../stats/stats.service';
-import { StreaksService } from '../streaks/streaks.service';
+import { StatsService } from '../stats/services/stats.service';
+import { StreaksService } from '../streaks/services/streaks.service';
 import { ChallengeType, ChallengeStatus, ChallengeParticipantStatus } from '@stayontrack/contracts';
 import { AnalyticsService } from '../analytics/services/analytics.service';
+import { ChallengesQueryRepository } from './repositories/challenges.query.repository';
+import { ChallengesCommandRepository } from './repositories/challenges.command.repository';
 
 describe('ChallengesService', () => {
   let service: ChallengesService;
-  let challengeRepo: any;
-  let participantRepo: any;
+  let queryRepo: any;
+  let commandRepo: any;
   let usersService: any;
   let friendsService: any;
   let statsService: any;
@@ -40,7 +39,7 @@ describe('ChallengesService', () => {
     return d.toISOString().split('T')[0];
   })();
 
-  const mockChallenge: Partial<Challenge> = {
+  const mockChallenge: any = {
     id: 'challenge-1',
     creatorUserId: 'user-1',
     title: 'No Sweets Week',
@@ -53,12 +52,10 @@ describe('ChallengesService', () => {
   };
 
   beforeEach(async () => {
-    challengeRepo = {
-      create: jest.fn((data) => ({ ...data, id: 'challenge-1', createdAt: new Date() })),
-      save: jest.fn((data) => Promise.resolve(data)),
-      find: jest.fn().mockResolvedValue([]),
-      findOne: jest.fn().mockResolvedValue(null),
-      findOneOrFail: jest.fn().mockResolvedValue({
+    queryRepo = {
+      findParticipationsByUser: jest.fn().mockResolvedValue([]),
+      findByIds: jest.fn().mockResolvedValue([]),
+      findOneWithRelations: jest.fn().mockResolvedValue({
         ...mockChallenge,
         creator: mockUser,
         winner: null,
@@ -67,16 +64,23 @@ describe('ChallengesService', () => {
           { id: 'p-2', userId: 'user-2', status: ChallengeParticipantStatus.INVITED, currentValue: 0, user: mockFriend },
         ],
       }),
-      count: jest.fn().mockResolvedValue(0),
-      manager: { query: jest.fn().mockResolvedValue([{ count: '5' }]) },
+      findById: jest.fn().mockResolvedValue(null),
+      findByInviteCode: jest.fn().mockResolvedValue(null),
+      findByIdWithParticipants: jest.fn().mockResolvedValue(null),
+      findParticipant: jest.fn().mockResolvedValue(null),
+      findPendingInvitations: jest.fn().mockResolvedValue([]),
+      findPublicChallenges: jest.fn().mockResolvedValue([]),
+      countAcceptedParticipations: jest.fn().mockResolvedValue(0),
+      countWins: jest.fn().mockResolvedValue(0),
+      countAvoidedHabitLogs: jest.fn().mockResolvedValue(5),
     };
 
-    participantRepo = {
-      create: jest.fn((data) => ({ ...data, id: `p-${Date.now()}`, joinedAt: new Date() })),
-      save: jest.fn((data) => Promise.resolve(Array.isArray(data) ? data : data)),
-      find: jest.fn().mockResolvedValue([]),
-      findOne: jest.fn().mockResolvedValue(null),
-      count: jest.fn().mockResolvedValue(0),
+    commandRepo = {
+      createChallenge: jest.fn((data) => ({ ...data, id: 'challenge-1', createdAt: new Date() })),
+      saveChallenge: jest.fn((data) => Promise.resolve(data)),
+      createParticipant: jest.fn((data) => ({ ...data, id: `p-${Date.now()}`, joinedAt: new Date() })),
+      saveParticipants: jest.fn((data) => Promise.resolve(Array.isArray(data) ? data : data)),
+      saveParticipant: jest.fn((data) => Promise.resolve(data)),
     };
 
     usersService = {
@@ -114,8 +118,8 @@ describe('ChallengesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChallengesService,
-        { provide: getRepositoryToken(Challenge), useValue: challengeRepo },
-        { provide: getRepositoryToken(ChallengeParticipant), useValue: participantRepo },
+        { provide: ChallengesQueryRepository, useValue: queryRepo },
+        { provide: ChallengesCommandRepository, useValue: commandRepo },
         { provide: UsersService, useValue: usersService },
         { provide: FriendsService, useValue: friendsService },
         { provide: StatsService, useValue: statsService },
@@ -140,9 +144,9 @@ describe('ChallengesService', () => {
     it('should create a challenge and invite a friend', async () => {
       const result = await service.create('user-1', validDto);
 
-      expect(challengeRepo.create).toHaveBeenCalled();
-      expect(challengeRepo.save).toHaveBeenCalled();
-      expect(participantRepo.save).toHaveBeenCalledWith(
+      expect(commandRepo.createChallenge).toHaveBeenCalled();
+      expect(commandRepo.saveChallenge).toHaveBeenCalled();
+      expect(commandRepo.saveParticipants).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ userId: 'user-1', status: ChallengeParticipantStatus.ACCEPTED }),
           expect.objectContaining({ userId: 'user-2', status: ChallengeParticipantStatus.INVITED }),
@@ -204,11 +208,11 @@ describe('ChallengesService', () => {
         userId: 'user-2',
         status: ChallengeParticipantStatus.INVITED,
       };
-      participantRepo.findOne.mockResolvedValue(invitation);
+      queryRepo.findParticipant.mockResolvedValue(invitation);
 
       await service.acceptChallenge('challenge-1', 'user-2');
 
-      expect(participantRepo.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveParticipant).toHaveBeenCalledWith(
         expect.objectContaining({
           status: ChallengeParticipantStatus.ACCEPTED,
         }),
@@ -216,7 +220,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw if invitation not found', async () => {
-      participantRepo.findOne.mockResolvedValue(null);
+      queryRepo.findParticipant.mockResolvedValue(null);
 
       await expect(
         service.acceptChallenge('challenge-1', 'user-3'),
@@ -232,11 +236,11 @@ describe('ChallengesService', () => {
         userId: 'user-2',
         status: ChallengeParticipantStatus.INVITED,
       };
-      participantRepo.findOne.mockResolvedValue(invitation);
+      queryRepo.findParticipant.mockResolvedValue(invitation);
 
       await service.declineChallenge('challenge-1', 'user-2');
 
-      expect(participantRepo.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveParticipant).toHaveBeenCalledWith(
         expect.objectContaining({
           status: ChallengeParticipantStatus.DECLINED,
         }),
@@ -246,14 +250,14 @@ describe('ChallengesService', () => {
 
   describe('cancelChallenge', () => {
     it('should allow creator to cancel', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findById.mockResolvedValue({
         ...mockChallenge,
         status: ChallengeStatus.ACTIVE,
       });
 
       await service.cancelChallenge('challenge-1', 'user-1');
 
-      expect(challengeRepo.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveChallenge).toHaveBeenCalledWith(
         expect.objectContaining({
           status: ChallengeStatus.CANCELLED,
         }),
@@ -261,7 +265,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw if not the creator', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findById.mockResolvedValue({
         ...mockChallenge,
         status: ChallengeStatus.ACTIVE,
       });
@@ -272,7 +276,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw if challenge is already completed', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findById.mockResolvedValue({
         ...mockChallenge,
         status: ChallengeStatus.COMPLETED,
       });
@@ -283,7 +287,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw if challenge not found', async () => {
-      challengeRepo.findOne.mockResolvedValue(null);
+      queryRepo.findById.mockResolvedValue(null);
 
       await expect(
         service.cancelChallenge('nonexistent', 'user-1'),
@@ -308,7 +312,7 @@ describe('ChallengesService', () => {
 
   describe('getChallengeCount', () => {
     it('should return participant count', async () => {
-      participantRepo.count.mockResolvedValue(3);
+      queryRepo.countAcceptedParticipations.mockResolvedValue(3);
       const result = await service.getChallengeCount('user-1');
       expect(result).toBe(3);
     });
@@ -316,7 +320,7 @@ describe('ChallengesService', () => {
 
   describe('getWinCount', () => {
     it('should return win count', async () => {
-      challengeRepo.count.mockResolvedValue(2);
+      queryRepo.countWins.mockResolvedValue(2);
       const result = await service.getWinCount('user-1');
       expect(result).toBe(2);
     });
@@ -335,21 +339,21 @@ describe('ChallengesService', () => {
     };
 
     it('should join a challenge by valid invite code', async () => {
-      challengeRepo.findOne.mockResolvedValue({ ...activeChallenge });
+      queryRepo.findByInviteCode.mockResolvedValue({ ...activeChallenge });
 
       const result = await service.joinByCode('user-3', 'abc12345');
 
-      expect(participantRepo.create).toHaveBeenCalledWith(
+      expect(commandRepo.createParticipant).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'user-3',
           status: ChallengeParticipantStatus.ACCEPTED,
         }),
       );
-      expect(participantRepo.save).toHaveBeenCalled();
+      expect(commandRepo.saveParticipant).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for invalid invite code', async () => {
-      challengeRepo.findOne.mockResolvedValue(null);
+      queryRepo.findByInviteCode.mockResolvedValue(null);
 
       await expect(
         service.joinByCode('user-3', 'invalid'),
@@ -357,7 +361,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw BadRequestException if challenge is not active', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findByInviteCode.mockResolvedValue({
         ...activeChallenge,
         status: ChallengeStatus.COMPLETED,
       });
@@ -368,7 +372,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw BadRequestException if user is already a participant', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findByInviteCode.mockResolvedValue({
         ...activeChallenge,
         participants: [
           { userId: 'user-3', status: ChallengeParticipantStatus.ACCEPTED },
@@ -381,7 +385,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw BadRequestException if challenge is full', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findByInviteCode.mockResolvedValue({
         ...activeChallenge,
         maxParticipants: 2,
         participants: [
@@ -396,7 +400,7 @@ describe('ChallengesService', () => {
     });
 
     it('should throw BadRequestException if challenge has ended', async () => {
-      challengeRepo.findOne.mockResolvedValue({
+      queryRepo.findByInviteCode.mockResolvedValue({
         ...activeChallenge,
         endDate: '2020-01-01',
       });
@@ -410,75 +414,13 @@ describe('ChallengesService', () => {
   // ── findPublicChallenges ────────────────────────────────────────
 
   describe('findPublicChallenges', () => {
-    it('should call query builder to find public active challenges', async () => {
-      const mockQb = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
-      participantRepo.find.mockResolvedValue([]);
+    it('should delegate to query repository', async () => {
+      queryRepo.findPublicChallenges.mockResolvedValue([]);
 
       const result = await service.findPublicChallenges('user-1');
 
-      expect(challengeRepo.createQueryBuilder).toHaveBeenCalledWith('challenge');
-      expect(mockQb.where).toHaveBeenCalledWith(
-        'challenge.visibility = :visibility',
-        expect.objectContaining({ visibility: 'PUBLIC' }),
-      );
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'challenge.status = :status',
-        expect.objectContaining({ status: 'ACTIVE' }),
-      );
+      expect(queryRepo.findPublicChallenges).toHaveBeenCalledWith('user-1', expect.any(String));
       expect(result).toEqual([]);
-    });
-
-    it('should exclude challenges user has already joined', async () => {
-      const mockQb = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
-
-      participantRepo.find.mockResolvedValue([
-        { challengeId: 'challenge-1' },
-        { challengeId: 'challenge-2' },
-      ]);
-
-      await service.findPublicChallenges('user-1');
-
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'challenge.id NOT IN (:...joinedIds)',
-        { joinedIds: ['challenge-1', 'challenge-2'] },
-      );
-    });
-
-    it('should not add NOT IN clause when user has no participations', async () => {
-      const mockQb = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      challengeRepo.createQueryBuilder = jest.fn().mockReturnValue(mockQb);
-      participantRepo.find.mockResolvedValue([]);
-
-      await service.findPublicChallenges('user-1');
-
-      // Should NOT have been called with NOT IN
-      const notInCalls = mockQb.andWhere.mock.calls.filter(
-        (call: any[]) => typeof call[0] === 'string' && call[0].includes('NOT IN'),
-      );
-      expect(notInCalls).toHaveLength(0);
     });
   });
 });

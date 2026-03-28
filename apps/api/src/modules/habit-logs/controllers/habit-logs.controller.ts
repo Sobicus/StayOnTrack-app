@@ -12,14 +12,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
-import { HabitLogsService } from './habit-logs.service';
-import { CreateHabitLogDto } from './dto/create-habit-log.dto';
-import { BatchCheckinDto } from './dto/batch-checkin.dto';
-import { HabitLogResponseDto, DaySummaryDto } from './dto/habit-log-response.dto';
-import { getTodayInTimezone } from '../../common/utils/date.utils';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
+import { HabitLogsService } from '../services/habit-logs.service';
+import { CreateHabitLogDto } from '../dto/create-habit-log.dto';
+import { BatchCheckinDto } from '../dto/batch-checkin.dto';
+import { HabitLogResponseDto, DaySummaryDto } from '../dto/habit-log-response.dto';
+import { getTodayInTimezone } from '../../../common/utils/date.utils';
 
 @ApiTags('Check-ins')
 @ApiBearerAuth('access-token')

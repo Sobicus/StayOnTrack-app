@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { HabitLog } from '../habit-logs/entities/habit-log.entity';
-import { Habit } from '../habits/entities/habit.entity';
-import { ActivitiesService } from '../activities/services/activities.service';
-import { User } from '../users/entities/user.entity';
+import { ActivitiesService } from '../../activities/services/activities.service';
+import { User } from '../../users/entities/user.entity';
 import {
   getPotentialWeightAvoided,
   getCaloriesPerMinute,
   getCaloriesPerRep,
   getActivityEquivalent,
 } from '@stayontrack/contracts';
-import { getTodayInTimezone } from '../../common/utils/date.utils';
+import { getTodayInTimezone } from '../../../common/utils/date.utils';
+import { StatsQueryRepository } from '../repositories/stats.query.repository';
 
 export interface WeeklyTrendPoint {
   week: string;
@@ -54,10 +51,7 @@ export interface EffortEquivalentResult {
 @Injectable()
 export class StatsService {
   constructor(
-    @InjectRepository(HabitLog)
-    private readonly logRepository: Repository<HabitLog>,
-    @InjectRepository(Habit)
-    private readonly habitRepository: Repository<Habit>,
+    private readonly statsQueryRepository: StatsQueryRepository,
     private readonly activitiesService: ActivitiesService,
   ) {}
 
@@ -65,14 +59,7 @@ export class StatsService {
    * Get cumulative stats for a user.
    */
   async getUserStats(userId: string): Promise<UserStatsResult> {
-    const result = await this.logRepository
-      .createQueryBuilder('log')
-      .select('SUM(log.savedCalories)', 'totalSavedCalories')
-      .addSelect('SUM(log.savedMoney)', 'totalSavedMoney')
-      .addSelect('COUNT(*)', 'totalCheckIns')
-      .addSelect('COUNT(DISTINCT log.date)', 'totalDaysTracked')
-      .where('log.userId = :userId', { userId })
-      .getRawOne();
+    const result = await this.statsQueryRepository.getAggregatedStats(userId);
 
     const totalSavedCalories = parseFloat(result?.totalSavedCalories) || 0;
     const totalSavedMoney = parseFloat(result?.totalSavedMoney) || 0;
@@ -139,25 +126,13 @@ export class StatsService {
     const today = getTodayInTimezone(user.timezone || 'UTC');
 
     // Past days (everything before today)
-    const pastResult = await this.logRepository
-      .createQueryBuilder('log')
-      .select('SUM(log.savedCalories)', 'cal')
-      .addSelect('SUM(log.savedMoney)', 'money')
-      .where('log.userId = :userId', { userId: user.id })
-      .andWhere('log.date < :today', { today })
-      .getRawOne();
+    const pastResult = await this.statsQueryRepository.getPastDaysSums(user.id, today);
 
     const pastCalories = parseFloat(pastResult?.cal) || 0;
     const pastMoney = parseFloat(pastResult?.money) || 0;
 
     // Today's check-ins
-    const todayResult = await this.logRepository
-      .createQueryBuilder('log')
-      .select('SUM(log.savedCalories)', 'cal')
-      .addSelect('SUM(log.savedMoney)', 'money')
-      .where('log.userId = :userId', { userId: user.id })
-      .andWhere('log.date = :today', { today })
-      .getRawOne();
+    const todayResult = await this.statsQueryRepository.getDaySums(user.id, today);
 
     const todayCalories = parseFloat(todayResult?.cal) || 0;
     const todayMoney = parseFloat(todayResult?.money) || 0;
@@ -195,20 +170,7 @@ export class StatsService {
     const startStr = startDate.toISOString().split('T')[0];
     const endStr = endDate.toISOString().split('T')[0];
 
-    const rows = await this.logRepository
-      .createQueryBuilder('log')
-      .select(
-        "TO_CHAR(DATE_TRUNC('week', log.date::date), 'IYYY-\"W\"IW')",
-        'week',
-      )
-      .addSelect('SUM(log.savedCalories)', 'savedCalories')
-      .addSelect('SUM(log.savedMoney)', 'savedMoney')
-      .where('log.userId = :userId', { userId })
-      .andWhere('log.date >= :startStr', { startStr })
-      .andWhere('log.date <= :endStr', { endStr })
-      .groupBy("DATE_TRUNC('week', log.date::date)")
-      .orderBy("DATE_TRUNC('week', log.date::date)", 'ASC')
-      .getRawMany();
+    const rows = await this.statsQueryRepository.getWeeklyTrendRows(userId, startStr, endStr);
 
     return rows.map((row) => ({
       week: row.week,
@@ -225,16 +187,11 @@ export class StatsService {
     startDate: string,
     endDate: string,
   ): Promise<UserStatsResult> {
-    const result = await this.logRepository
-      .createQueryBuilder('log')
-      .select('SUM(log.savedCalories)', 'totalSavedCalories')
-      .addSelect('SUM(log.savedMoney)', 'totalSavedMoney')
-      .addSelect('COUNT(*)', 'totalCheckIns')
-      .addSelect('COUNT(DISTINCT log.date)', 'totalDaysTracked')
-      .where('log.userId = :userId', { userId })
-      .andWhere('log.date >= :startDate', { startDate })
-      .andWhere('log.date <= :endDate', { endDate })
-      .getRawOne();
+    const result = await this.statsQueryRepository.getAggregatedStatsByDateRange(
+      userId,
+      startDate,
+      endDate,
+    );
 
     const totalSavedCalories = parseFloat(result?.totalSavedCalories) || 0;
     const totalSavedMoney = parseFloat(result?.totalSavedMoney) || 0;
@@ -254,7 +211,7 @@ export class StatsService {
    * Get pattern analysis for a user (day-of-week rates, category breakdown, top habits).
    */
   async getPatterns(userId: string): Promise<Record<string, unknown> | null> {
-    const logs = await this.logRepository.find({ where: { userId } });
+    const logs = await this.statsQueryRepository.findAllLogsByUser(userId);
 
     if (logs.length < 7) return null;
 
@@ -278,7 +235,7 @@ export class StatsService {
     const worstDay = dayRates.reduce((a, b) => (a.rate < b.rate ? a : b));
 
     // Category breakdown
-    const habits = await this.habitRepository.find({ where: { userId } });
+    const habits = await this.statsQueryRepository.findHabitsByUser(userId);
     const habitMap = new Map(habits.map((h) => [h.id, h]));
     const categoryStats: Record<string, number> = {};
 
@@ -410,14 +367,7 @@ export class StatsService {
       endDate = `${date.slice(0, 4)}-12-31`;
     }
 
-    const logs = await this.logRepository
-      .createQueryBuilder('log')
-      .where('log.userId = :userId', { userId })
-      .andWhere('log.date >= :startDate AND log.date <= :endDate', {
-        startDate,
-        endDate,
-      })
-      .getMany();
+    const logs = await this.statsQueryRepository.findLogsByDateRange(userId, startDate, endDate);
 
     if (logs.length === 0) return null;
 
@@ -433,7 +383,7 @@ export class StatsService {
     const avoidanceRate = Math.round((avoidedCount / totalCheckIns) * 100);
 
     // Top habits
-    const habits = await this.habitRepository.find({ where: { userId } });
+    const habits = await this.statsQueryRepository.findHabitsByUser(userId);
     const habitMap = new Map(habits.map((h) => [h.id, h]));
     const habitCals: Record<string, number> = {};
     for (const log of avoidedLogs) {

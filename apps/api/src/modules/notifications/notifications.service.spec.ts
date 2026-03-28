@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './services/notifications.service';
 import { EmailService } from '../../common/email/email.service';
-import { StreaksService } from '../streaks/streaks.service';
+import { StreaksService } from '../streaks/services/streaks.service';
 import { UsersService } from '../users/services/users.service';
 import { ConfigService } from '@nestjs/config';
 import { NotificationsQueryRepository } from './repositories/notifications.query.repository';

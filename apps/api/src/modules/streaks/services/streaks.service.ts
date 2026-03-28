@@ -1,12 +1,11 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
-import { HabitsService } from '../habits/services/habits.service';
-import { User } from '../users/entities/user.entity';
+import { HabitLogStatus } from '../../habit-logs/entities/habit-log.entity';
+import { HabitsService } from '../../habits/services/habits.service';
 import { PARTIAL_SUCCESS_THRESHOLD, STREAK_SHIELDS_PER_WEEK, STREAK_RECOVERY_XP_COST, XP_REWARDS } from '@stayontrack/contracts';
-import { getTodayInTimezone, getDayOfWeekInTimezone } from '../../common/utils/date.utils';
-import { GamificationService } from '../gamification/services/gamification.service';
+import { getTodayInTimezone, getDayOfWeekInTimezone } from '../../../common/utils/date.utils';
+import { GamificationService } from '../../gamification/services/gamification.service';
+import { StreaksQueryRepository } from '../repositories/streaks.query.repository';
+import { StreaksCommandRepository } from '../repositories/streaks.command.repository';
 
 /** Streak day counts that trigger a milestone XP reward */
 const STREAK_MILESTONES = [7, 14, 30, 60, 90, 180, 365];
@@ -29,10 +28,8 @@ export interface StreakResult {
 @Injectable()
 export class StreaksService {
   constructor(
-    @InjectRepository(HabitLog)
-    private readonly logRepository: Repository<HabitLog>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly streaksQueryRepository: StreaksQueryRepository,
+    private readonly streaksCommandRepository: StreaksCommandRepository,
     private readonly habitsService: HabitsService,
     private readonly gamificationService: GamificationService,
   ) {}
@@ -51,7 +48,7 @@ export class StreaksService {
     // Replenish shield if needed
     await this.replenishShieldIfNeeded(userId);
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.streaksQueryRepository.findUser(userId);
     if (!user) {
       return {
         currentStreak: 0,
@@ -63,12 +60,7 @@ export class StreaksService {
     }
 
     // Get all unique dates with check-ins, ordered DESC
-    const dates = await this.logRepository
-      .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
-      .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'DESC')
-      .getRawMany();
+    const dates = await this.streaksQueryRepository.getDistinctDatesDesc(userId);
 
     if (dates.length === 0) {
       return {
@@ -193,7 +185,7 @@ export class StreaksService {
    * - Deducts XP and creates recovery log entries for the missed day
    */
   async recoverStreak(userId: string): Promise<StreakRecoveryResult> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.streaksQueryRepository.findUser(userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -202,13 +194,7 @@ export class StreaksService {
     const yesterday = this.getDateOffset(today, -1);
 
     // Get the most recent check-in date
-    const dates = await this.logRepository
-      .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
-      .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'DESC')
-      .limit(1)
-      .getRawMany();
+    const dates = await this.streaksQueryRepository.getMostRecentDate(userId);
 
     if (dates.length === 0) {
       throw new BadRequestException('No check-in history found — nothing to recover');
@@ -240,20 +226,18 @@ export class StreaksService {
     }
 
     // Check that no logs exist for yesterday (the missed day)
-    const existingLogs = await this.logRepository.find({
-      where: { userId, date: yesterday },
-    });
+    const existingLogs = await this.streaksQueryRepository.getLogsByDate(userId, yesterday);
     if (existingLogs.length > 0) {
       throw new BadRequestException('Yesterday already has check-in entries');
     }
 
     // Deduct XP
     user.totalXp -= STREAK_RECOVERY_XP_COST;
-    await this.userRepository.save(user);
+    await this.streaksCommandRepository.saveUser(user);
 
     // Create "AVOIDED" recovery log entries for each active habit on the missed day
     const recoveryLogs = activeHabits.map((habit) =>
-      this.logRepository.create({
+      this.streaksCommandRepository.createLog({
         habitId: habit.id,
         userId,
         date: yesterday,
@@ -263,7 +247,7 @@ export class StreaksService {
         savedMoney: habit.pricePerOccurrence,
       }),
     );
-    await this.logRepository.save(recoveryLogs);
+    await this.streaksCommandRepository.saveLogs(recoveryLogs);
 
     // Get updated streak
     const streakResult = await this.getStreak(userId);
@@ -285,9 +269,7 @@ export class StreaksService {
     date: string,
     activeHabitCount: number,
   ): Promise<boolean> {
-    const logs = await this.logRepository.find({
-      where: { userId, date },
-    });
+    const logs = await this.streaksQueryRepository.getLogsByDate(userId, date);
 
     // Must have checked in for all active habits
     if (logs.length < activeHabitCount) return false;
@@ -312,12 +294,7 @@ export class StreaksService {
     userId: string,
     activeHabitCount: number,
   ): Promise<number> {
-    const dates = await this.logRepository
-      .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
-      .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'ASC')
-      .getRawMany();
+    const dates = await this.streaksQueryRepository.getDistinctDatesAsc(userId);
 
     let bestStreak = 0;
     let tempStreak = 0;
@@ -353,7 +330,7 @@ export class StreaksService {
    * Replenish streak shield if it's a new week (Monday).
    */
   private async replenishShieldIfNeeded(userId: string): Promise<void> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.streaksQueryRepository.findUser(userId);
     if (!user) return;
 
     const todayStr = getTodayInTimezone(user.timezone);
@@ -368,7 +345,7 @@ export class StreaksService {
       if (!lastReplenish || lastReplenish !== todayStr) {
         user.streakShieldsRemaining = STREAK_SHIELDS_PER_WEEK;
         user.lastShieldReplenishDate = new Date(todayStr + 'T00:00:00Z');
-        await this.userRepository.save(user);
+        await this.streaksCommandRepository.saveUser(user);
       }
     }
   }

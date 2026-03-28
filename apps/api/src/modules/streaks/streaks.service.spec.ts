@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { StreaksService } from './streaks.service';
-import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
+import { StreaksService } from './services/streaks.service';
+import { HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { User } from '../users/entities/user.entity';
 import { HabitsService } from '../habits/services/habits.service';
 import { GamificationService } from '../gamification/services/gamification.service';
 import { STREAK_SHIELDS_PER_WEEK } from '@stayontrack/contracts';
+import { StreaksQueryRepository } from './repositories/streaks.query.repository';
+import { StreaksCommandRepository } from './repositories/streaks.command.repository';
 
 describe('StreaksService', () => {
   let service: StreaksService;
-  let logRepo: any;
-  let userRepo: any;
+  let streaksQueryRepo: any;
+  let streaksCommandRepo: any;
   let habitsService: any;
   let gamificationService: any;
 
@@ -43,23 +44,19 @@ describe('StreaksService', () => {
     { id: 'habit-1', name: 'No Sweets', isActive: true },
   ];
 
-  // Creates a mock query builder for log repository
-  const createMockQueryBuilder = (dates: { date: string }[]) => ({
-    select: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getRawMany: jest.fn().mockResolvedValue(dates),
-  });
-
   beforeEach(async () => {
-    logRepo = {
-      find: jest.fn().mockResolvedValue([]),
-      createQueryBuilder: jest.fn(),
+    streaksQueryRepo = {
+      getDistinctDatesDesc: jest.fn().mockResolvedValue([]),
+      getDistinctDatesAsc: jest.fn().mockResolvedValue([]),
+      getMostRecentDate: jest.fn().mockResolvedValue([]),
+      getLogsByDate: jest.fn().mockResolvedValue([]),
+      findUser: jest.fn().mockResolvedValue({ ...mockUser }),
     };
 
-    userRepo = {
-      findOne: jest.fn().mockResolvedValue({ ...mockUser }),
-      save: jest.fn((data) => Promise.resolve(data)),
+    streaksCommandRepo = {
+      saveUser: jest.fn((data) => Promise.resolve(data)),
+      createLog: jest.fn((data) => data),
+      saveLogs: jest.fn((data) => Promise.resolve(data)),
     };
 
     habitsService = {
@@ -73,8 +70,8 @@ describe('StreaksService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StreaksService,
-        { provide: getRepositoryToken(HabitLog), useValue: logRepo },
-        { provide: getRepositoryToken(User), useValue: userRepo },
+        { provide: StreaksQueryRepository, useValue: streaksQueryRepo },
+        { provide: StreaksCommandRepository, useValue: streaksCommandRepo },
         { provide: HabitsService, useValue: habitsService },
         { provide: GamificationService, useValue: gamificationService },
       ],
@@ -85,7 +82,7 @@ describe('StreaksService', () => {
 
   describe('getStreak', () => {
     it('should return zero streak when user not found', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      streaksQueryRepo.findUser.mockResolvedValue(null);
 
       const result = await service.getStreak('user-1');
 
@@ -99,9 +96,7 @@ describe('StreaksService', () => {
     });
 
     it('should return zero streak when no check-in dates exist', async () => {
-      logRepo.createQueryBuilder.mockReturnValue(
-        createMockQueryBuilder([]),
-      );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue([]);
 
       const result = await service.getStreak('user-1');
 
@@ -112,9 +107,7 @@ describe('StreaksService', () => {
 
     it('should return zero streak when no active habits exist', async () => {
       habitsService.findActiveByUser.mockResolvedValue([]);
-      logRepo.createQueryBuilder.mockReturnValue(
-        createMockQueryBuilder([{ date: today }]),
-      );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue([{ date: today }]);
 
       const result = await service.getStreak('user-1');
 
@@ -132,14 +125,11 @@ describe('StreaksService', () => {
 
       // First call: DESC order for current streak calculation
       // Second call: ASC order for best streak calculation
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(
-          createMockQueryBuilder([...dates].reverse()),
-        );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue([...dates].reverse());
 
       // All days are successful (AVOIDED status)
-      logRepo.find.mockResolvedValue([
+      streaksQueryRepo.getLogsByDate.mockResolvedValue([
         {
           status: HabitLogStatus.AVOIDED,
           portionRatio: 0,
@@ -156,11 +146,10 @@ describe('StreaksService', () => {
     it('should reset streak when last check-in was more than 1 day ago', async () => {
       const dates = [{ date: threeDaysAgo }];
 
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(createMockQueryBuilder(dates));
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue(dates);
 
-      logRepo.find.mockResolvedValue([
+      streaksQueryRepo.getLogsByDate.mockResolvedValue([
         { status: HabitLogStatus.AVOIDED, portionRatio: 0 },
       ]);
 
@@ -173,11 +162,10 @@ describe('StreaksService', () => {
     it('should count PARTIAL check-ins below threshold as successful', async () => {
       const dates = [{ date: today }];
 
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(createMockQueryBuilder(dates));
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue(dates);
 
-      logRepo.find.mockResolvedValue([
+      streaksQueryRepo.getLogsByDate.mockResolvedValue([
         {
           status: HabitLogStatus.PARTIAL,
           portionRatio: 0.3, // Below PARTIAL_SUCCESS_THRESHOLD (0.5)
@@ -195,14 +183,11 @@ describe('StreaksService', () => {
         { date: yesterday },
       ];
 
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(
-          createMockQueryBuilder([...dates].reverse()),
-        );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue([...dates].reverse());
 
       // Today: CONSUMED (fails), yesterday: AVOIDED (succeeds)
-      logRepo.find
+      streaksQueryRepo.getLogsByDate
         .mockResolvedValueOnce([
           { status: HabitLogStatus.CONSUMED, portionRatio: 1 },
         ])
@@ -210,7 +195,7 @@ describe('StreaksService', () => {
           { status: HabitLogStatus.AVOIDED, portionRatio: 0 },
         ]);
 
-      userRepo.findOne.mockResolvedValue({
+      streaksQueryRepo.findUser.mockResolvedValue({
         ...mockUser,
         streakShieldsRemaining: 0,
       });
@@ -229,14 +214,11 @@ describe('StreaksService', () => {
         { date: yesterday },
       ];
 
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(
-          createMockQueryBuilder([...dates].reverse()),
-        );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue([...dates].reverse());
 
       // Today: CONSUMED (fails but shield saves it), yesterday: AVOIDED
-      logRepo.find
+      streaksQueryRepo.getLogsByDate
         .mockResolvedValueOnce([
           { status: HabitLogStatus.CONSUMED, portionRatio: 1 },
         ])
@@ -258,7 +240,7 @@ describe('StreaksService', () => {
     });
 
     it('should not activate shield when no shields remaining', async () => {
-      userRepo.findOne.mockResolvedValue({
+      streaksQueryRepo.findUser.mockResolvedValue({
         ...mockUser,
         streakShieldsRemaining: 0,
       });
@@ -268,14 +250,11 @@ describe('StreaksService', () => {
         { date: yesterday },
       ];
 
-      logRepo.createQueryBuilder
-        .mockReturnValueOnce(createMockQueryBuilder(dates))
-        .mockReturnValueOnce(
-          createMockQueryBuilder([...dates].reverse()),
-        );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue(dates);
+      streaksQueryRepo.getDistinctDatesAsc.mockResolvedValue([...dates].reverse());
 
       // Today: CONSUMED (no shield available)
-      logRepo.find
+      streaksQueryRepo.getLogsByDate
         .mockResolvedValueOnce([
           { status: HabitLogStatus.CONSUMED, portionRatio: 1 },
         ]);
@@ -299,17 +278,15 @@ describe('StreaksService', () => {
         streakShieldsRemaining: 0,
         lastShieldReplenishDate: new Date('2025-12-29'), // Last Monday
       };
-      userRepo.findOne.mockResolvedValue(userWithOldReplenish);
+      streaksQueryRepo.findUser.mockResolvedValue(userWithOldReplenish);
 
-      // Set up query builder for the getStreak call (returns empty dates)
-      logRepo.createQueryBuilder.mockReturnValue(
-        createMockQueryBuilder([]),
-      );
+      // Set up query for the getStreak call (returns empty dates)
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue([]);
 
       await service.getStreak('user-1');
 
       // Shield should have been replenished
-      expect(userRepo.save).toHaveBeenCalledWith(
+      expect(streaksCommandRepo.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({
           streakShieldsRemaining: STREAK_SHIELDS_PER_WEEK,
         }),
@@ -328,18 +305,14 @@ describe('StreaksService', () => {
         streakShieldsRemaining: 0,
         lastShieldReplenishDate: new Date('2025-12-29'),
       };
-      userRepo.findOne.mockResolvedValue(userWithNoShields);
+      streaksQueryRepo.findUser.mockResolvedValue(userWithNoShields);
 
-      logRepo.createQueryBuilder.mockReturnValue(
-        createMockQueryBuilder([]),
-      );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue([]);
 
       await service.getStreak('user-1');
 
-      // save should only be called by replenishShieldIfNeeded (first findOne call),
-      // but NOT for replenishment since it's Wednesday
-      // The first findOne is for replenish check, second is for getStreak main body
-      expect(userRepo.save).not.toHaveBeenCalledWith(
+      // save should NOT have been called for replenishment since it's Wednesday
+      expect(streaksCommandRepo.saveUser).not.toHaveBeenCalledWith(
         expect.objectContaining({
           streakShieldsRemaining: STREAK_SHIELDS_PER_WEEK,
         }),
@@ -357,15 +330,13 @@ describe('StreaksService', () => {
         streakShieldsRemaining: STREAK_SHIELDS_PER_WEEK,
         lastShieldReplenishDate: new Date('2026-01-05'), // Already done today
       };
-      userRepo.findOne.mockResolvedValue(userAlreadyReplenished);
+      streaksQueryRepo.findUser.mockResolvedValue(userAlreadyReplenished);
 
-      logRepo.createQueryBuilder.mockReturnValue(
-        createMockQueryBuilder([]),
-      );
+      streaksQueryRepo.getDistinctDatesDesc.mockResolvedValue([]);
 
       await service.getStreak('user-1');
 
-      expect(userRepo.save).not.toHaveBeenCalled();
+      expect(streaksCommandRepo.saveUser).not.toHaveBeenCalled();
 
       jest.useRealTimers();
     });

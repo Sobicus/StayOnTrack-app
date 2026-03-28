@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Challenge } from './entities/challenge.entity';
 import { ChallengeParticipant } from './entities/challenge-participant.entity';
-import { ChallengesService } from './challenges.service';
-import { ChallengesController } from './challenges.controller';
+import { ChallengesService } from './services/challenges.service';
+import { ChallengesController } from './controllers/challenges.controller';
+import { ChallengesQueryRepository } from './repositories/challenges.query.repository';
+import { ChallengesCommandRepository } from './repositories/challenges.command.repository';
 import { UsersModule } from '../users/users.module';
 import { FriendsModule } from '../friends/friends.module';
 import { StatsModule } from '../stats/stats.module';
@@ -20,7 +22,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
     AnalyticsModule,
   ],
   controllers: [ChallengesController],
-  providers: [ChallengesService],
+  providers: [ChallengesService, ChallengesQueryRepository, ChallengesCommandRepository],
   exports: [ChallengesService],
 })
 export class ChallengesModule {}

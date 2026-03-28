@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as webpush from 'web-push';
 import { User } from '../../users/entities/user.entity';
 import { EmailService, WeeklyDigestStats } from '../../../common/email/email.service';
-import { StreaksService } from '../../streaks/streaks.service';
+import { StreaksService } from '../../streaks/services/streaks.service';
 import { UsersService } from '../../users/services/users.service';
 import { NotificationsQueryRepository } from '../repositories/notifications.query.repository';
 
