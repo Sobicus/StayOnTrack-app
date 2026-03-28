@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 
 export interface WeeklyDigestStats {
   totalCheckins: number;
@@ -15,24 +15,33 @@ export interface WeeklyDigestStats {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private resend: Resend | null = null;
+  private transporter: nodemailer.Transporter | null = null;
 
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    if (apiKey) {
-      this.resend = new Resend(apiKey);
-      this.logger.log('Resend email service initialized');
+    const gmailUser = this.configService.get<string>('GMAIL_USER');
+    const gmailAppPassword = this.configService.get<string>('GMAIL_APP_PASSWORD');
+
+    if (gmailUser && gmailAppPassword) {
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: gmailUser,
+          pass: gmailAppPassword,
+        },
+      });
+      this.logger.log(`Gmail SMTP initialized for ${gmailUser}`);
     } else {
       this.logger.warn(
-        'RESEND_API_KEY not set — emails will be logged to console only',
+        'GMAIL_USER/GMAIL_APP_PASSWORD not set — emails will be logged to console only',
       );
     }
   }
 
   private get fromAddress(): string {
+    const gmailUser = this.configService.get<string>('GMAIL_USER');
     return (
       this.configService.get<string>('EMAIL_FROM') ||
-      'StayOnTrack <noreply@stayontrack.app>'
+      `StayOnTrack <${gmailUser || 'noreply@stayontrack.app'}>`
     );
   }
 
@@ -62,9 +71,9 @@ export class EmailService {
       </div>
     `;
 
-    if (this.resend) {
+    if (this.transporter) {
       try {
-        await this.resend.emails.send({
+        await this.transporter.sendMail({
           from: this.fromAddress,
           to: email,
           subject,
@@ -97,9 +106,9 @@ export class EmailService {
   ): Promise<void> {
     const resetUrl = `${this.appUrl}/auth/reset-password?token=${resetToken}`;
 
-    if (this.resend) {
+    if (this.transporter) {
       try {
-        await this.resend.emails.send({
+        await this.transporter.sendMail({
           from: this.fromAddress,
           to: email,
           subject: 'Reset your StayOnTrack password',
@@ -131,9 +140,9 @@ export class EmailService {
     username: string,
     currentStreak: number,
   ): Promise<void> {
-    if (this.resend) {
+    if (this.transporter) {
       try {
-        await this.resend.emails.send({
+        await this.transporter.sendMail({
           from: this.fromAddress,
           to: email,
           subject: "Don't break your streak! \uD83D\uDD25",
@@ -171,9 +180,9 @@ export class EmailService {
   ): Promise<void> {
     const checkinUrl = `${this.appUrl}/dashboard`;
 
-    if (this.resend) {
+    if (this.transporter) {
       try {
-        await this.resend.emails.send({
+        await this.transporter.sendMail({
           from: this.fromAddress,
           to: email,
           subject: `Your ${currentStreak}-day streak is at risk! ⚠️`,
@@ -209,9 +218,9 @@ export class EmailService {
     username: string,
     stats: WeeklyDigestStats,
   ): Promise<void> {
-    if (this.resend) {
+    if (this.transporter) {
       try {
-        await this.resend.emails.send({
+        await this.transporter.sendMail({
           from: this.fromAddress,
           to: email,
           subject: 'Your weekly progress report 📊',
