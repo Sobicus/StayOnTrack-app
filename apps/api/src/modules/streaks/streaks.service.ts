@@ -2,11 +2,11 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
-import { HabitsService } from '../habits/habits.service';
+import { HabitsService } from '../habits/services/habits.service';
 import { User } from '../users/entities/user.entity';
 import { PARTIAL_SUCCESS_THRESHOLD, STREAK_SHIELDS_PER_WEEK, STREAK_RECOVERY_XP_COST, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone, getDayOfWeekInTimezone } from '../../common/utils/date.utils';
-import { GamificationService } from '../gamification/gamification.service';
+import { GamificationService } from '../gamification/services/gamification.service';
 
 /** Streak day counts that trigger a milestone XP reward */
 const STREAK_MILESTONES = [7, 14, 30, 60, 90, 180, 365];

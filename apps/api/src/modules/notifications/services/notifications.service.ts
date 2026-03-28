@@ -1,14 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as webpush from 'web-push';
-import { User } from '../users/entities/user.entity';
-import { HabitLog } from '../habit-logs/entities/habit-log.entity';
-import { Habit } from '../habits/entities/habit.entity';
-import { EmailService, WeeklyDigestStats } from '../../common/email/email.service';
-import { StreaksService } from '../streaks/streaks.service';
-import { UsersService } from '../users/users.service';
+import { User } from '../../users/entities/user.entity';
+import { EmailService, WeeklyDigestStats } from '../../../common/email/email.service';
+import { StreaksService } from '../../streaks/streaks.service';
+import { UsersService } from '../../users/services/users.service';
+import { NotificationsQueryRepository } from '../repositories/notifications.query.repository';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -16,12 +13,7 @@ export class NotificationsService implements OnModuleInit {
   private pushEnabled = false;
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-    @InjectRepository(HabitLog)
-    private readonly habitLogRepo: Repository<HabitLog>,
-    @InjectRepository(Habit)
-    private readonly habitRepo: Repository<Habit>,
+    private readonly queryRepo: NotificationsQueryRepository,
     private readonly emailService: EmailService,
     private readonly streaksService: StreaksService,
     private readonly configService: ConfigService,
@@ -76,9 +68,7 @@ export class NotificationsService implements OnModuleInit {
    */
   async getUsersNeedingReminder(): Promise<User[]> {
     // Get all users with reminders enabled
-    const users = await this.userRepo.find({
-      where: { emailReminders: true },
-    });
+    const users = await this.queryRepo.findUsersWithRemindersEnabled();
 
     const now = new Date();
     const usersNeedingReminder: User[] = [];
@@ -118,12 +108,7 @@ export class NotificationsService implements OnModuleInit {
       }
 
       // Check if user has any habit logs for today
-      const logCount = await this.habitLogRepo.count({
-        where: {
-          userId: user.id,
-          date: todayStr,
-        },
-      });
+      const logCount = await this.queryRepo.countHabitLogsByUserAndDate(user.id, todayStr);
 
       if (logCount === 0) {
         usersNeedingReminder.push(user);
@@ -183,9 +168,7 @@ export class NotificationsService implements OnModuleInit {
    * Returns the number of emails sent.
    */
   async sendWeeklyDigests(): Promise<{ sent: number }> {
-    const users = await this.userRepo.find({
-      where: { emailReminders: true },
-    });
+    const users = await this.queryRepo.findUsersWithRemindersEnabled();
 
     this.logger.log(
       `Found ${users.length} user(s) eligible for weekly digest`,
@@ -227,12 +210,7 @@ export class NotificationsService implements OnModuleInit {
     startDate: string,
   ): Promise<WeeklyDigestStats> {
     // Get all habit logs for the user in the last 7 days
-    const logs = await this.habitLogRepo.find({
-      where: {
-        userId: user.id,
-        date: MoreThanOrEqual(startDate),
-      },
-    });
+    const logs = await this.queryRepo.findHabitLogsByUserSinceDate(user.id, startDate);
 
     // Total check-ins
     const totalCheckins = logs.length;
@@ -282,17 +260,13 @@ export class NotificationsService implements OnModuleInit {
       }
       // Look up the habit title
       if (topHabitId) {
-        const habit = await this.habitRepo.findOne({
-          where: { id: topHabitId },
-        });
+        const habit = await this.queryRepo.findHabitById(topHabitId);
         topHabit = habit ? habit.title : '';
       }
     }
 
     // Completion rate: active habits vs check-ins over 7 days
-    const activeHabits = await this.habitRepo.count({
-      where: { userId: user.id, isActive: true },
-    });
+    const activeHabits = await this.queryRepo.countActiveHabitsByUser(user.id);
     const possibleCheckins = activeHabits * 7;
     const completionRate =
       possibleCheckins > 0

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AchievementsService } from './services/achievements.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
-import { FriendsService } from '../friends/friends.service';
+import { FriendsService } from '../friends/services/friends.service';
 import { ChallengesService } from '../challenges/challenges.service';
 import { ACHIEVEMENTS } from './achievements.constants';
 

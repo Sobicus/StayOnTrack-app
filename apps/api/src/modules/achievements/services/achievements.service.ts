@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { StatsService, UserStatsResult } from '../../stats/stats.service';
 import { StreaksService, StreakResult } from '../../streaks/streaks.service';
-import { FriendsService } from '../../friends/friends.service';
+import { FriendsService } from '../../friends/services/friends.service';
 import { ChallengesService } from '../../challenges/challenges.service';
 import { ACHIEVEMENTS, AchievementDef } from '../achievements.constants';
 

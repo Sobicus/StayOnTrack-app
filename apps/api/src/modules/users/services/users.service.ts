@@ -3,36 +3,35 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, Not, IsNull, MoreThan } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User } from '../entities/user.entity';
+import { UsersQueryRepository } from '../repositories/users.query.repository';
+import { UsersCommandRepository } from '../repositories/users.command.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-    private readonly dataSource: DataSource,
+    private readonly queryRepo: UsersQueryRepository,
+    private readonly commandRepo: UsersCommandRepository,
   ) {}
 
   async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    return this.queryRepo.findById(id);
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.queryRepo.findByEmail(email);
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { username } });
+    return this.queryRepo.findByUsername(username);
   }
 
   async findByGoogleId(googleId: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { googleId } });
+    return this.queryRepo.findByGoogleId(googleId);
   }
 
   async findByTelegramChatId(chatId: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { telegramChatId: chatId } });
+    return this.queryRepo.findByTelegramChatId(chatId);
   }
 
   async create(data: {
@@ -55,8 +54,8 @@ export class UsersService {
       throw new ConflictException('Username is already taken');
     }
 
-    const user = this.usersRepository.create(data);
-    return this.usersRepository.save(user);
+    const user = this.commandRepo.create(data);
+    return this.commandRepo.save(user);
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {
@@ -74,19 +73,14 @@ export class UsersService {
     }
 
     Object.assign(user, data);
-    return this.usersRepository.save(user);
+    return this.commandRepo.save(user);
   }
 
   /**
    * Find users with active (non-expired) password reset tokens.
    */
   async findWithActiveResetToken(): Promise<User[]> {
-    return this.usersRepository.find({
-      where: {
-        passwordResetTokenHash: Not(IsNull()),
-        passwordResetExpires: MoreThan(new Date()),
-      },
-    });
+    return this.queryRepo.findWithActiveResetToken();
   }
 
   /**
@@ -96,11 +90,11 @@ export class UsersService {
     const user = await this.findById(userId);
     if (!user) return;
     user.streakShieldsRemaining += count;
-    await this.usersRepository.save(user);
+    await this.commandRepo.save(user);
   }
 
   async findByTelegramLinkCode(code: string): Promise<User | null> {
-    const user = await this.usersRepository.findOne({ where: { telegramLinkCode: code } });
+    const user = await this.queryRepo.findByTelegramLinkCode(code);
     if (!user || !user.telegramLinkCodeExpiresAt) return null;
     if (new Date() > new Date(user.telegramLinkCodeExpiresAt)) return null;
     return user;
@@ -134,47 +128,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Query related data from all tables
-    const [habits, habitLogs, friendships, challenges] = await Promise.all([
-      this.dataSource.query(
-        `SELECT id, title, emoji, category, "caloriesPerOccurrence", "pricePerOccurrence", "frequencyType", "createdAt" FROM habits WHERE "userId" = $1`,
-        [userId],
-      ),
-      this.dataSource.query(
-        `SELECT hl.id, hl.date, hl.status, hl."portionRatio", hl."savedCalories", hl."savedMoney", h.title as "habitTitle" FROM habit_logs hl LEFT JOIN habits h ON hl."habitId" = h.id WHERE hl."userId" = $1 ORDER BY hl.date DESC`,
-        [userId],
-      ),
-      this.dataSource.query(
-        `SELECT f.id, f."createdAt", u.username as "friendUsername" FROM friendships f LEFT JOIN users u ON (CASE WHEN f."userAId" = $1 THEN f."userBId" ELSE f."userAId" END) = u.id WHERE f."userAId" = $1 OR f."userBId" = $1`,
-        [userId],
-      ),
-      this.dataSource.query(
-        `SELECT c.id, c.title, c.type, c.target, c.status, c."startDate", c."endDate", cp.progress, cp.status as "participantStatus" FROM challenge_participants cp JOIN challenges c ON cp."challengeId" = c.id WHERE cp."userId" = $1`,
-        [userId],
-      ),
-    ]);
-
-    return {
-      exportedAt: new Date().toISOString(),
-      profile: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        weightKg: user.weightKg,
-        heightCm: user.heightCm,
-        goal: user.goal,
-        visibility: user.visibility,
-        locale: user.locale,
-        currency: user.currency,
-        weekStartDay: user.weekStartDay,
-        dayEndHour: user.dayEndHour,
-        createdAt: user.createdAt,
-      },
-      habits,
-      habitLogs,
-      friendships,
-      challenges,
-    };
+    return this.queryRepo.exportUserData(userId);
   }
 
   /**
@@ -186,6 +140,6 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    await this.usersRepository.remove(user);
+    await this.commandRepo.remove(user);
   }
 }

@@ -1,19 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotificationsService } from './notifications.service';
-import { User } from '../users/entities/user.entity';
-import { HabitLog } from '../habit-logs/entities/habit-log.entity';
-import { Habit } from '../habits/entities/habit.entity';
+import { NotificationsService } from './services/notifications.service';
 import { EmailService } from '../../common/email/email.service';
 import { StreaksService } from '../streaks/streaks.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users/services/users.service';
 import { ConfigService } from '@nestjs/config';
+import { NotificationsQueryRepository } from './repositories/notifications.query.repository';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
-  let userRepo: any;
-  let habitLogRepo: any;
-  let habitRepo: any;
+  let queryRepo: any;
   let emailService: any;
   let streaksService: any;
 
@@ -41,18 +36,12 @@ describe('NotificationsService', () => {
   };
 
   beforeEach(async () => {
-    userRepo = {
-      find: jest.fn().mockResolvedValue([]),
-    };
-
-    habitLogRepo = {
-      count: jest.fn().mockResolvedValue(0),
-      find: jest.fn().mockResolvedValue([]),
-    };
-
-    habitRepo = {
-      findOne: jest.fn().mockResolvedValue(null),
-      count: jest.fn().mockResolvedValue(0),
+    queryRepo = {
+      findUsersWithRemindersEnabled: jest.fn().mockResolvedValue([]),
+      countHabitLogsByUserAndDate: jest.fn().mockResolvedValue(0),
+      findHabitLogsByUserSinceDate: jest.fn().mockResolvedValue([]),
+      findHabitById: jest.fn().mockResolvedValue(null),
+      countActiveHabitsByUser: jest.fn().mockResolvedValue(0),
     };
 
     emailService = {
@@ -73,9 +62,7 @@ describe('NotificationsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
-        { provide: getRepositoryToken(User), useValue: userRepo },
-        { provide: getRepositoryToken(HabitLog), useValue: habitLogRepo },
-        { provide: getRepositoryToken(Habit), useValue: habitRepo },
+        { provide: NotificationsQueryRepository, useValue: queryRepo },
         { provide: EmailService, useValue: emailService },
         { provide: StreaksService, useValue: streaksService },
         { provide: UsersService, useValue: { findById: jest.fn().mockResolvedValue(null), update: jest.fn().mockResolvedValue(undefined) } },
@@ -90,8 +77,8 @@ describe('NotificationsService', () => {
 
   describe('getUsersNeedingReminder', () => {
     it('should return users who have reminders enabled, matching hour, and no logs today', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.count.mockResolvedValue(0); // No logs today
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(0); // No logs today
 
       const result = await service.getUsersNeedingReminder();
 
@@ -100,8 +87,8 @@ describe('NotificationsService', () => {
     });
 
     it('should exclude users who already have logs today', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.count.mockResolvedValue(3); // Has logs today
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(3); // Has logs today
 
       const result = await service.getUsersNeedingReminder();
 
@@ -115,7 +102,7 @@ describe('NotificationsService', () => {
         ...mockUserWithReminders,
         reminderHour: differentHour,
       };
-      userRepo.find.mockResolvedValue([userWithDifferentHour]);
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([userWithDifferentHour]);
 
       const result = await service.getUsersNeedingReminder();
 
@@ -123,7 +110,7 @@ describe('NotificationsService', () => {
     });
 
     it('should return empty array when no users have reminders enabled', async () => {
-      userRepo.find.mockResolvedValue([]); // query already filters emailReminders=true
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([]); // query already filters emailReminders=true
 
       const result = await service.getUsersNeedingReminder();
 
@@ -135,8 +122,8 @@ describe('NotificationsService', () => {
         ...mockUserWithReminders,
         timezone: 'Invalid/Timezone',
       };
-      userRepo.find.mockResolvedValue([userWithBadTz]);
-      habitLogRepo.count.mockResolvedValue(0);
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([userWithBadTz]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(0);
 
       // Should not throw — falls back to UTC
       const result = await service.getUsersNeedingReminder();
@@ -150,8 +137,8 @@ describe('NotificationsService', () => {
 
   describe('sendDailyReminders', () => {
     it('should send daily reminders to qualifying users', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.count.mockResolvedValue(0); // No logs today
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(0); // No logs today
 
       const result = await service.sendDailyReminders();
 
@@ -164,7 +151,7 @@ describe('NotificationsService', () => {
     });
 
     it('should return sent: 0 when no users need reminders', async () => {
-      userRepo.find.mockResolvedValue([]);
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([]);
 
       const result = await service.sendDailyReminders();
 
@@ -179,8 +166,8 @@ describe('NotificationsService', () => {
         email: 'carol@example.com',
         username: 'carol',
       };
-      userRepo.find.mockResolvedValue([mockUserWithReminders, user2]);
-      habitLogRepo.count.mockResolvedValue(0); // No logs for either
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders, user2]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(0); // No logs for either
 
       emailService.sendDailyReminder
         .mockRejectedValueOnce(new Error('SMTP error'))
@@ -193,8 +180,8 @@ describe('NotificationsService', () => {
     });
 
     it('should fetch current streak for each user', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.count.mockResolvedValue(0);
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(0);
 
       await service.sendDailyReminders();
 
@@ -206,8 +193,8 @@ describe('NotificationsService', () => {
 
   describe('sendWeeklyDigests', () => {
     it('should send weekly digest to users with reminders enabled', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.find.mockResolvedValue([]); // No logs in range
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.findHabitLogsByUserSinceDate.mockResolvedValue([]); // No logs in range
 
       const result = await service.sendWeeklyDigests();
 
@@ -225,14 +212,14 @@ describe('NotificationsService', () => {
     });
 
     it('should compute stats from habit logs in the last 7 days', async () => {
-      userRepo.find.mockResolvedValue([mockUserWithReminders]);
-      habitLogRepo.find.mockResolvedValue([
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([mockUserWithReminders]);
+      queryRepo.findHabitLogsByUserSinceDate.mockResolvedValue([
         { habitId: 'h1', savedCalories: 200, savedMoney: 5 },
         { habitId: 'h1', savedCalories: 300, savedMoney: 8 },
         { habitId: 'h2', savedCalories: 100, savedMoney: 3 },
       ]);
-      habitRepo.findOne.mockResolvedValue({ id: 'h1', title: 'No Sweets' });
-      habitRepo.count.mockResolvedValue(2);
+      queryRepo.findHabitById.mockResolvedValue({ id: 'h1', title: 'No Sweets' });
+      queryRepo.countActiveHabitsByUser.mockResolvedValue(2);
 
       const result = await service.sendWeeklyDigests();
 
@@ -250,7 +237,7 @@ describe('NotificationsService', () => {
     });
 
     it('should return sent: 0 when no users eligible', async () => {
-      userRepo.find.mockResolvedValue([]);
+      queryRepo.findUsersWithRemindersEnabled.mockResolvedValue([]);
 
       const result = await service.sendWeeklyDigests();
 

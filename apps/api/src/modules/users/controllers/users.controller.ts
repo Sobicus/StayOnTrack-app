@@ -10,12 +10,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from './entities/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+import { UsersService } from '../services/users.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../entities/user.entity';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')

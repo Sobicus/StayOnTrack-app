@@ -3,8 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { HabitLogsService } from './habit-logs.service';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
-import { HabitsService } from '../habits/habits.service';
-import { GamificationService } from '../gamification/gamification.service';
+import { HabitsService } from '../habits/services/habits.service';
+import { GamificationService } from '../gamification/services/gamification.service';
 import { AnalyticsService } from '../analytics/services/analytics.service';
 import { HabitFrequencyType } from '../habits/entities/habit.entity';
 

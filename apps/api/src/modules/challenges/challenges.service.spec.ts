@@ -8,8 +8,8 @@ import {
 import { ChallengesService } from './challenges.service';
 import { Challenge } from './entities/challenge.entity';
 import { ChallengeParticipant } from './entities/challenge-participant.entity';
-import { UsersService } from '../users/users.service';
-import { FriendsService } from '../friends/friends.service';
+import { UsersService } from '../users/services/users.service';
+import { FriendsService } from '../friends/services/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { ChallengeType, ChallengeStatus, ChallengeParticipantStatus } from '@stayontrack/contracts';

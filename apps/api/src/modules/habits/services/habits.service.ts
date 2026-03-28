@@ -3,43 +3,37 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Habit } from './entities/habit.entity';
-import { HabitTemplate } from './entities/habit-template.entity';
-import { CreateHabitDto } from './dto/create-habit.dto';
-import { UpdateHabitDto } from './dto/update-habit.dto';
-import { AnalyticsService } from '../analytics/services/analytics.service';
+import { Habit } from '../entities/habit.entity';
+import { HabitTemplate } from '../entities/habit-template.entity';
+import { CreateHabitDto } from '../dto/create-habit.dto';
+import { UpdateHabitDto } from '../dto/update-habit.dto';
+import { AnalyticsService } from '../../analytics/services/analytics.service';
+import { HabitsQueryRepository } from '../repositories/habits.query.repository';
+import { HabitsCommandRepository } from '../repositories/habits.command.repository';
 
 @Injectable()
 export class HabitsService {
   constructor(
-    @InjectRepository(Habit)
-    private readonly habitRepository: Repository<Habit>,
-    @InjectRepository(HabitTemplate)
-    private readonly templateRepository: Repository<HabitTemplate>,
+    private readonly queryRepo: HabitsQueryRepository,
+    private readonly commandRepo: HabitsCommandRepository,
     private readonly analyticsService: AnalyticsService,
   ) {}
 
   async getTemplates(): Promise<HabitTemplate[]> {
-    return this.templateRepository.find({ order: { category: 'ASC', sortOrder: 'ASC' } });
+    return this.queryRepo.getTemplates();
   }
 
   async create(userId: string, dto: CreateHabitDto): Promise<Habit> {
     // Get the next sort order for this user
-    const maxSortOrder = await this.habitRepository
-      .createQueryBuilder('habit')
-      .select('MAX(habit.sortOrder)', 'max')
-      .where('habit.userId = :userId', { userId })
-      .getRawOne();
+    const maxSortOrder = await this.queryRepo.getMaxSortOrder(userId);
 
-    const habit = this.habitRepository.create({
+    const habit = this.commandRepo.create({
       ...dto,
       userId,
-      sortOrder: (maxSortOrder?.max ?? -1) + 1,
+      sortOrder: (maxSortOrder ?? -1) + 1,
     });
 
-    const saved = await this.habitRepository.save(habit);
+    const saved = await this.commandRepo.save(habit);
 
     this.analyticsService
       .trackEvent(userId, 'habit_created', { habitId: saved.id, category: dto.category })
@@ -49,23 +43,15 @@ export class HabitsService {
   }
 
   async findAllByUser(userId: string): Promise<Habit[]> {
-    return this.habitRepository.find({
-      where: { userId },
-      order: { sortOrder: 'ASC', createdAt: 'ASC' },
-    });
+    return this.queryRepo.findAllByUser(userId);
   }
 
   async findActiveByUser(userId: string): Promise<Habit[]> {
-    return this.habitRepository.find({
-      where: { userId, isActive: true },
-      order: { sortOrder: 'ASC', createdAt: 'ASC' },
-    });
+    return this.queryRepo.findActiveByUser(userId);
   }
 
   async findOneByUser(habitId: string, userId: string): Promise<Habit> {
-    const habit = await this.habitRepository.findOne({
-      where: { id: habitId },
-    });
+    const habit = await this.queryRepo.findOneById(habitId);
 
     if (!habit) {
       throw new NotFoundException('Habit not found');
@@ -87,12 +73,12 @@ export class HabitsService {
 
     Object.assign(habit, dto);
 
-    return this.habitRepository.save(habit);
+    return this.commandRepo.save(habit);
   }
 
   async remove(habitId: string, userId: string): Promise<void> {
     const habit = await this.findOneByUser(habitId, userId);
-    await this.habitRepository.remove(habit);
+    await this.commandRepo.remove(habit);
   }
 
   async reorder(
@@ -111,10 +97,7 @@ export class HabitsService {
 
     // Update sort orders
     const updates = habitIds.map((id, index) =>
-      this.habitRepository.update(
-        { id, userId },
-        { sortOrder: index },
-      ),
+      this.commandRepo.updateSortOrder(id, userId, index),
     );
 
     await Promise.all(updates);

@@ -7,14 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 import { HabitLog, HabitLogStatus } from './entities/habit-log.entity';
-import { HabitsService } from '../habits/habits.service';
+import { HabitsService } from '../habits/services/habits.service';
 import { Habit, HabitFrequencyType, HabitType } from '../habits/entities/habit.entity';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { BatchCheckinDto } from './dto/batch-checkin.dto';
 import { DaySummaryDto, HabitLogResponseDto } from './dto/habit-log-response.dto';
 import { getSavedCalories, getSavedMoney, XP_REWARDS } from '@stayontrack/contracts';
 import { getTodayInTimezone } from '../../common/utils/date.utils';
-import { GamificationService, AddXpResult } from '../gamification/gamification.service';
+import { GamificationService, AddXpResult } from '../gamification/services/gamification.service';
 import { AnalyticsService } from '../analytics/services/analytics.service';
 
 export interface CreateLogResult {

@@ -13,8 +13,8 @@ import {
   ChallengeParticipantStatus,
 } from './entities/challenge-participant.entity';
 import { ChallengeType } from '@stayontrack/contracts';
-import { UsersService } from '../users/users.service';
-import { FriendsService } from '../friends/friends.service';
+import { UsersService } from '../users/services/users.service';
+import { FriendsService } from '../friends/services/friends.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';

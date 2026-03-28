@@ -1,20 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { GamificationService } from './gamification.service';
-import { User } from '../users/entities/user.entity';
-import { Quest, QuestType } from './entities/quest.entity';
-import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
-import { Habit } from '../habits/entities/habit.entity';
+import { GamificationService } from './services/gamification.service';
+import { QuestType } from './entities/quest.entity';
+import { HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { XP_REWARDS } from '@stayontrack/contracts';
 import { AnalyticsService } from '../analytics/services/analytics.service';
+import { GamificationQueryRepository } from './repositories/gamification.query.repository';
+import { GamificationCommandRepository } from './repositories/gamification.command.repository';
 
 describe('GamificationService', () => {
   let service: GamificationService;
-  let userRepo: any;
-  let questRepo: any;
-  let habitLogRepo: any;
-  let habitRepo: any;
+  let queryRepo: any;
+  let commandRepo: any;
   let analyticsService: any;
 
   const mockUser = {
@@ -27,29 +24,24 @@ describe('GamificationService', () => {
   const today = new Date().toISOString().split('T')[0];
 
   beforeEach(async () => {
-    userRepo = {
-      findOne: jest.fn().mockResolvedValue({ ...mockUser }),
-      save: jest.fn().mockImplementation((user) => Promise.resolve(user)),
+    queryRepo = {
+      findUserById: jest.fn().mockResolvedValue({ ...mockUser }),
+      findQuestsByUserAndDate: jest.fn().mockResolvedValue([]),
+      findQuestByUserTypeAndDate: jest.fn().mockResolvedValue(null),
+      countActiveHabitsByUser: jest.fn().mockResolvedValue(0),
+      countHabitLogsByUserAndDate: jest.fn().mockResolvedValue(0),
+      countHabitLogsByUserDateAndStatus: jest.fn().mockResolvedValue(0),
+      findEarliestHabitLogByUserAndDate: jest.fn().mockResolvedValue(null),
     };
 
-    questRepo = {
-      find: jest.fn().mockResolvedValue([]),
-      findOne: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation((data) => ({
+    commandRepo = {
+      createQuest: jest.fn().mockImplementation((data) => Promise.resolve({
         id: `quest-${Date.now()}-${Math.random()}`,
         ...data,
         createdAt: new Date(),
       })),
-      save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
-    };
-
-    habitLogRepo = {
-      count: jest.fn().mockResolvedValue(0),
-      find: jest.fn().mockResolvedValue([]),
-    };
-
-    habitRepo = {
-      count: jest.fn().mockResolvedValue(0),
+      saveQuest: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+      saveUser: jest.fn().mockImplementation((user) => Promise.resolve(user)),
     };
 
     analyticsService = {
@@ -59,10 +51,8 @@ describe('GamificationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GamificationService,
-        { provide: getRepositoryToken(User), useValue: userRepo },
-        { provide: getRepositoryToken(Quest), useValue: questRepo },
-        { provide: getRepositoryToken(HabitLog), useValue: habitLogRepo },
-        { provide: getRepositoryToken(Habit), useValue: habitRepo },
+        { provide: GamificationQueryRepository, useValue: queryRepo },
+        { provide: GamificationCommandRepository, useValue: commandRepo },
         { provide: AnalyticsService, useValue: analyticsService },
       ],
     }).compile();
@@ -74,7 +64,7 @@ describe('GamificationService', () => {
 
   describe('getLevelInfo', () => {
     it('should return level 1 for 0 XP', async () => {
-      userRepo.findOne.mockResolvedValue({ ...mockUser, totalXp: 0 });
+      queryRepo.findUserById.mockResolvedValue({ ...mockUser, totalXp: 0 });
 
       const result = await service.getLevelInfo('user-1');
 
@@ -85,7 +75,7 @@ describe('GamificationService', () => {
     });
 
     it('should return level 2 for 100 XP', async () => {
-      userRepo.findOne.mockResolvedValue({ ...mockUser, totalXp: 100 });
+      queryRepo.findUserById.mockResolvedValue({ ...mockUser, totalXp: 100 });
 
       const result = await service.getLevelInfo('user-1');
 
@@ -94,7 +84,7 @@ describe('GamificationService', () => {
     });
 
     it('should return correct progress within a level', async () => {
-      userRepo.findOne.mockResolvedValue({ ...mockUser, totalXp: 50 });
+      queryRepo.findUserById.mockResolvedValue({ ...mockUser, totalXp: 50 });
 
       const result = await service.getLevelInfo('user-1');
 
@@ -104,7 +94,7 @@ describe('GamificationService', () => {
     });
 
     it('should throw NotFoundException when user not found', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      queryRepo.findUserById.mockResolvedValue(null);
 
       await expect(service.getLevelInfo('nonexistent')).rejects.toThrow(
         NotFoundException,
@@ -117,13 +107,13 @@ describe('GamificationService', () => {
   describe('addXp', () => {
     it('should increment user XP by the given amount', async () => {
       const user = { ...mockUser, totalXp: 50 };
-      userRepo.findOne.mockResolvedValue(user);
+      queryRepo.findUserById.mockResolvedValue(user);
 
       const result = await service.addXp('user-1', 30);
 
       expect(result.totalXp).toBe(80);
       expect(result.xpEarned).toBe(30);
-      expect(userRepo.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveUser).toHaveBeenCalledWith(
         expect.objectContaining({ totalXp: 80 }),
       );
     });
@@ -131,7 +121,7 @@ describe('GamificationService', () => {
     it('should detect level-up when XP crosses threshold', async () => {
       // User at 90 XP (level 1), adding 20 should cross 100 (level 2)
       const user = { ...mockUser, totalXp: 90 };
-      userRepo.findOne.mockResolvedValue(user);
+      queryRepo.findUserById.mockResolvedValue(user);
 
       const result = await service.addXp('user-1', 20);
 
@@ -142,7 +132,7 @@ describe('GamificationService', () => {
 
     it('should not detect level-up when XP stays within same level', async () => {
       const user = { ...mockUser, totalXp: 10 };
-      userRepo.findOne.mockResolvedValue(user);
+      queryRepo.findUserById.mockResolvedValue(user);
 
       const result = await service.addXp('user-1', 20);
 
@@ -152,7 +142,7 @@ describe('GamificationService', () => {
     });
 
     it('should throw NotFoundException when user not found', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      queryRepo.findUserById.mockResolvedValue(null);
 
       await expect(service.addXp('nonexistent', 10)).rejects.toThrow(
         NotFoundException,
@@ -164,12 +154,11 @@ describe('GamificationService', () => {
 
   describe('getDailyQuests', () => {
     it('should generate 3 quests when none exist for today', async () => {
-      questRepo.find.mockResolvedValue([]); // No existing quests
+      queryRepo.findQuestsByUserAndDate.mockResolvedValue([]); // No existing quests
 
       const result = await service.getDailyQuests('user-1', today);
 
-      expect(questRepo.create).toHaveBeenCalledTimes(3);
-      expect(questRepo.save).toHaveBeenCalledTimes(3);
+      expect(commandRepo.createQuest).toHaveBeenCalledTimes(3);
       expect(result).toHaveLength(3);
     });
 
@@ -179,11 +168,11 @@ describe('GamificationService', () => {
         { id: 'q-2', questType: QuestType.AVOID_FULLY_ONE, date: today, completed: false, completedAt: null, xpReward: 50, createdAt: new Date() },
         { id: 'q-3', questType: QuestType.LOG_3_HABITS, date: today, completed: false, completedAt: null, xpReward: 50, createdAt: new Date() },
       ];
-      questRepo.find.mockResolvedValue(existingQuests);
+      queryRepo.findQuestsByUserAndDate.mockResolvedValue(existingQuests);
 
       const result = await service.getDailyQuests('user-1', today);
 
-      expect(questRepo.create).not.toHaveBeenCalled();
+      expect(commandRepo.createQuest).not.toHaveBeenCalled();
       expect(result).toHaveLength(3);
     });
 
@@ -191,7 +180,7 @@ describe('GamificationService', () => {
       const existingQuests = [
         { id: 'q-1', questType: QuestType.LOG_ALL_HABITS, date: today, completed: false, completedAt: null, xpReward: 50, createdAt: new Date() },
       ];
-      questRepo.find.mockResolvedValue(existingQuests);
+      queryRepo.findQuestsByUserAndDate.mockResolvedValue(existingQuests);
 
       const result = await service.getDailyQuests('user-1', today);
 
@@ -201,11 +190,11 @@ describe('GamificationService', () => {
     });
 
     it('should set xpReward to QUEST_COMPLETE value for generated quests', async () => {
-      questRepo.find.mockResolvedValue([]); // No existing quests
+      queryRepo.findQuestsByUserAndDate.mockResolvedValue([]); // No existing quests
 
       await service.getDailyQuests('user-1', today);
 
-      expect(questRepo.create).toHaveBeenCalledWith(
+      expect(commandRepo.createQuest).toHaveBeenCalledWith(
         expect.objectContaining({
           xpReward: XP_REWARDS.QUEST_COMPLETE,
         }),
@@ -221,17 +210,17 @@ describe('GamificationService', () => {
         { id: 'q-1', questType: QuestType.AVOID_FULLY_ONE, date: today, completed: false, completedAt: null, xpReward: 50, userId: 'user-1' },
       ];
       // First find call returns uncompleted quests, second returns updated quests
-      questRepo.find
+      queryRepo.findQuestsByUserAndDate
         .mockResolvedValueOnce(uncompleted) // initial find
         .mockResolvedValueOnce([ // re-fetch after update
           { ...uncompleted[0], completed: true, completedAt: new Date() },
         ]);
 
       // evaluateQuest: checkAvoidFullyOne returns true
-      habitLogRepo.count.mockResolvedValue(1); // 1 AVOIDED log
+      queryRepo.countHabitLogsByUserDateAndStatus.mockResolvedValue(1); // 1 AVOIDED log
 
       // addXp needs a user
-      userRepo.findOne.mockResolvedValue({ ...mockUser, totalXp: 0 });
+      queryRepo.findUserById.mockResolvedValue({ ...mockUser, totalXp: 0 });
 
       const result = await service.checkAllQuests('user-1', today);
 
@@ -243,7 +232,7 @@ describe('GamificationService', () => {
       const quests = [
         { id: 'q-1', questType: QuestType.LOG_ALL_HABITS, date: today, completed: true, completedAt: new Date(), xpReward: 50, userId: 'user-1' },
       ];
-      questRepo.find
+      queryRepo.findQuestsByUserAndDate
         .mockResolvedValueOnce(quests)
         .mockResolvedValueOnce(quests);
 
@@ -257,12 +246,12 @@ describe('GamificationService', () => {
       const uncompleted = [
         { id: 'q-1', questType: QuestType.LOG_3_HABITS, date: today, completed: false, completedAt: null, xpReward: 50, userId: 'user-1' },
       ];
-      questRepo.find
+      queryRepo.findQuestsByUserAndDate
         .mockResolvedValueOnce(uncompleted)
         .mockResolvedValueOnce(uncompleted);
 
       // Only 1 log, need 3
-      habitLogRepo.count.mockResolvedValue(1);
+      queryRepo.countHabitLogsByUserAndDate.mockResolvedValue(1);
 
       const result = await service.checkAllQuests('user-1', today);
 
@@ -272,13 +261,13 @@ describe('GamificationService', () => {
 
     it('should generate quests if none exist when checking', async () => {
       // First find returns empty, triggers generation, then the generated quests
-      questRepo.find
+      queryRepo.findQuestsByUserAndDate
         .mockResolvedValueOnce([]) // no quests yet
         .mockResolvedValueOnce([]); // re-fetch also empty (freshly generated but not completed)
 
       const result = await service.checkAllQuests('user-1', today);
 
-      expect(questRepo.create).toHaveBeenCalledTimes(3);
+      expect(commandRepo.createQuest).toHaveBeenCalledTimes(3);
       expect(result.quests).toHaveLength(0); // re-fetch returned empty
     });
   });

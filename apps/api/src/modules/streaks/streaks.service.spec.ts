@@ -3,8 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { StreaksService } from './streaks.service';
 import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
 import { User } from '../users/entities/user.entity';
-import { HabitsService } from '../habits/habits.service';
-import { GamificationService } from '../gamification/gamification.service';
+import { HabitsService } from '../habits/services/habits.service';
+import { GamificationService } from '../gamification/services/gamification.service';
 import { STREAK_SHIELDS_PER_WEEK } from '@stayontrack/contracts';
 
 describe('StreaksService', () => {

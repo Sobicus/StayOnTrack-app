@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Telegraf } from 'telegraf';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../users/services/users.service';
 import { StatsService } from '../stats/stats.service';
 import { StreaksService } from '../streaks/streaks.service';
 

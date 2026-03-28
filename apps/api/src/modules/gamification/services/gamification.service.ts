@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { Quest, QuestType } from './entities/quest.entity';
-import { HabitLog, HabitLogStatus } from '../habit-logs/entities/habit-log.entity';
-import { Habit } from '../habits/entities/habit.entity';
-import { QUEST_DEFINITIONS, getQuestDefinitionMap } from './quest-definitions';
+import { Quest, QuestType } from '../entities/quest.entity';
+import { HabitLogStatus } from '../../habit-logs/entities/habit-log.entity';
+import { QUEST_DEFINITIONS, getQuestDefinitionMap } from '../quest-definitions';
 import { getLevel, getXpForNextLevel, XP_REWARDS } from '@stayontrack/contracts';
-import { AnalyticsService } from '../analytics/services/analytics.service';
+import { AnalyticsService } from '../../analytics/services/analytics.service';
+import { GamificationQueryRepository } from '../repositories/gamification.query.repository';
+import { GamificationCommandRepository } from '../repositories/gamification.command.repository';
 
 export interface LevelInfo {
   level: number;
@@ -42,14 +40,8 @@ export interface CheckQuestsResult {
 @Injectable()
 export class GamificationService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Quest)
-    private readonly questRepository: Repository<Quest>,
-    @InjectRepository(HabitLog)
-    private readonly habitLogRepository: Repository<HabitLog>,
-    @InjectRepository(Habit)
-    private readonly habitRepository: Repository<Habit>,
+    private readonly queryRepo: GamificationQueryRepository,
+    private readonly commandRepo: GamificationCommandRepository,
     private readonly analyticsService: AnalyticsService,
   ) {}
 
@@ -57,7 +49,7 @@ export class GamificationService {
    * Get level info for a user.
    */
   async getLevelInfo(userId: string): Promise<LevelInfo> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.queryRepo.findUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -69,7 +61,7 @@ export class GamificationService {
    * Add XP to a user. Returns the result including whether a level-up occurred.
    */
   async addXp(userId: string, amount: number): Promise<AddXpResult> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.queryRepo.findUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -77,7 +69,7 @@ export class GamificationService {
     const previousLevel = getLevel(user.totalXp);
 
     user.totalXp += amount;
-    await this.userRepository.save(user);
+    await this.commandRepo.saveUser(user);
 
     const newLevel = getLevel(user.totalXp);
 
@@ -97,10 +89,7 @@ export class GamificationService {
   async getDailyQuests(userId: string, today?: string): Promise<QuestResponse[]> {
     const date = today || this.getTodayDate();
 
-    let quests = await this.questRepository.find({
-      where: { userId, date },
-      order: { createdAt: 'ASC' },
-    });
+    let quests = await this.queryRepo.findQuestsByUserAndDate(userId, date);
 
     if (quests.length === 0) {
       quests = await this.generateDailyQuests(userId, date);
@@ -116,9 +105,7 @@ export class GamificationService {
     const date = today || this.getTodayDate();
 
     // Ensure quests exist
-    let quests = await this.questRepository.find({
-      where: { userId, date },
-    });
+    let quests = await this.queryRepo.findQuestsByUserAndDate(userId, date);
 
     if (quests.length === 0) {
       quests = await this.generateDailyQuests(userId, date);
@@ -134,7 +121,7 @@ export class GamificationService {
       if (isCompleted) {
         quest.completed = true;
         quest.completedAt = new Date();
-        await this.questRepository.save(quest);
+        await this.commandRepo.saveQuest(quest);
 
         await this.addXp(userId, quest.xpReward);
         totalXpEarned += quest.xpReward;
@@ -147,10 +134,7 @@ export class GamificationService {
     }
 
     // Re-fetch to get updated state
-    const updatedQuests = await this.questRepository.find({
-      where: { userId, date },
-      order: { createdAt: 'ASC' },
-    });
+    const updatedQuests = await this.queryRepo.findQuestsByUserAndDate(userId, date);
 
     return {
       quests: this.mapQuestsToResponse(updatedQuests),
@@ -169,9 +153,7 @@ export class GamificationService {
   ): Promise<boolean> {
     const date = today || this.getTodayDate();
 
-    const quest = await this.questRepository.findOne({
-      where: { userId, questType, date },
-    });
+    const quest = await this.queryRepo.findQuestByUserTypeAndDate(userId, questType, date);
 
     if (!quest || quest.completed) {
       return quest?.completed ?? false;
@@ -181,7 +163,7 @@ export class GamificationService {
     if (isCompleted) {
       quest.completed = true;
       quest.completedAt = new Date();
-      await this.questRepository.save(quest);
+      await this.commandRepo.saveQuest(quest);
 
       await this.addXp(userId, quest.xpReward);
     }
@@ -201,14 +183,13 @@ export class GamificationService {
 
     const quests: Quest[] = [];
     for (const def of picked) {
-      const quest = this.questRepository.create({
+      const saved = await this.commandRepo.createQuest({
         userId,
         questType: def.type,
         date,
         completed: false,
         xpReward: XP_REWARDS.QUEST_COMPLETE,
       });
-      const saved = await this.questRepository.save(quest);
       quests.push(saved);
     }
 
@@ -245,15 +226,11 @@ export class GamificationService {
    * log_all_habits: User has logged every active habit for today.
    */
   private async checkLogAllHabits(userId: string, date: string): Promise<boolean> {
-    const activeHabits = await this.habitRepository.count({
-      where: { userId, isActive: true },
-    });
+    const activeHabits = await this.queryRepo.countActiveHabitsByUser(userId);
 
     if (activeHabits === 0) return false;
 
-    const logsToday = await this.habitLogRepository.count({
-      where: { userId, date },
-    });
+    const logsToday = await this.queryRepo.countHabitLogsByUserAndDate(userId, date);
 
     return logsToday >= activeHabits;
   }
@@ -262,9 +239,11 @@ export class GamificationService {
    * avoid_fully_one: At least one log today with status AVOIDED (portionRatio = 0).
    */
   private async checkAvoidFullyOne(userId: string, date: string): Promise<boolean> {
-    const count = await this.habitLogRepository.count({
-      where: { userId, date, status: HabitLogStatus.AVOIDED },
-    });
+    const count = await this.queryRepo.countHabitLogsByUserDateAndStatus(
+      userId,
+      date,
+      HabitLogStatus.AVOIDED,
+    );
 
     return count >= 1;
   }
@@ -273,25 +252,18 @@ export class GamificationService {
    * check_in_before_noon: At least one log created before 12:00 PM today.
    */
   private async checkCheckInBeforeNoon(userId: string, date: string): Promise<boolean> {
-    const logs = await this.habitLogRepository.find({
-      where: { userId, date },
-      order: { createdAt: 'ASC' },
-      take: 1,
-    });
+    const log = await this.queryRepo.findEarliestHabitLogByUserAndDate(userId, date);
 
-    if (logs.length === 0) return false;
+    if (!log) return false;
 
-    const createdAt = logs[0].createdAt;
-    return createdAt.getHours() < 12;
+    return log.createdAt.getHours() < 12;
   }
 
   /**
    * log_3_habits: At least 3 habit logs for today.
    */
   private async checkLog3Habits(userId: string, date: string): Promise<boolean> {
-    const count = await this.habitLogRepository.count({
-      where: { userId, date },
-    });
+    const count = await this.queryRepo.countHabitLogsByUserAndDate(userId, date);
 
     return count >= 3;
   }

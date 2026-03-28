@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import {
   BadRequestException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { FriendsService } from './friends.service';
-import { FriendRequest, FriendRequestStatus } from './entities/friend-request.entity';
-import { Friendship } from './entities/friendship.entity';
-import { UsersService } from '../users/users.service';
-import { GamificationService } from '../gamification/gamification.service';
+import { FriendsService } from './services/friends.service';
+import { FriendRequestStatus } from './entities/friend-request.entity';
+import { UsersService } from '../users/services/users.service';
+import { GamificationService } from '../gamification/services/gamification.service';
+import { FriendsQueryRepository } from './repositories/friends.query.repository';
+import { FriendsCommandRepository } from './repositories/friends.command.repository';
 
 describe('FriendsService', () => {
   let service: FriendsService;
-  let requestRepository: any;
-  let friendshipRepository: any;
+  let queryRepo: any;
+  let commandRepo: any;
   let usersService: any;
   let gamificationService: any;
 
@@ -31,30 +31,25 @@ describe('FriendsService', () => {
   };
 
   beforeEach(async () => {
-    requestRepository = {
-      findOne: jest.fn(),
-      findOneOrFail: jest.fn(),
-      find: jest.fn().mockResolvedValue([]),
-      create: jest.fn((data) => ({ ...data, id: 'req-1', createdAt: new Date() })),
-      save: jest.fn((data) => {
-        if (Array.isArray(data)) return Promise.resolve(data);
-        return Promise.resolve({ ...data, id: data.id || 'req-1' });
-      }),
+    queryRepo = {
+      findPendingRequestBetween: jest.fn().mockResolvedValue(null),
+      findRequestById: jest.fn().mockResolvedValue(null),
+      findRequestByIdWithRelations: jest.fn().mockResolvedValue(null),
+      findIncomingRequests: jest.fn().mockResolvedValue([]),
+      findOutgoingRequests: jest.fn().mockResolvedValue([]),
+      findFriendship: jest.fn().mockResolvedValue(null),
+      findAllFriendships: jest.fn().mockResolvedValue([]),
+      countFriendships: jest.fn().mockResolvedValue(0),
+      findFriendIds: jest.fn().mockResolvedValue([]),
+      getLeaderboardStats: jest.fn().mockResolvedValue([]),
     };
 
-    friendshipRepository = {
-      findOne: jest.fn().mockResolvedValue(null),
-      find: jest.fn().mockResolvedValue([]),
-      count: jest.fn().mockResolvedValue(0),
-      create: jest.fn((data) => ({ ...data, id: 'fs-1', createdAt: new Date() })),
-      save: jest.fn((data) => {
-        if (Array.isArray(data)) return Promise.resolve(data);
-        return Promise.resolve(data);
-      }),
-      delete: jest.fn(),
-      manager: {
-        query: jest.fn().mockResolvedValue([]),
-      },
+    commandRepo = {
+      createRequest: jest.fn((data) => ({ ...data, id: 'req-1', createdAt: new Date() })),
+      saveRequest: jest.fn((data) => Promise.resolve({ ...data, id: data.id || 'req-1' })),
+      createFriendship: jest.fn((data) => ({ ...data, id: 'fs-1', createdAt: new Date() })),
+      saveFriendships: jest.fn((data) => Promise.resolve(data)),
+      deleteFriendship: jest.fn().mockResolvedValue(undefined),
     };
 
     usersService = {
@@ -70,8 +65,8 @@ describe('FriendsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FriendsService,
-        { provide: getRepositoryToken(FriendRequest), useValue: requestRepository },
-        { provide: getRepositoryToken(Friendship), useValue: friendshipRepository },
+        { provide: FriendsQueryRepository, useValue: queryRepo },
+        { provide: FriendsCommandRepository, useValue: commandRepo },
         { provide: UsersService, useValue: usersService },
         { provide: GamificationService, useValue: gamificationService },
       ],
@@ -83,8 +78,7 @@ describe('FriendsService', () => {
   describe('sendRequest', () => {
     it('should send a friend request successfully', async () => {
       usersService.findByUsername.mockResolvedValue(mockFriend);
-      requestRepository.findOne.mockResolvedValue(null);
-      requestRepository.findOneOrFail.mockResolvedValue({
+      queryRepo.findRequestByIdWithRelations.mockResolvedValue({
         id: 'req-1',
         fromUserId: 'user-1',
         toUserId: 'user-2',
@@ -98,7 +92,7 @@ describe('FriendsService', () => {
 
       expect(result.fromUserId).toBe('user-1');
       expect(result.toUserId).toBe('user-2');
-      expect(requestRepository.create).toHaveBeenCalled();
+      expect(commandRepo.createRequest).toHaveBeenCalled();
     });
 
     it('should throw if user not found', async () => {
@@ -119,7 +113,7 @@ describe('FriendsService', () => {
 
     it('should throw if already friends', async () => {
       usersService.findByUsername.mockResolvedValue(mockFriend);
-      friendshipRepository.findOne.mockResolvedValue({ id: 'fs-1' });
+      queryRepo.findFriendship.mockResolvedValue({ id: 'fs-1' });
 
       await expect(
         service.sendRequest('user-1', 'bob'),
@@ -128,8 +122,8 @@ describe('FriendsService', () => {
 
     it('should throw if pending request already exists', async () => {
       usersService.findByUsername.mockResolvedValue(mockFriend);
-      friendshipRepository.findOne.mockResolvedValue(null);
-      requestRepository.findOne.mockResolvedValue({ id: 'req-existing' });
+      queryRepo.findFriendship.mockResolvedValue(null);
+      queryRepo.findPendingRequestBetween.mockResolvedValue({ id: 'req-existing' });
 
       await expect(
         service.sendRequest('user-1', 'bob'),
@@ -146,15 +140,15 @@ describe('FriendsService', () => {
         status: FriendRequestStatus.PENDING,
         inviteRewardClaimed: false,
       };
-      requestRepository.findOne.mockResolvedValue(pendingRequest);
+      queryRepo.findRequestById.mockResolvedValue(pendingRequest);
 
       await service.acceptRequest('req-1', 'user-2');
 
-      expect(requestRepository.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveRequest).toHaveBeenCalledWith(
         expect.objectContaining({ status: FriendRequestStatus.ACCEPTED }),
       );
-      // Should create bidirectional friendship (save called with array)
-      expect(friendshipRepository.save).toHaveBeenCalledWith(
+      // Should create bidirectional friendship
+      expect(commandRepo.saveFriendships).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ userId: 'user-1', friendId: 'user-2' }),
           expect.objectContaining({ userId: 'user-2', friendId: 'user-1' }),
@@ -169,7 +163,7 @@ describe('FriendsService', () => {
     });
 
     it('should throw if request not found', async () => {
-      requestRepository.findOne.mockResolvedValue(null);
+      queryRepo.findRequestById.mockResolvedValue(null);
 
       await expect(
         service.acceptRequest('req-999', 'user-2'),
@@ -185,11 +179,11 @@ describe('FriendsService', () => {
         toUserId: 'user-2',
         status: FriendRequestStatus.PENDING,
       };
-      requestRepository.findOne.mockResolvedValue(pendingRequest);
+      queryRepo.findRequestById.mockResolvedValue(pendingRequest);
 
       await service.declineRequest('req-1', 'user-2');
 
-      expect(requestRepository.save).toHaveBeenCalledWith(
+      expect(commandRepo.saveRequest).toHaveBeenCalledWith(
         expect.objectContaining({ status: FriendRequestStatus.DECLINED }),
       );
     });
@@ -197,23 +191,17 @@ describe('FriendsService', () => {
 
   describe('removeFriend', () => {
     it('should remove both directions of friendship', async () => {
-      friendshipRepository.findOne.mockResolvedValue({ id: 'fs-1' });
+      queryRepo.findFriendship.mockResolvedValue({ id: 'fs-1' });
 
       await service.removeFriend('user-1', 'user-2');
 
-      expect(friendshipRepository.delete).toHaveBeenCalledTimes(2);
-      expect(friendshipRepository.delete).toHaveBeenCalledWith({
-        userId: 'user-1',
-        friendId: 'user-2',
-      });
-      expect(friendshipRepository.delete).toHaveBeenCalledWith({
-        userId: 'user-2',
-        friendId: 'user-1',
-      });
+      expect(commandRepo.deleteFriendship).toHaveBeenCalledTimes(2);
+      expect(commandRepo.deleteFriendship).toHaveBeenCalledWith('user-1', 'user-2');
+      expect(commandRepo.deleteFriendship).toHaveBeenCalledWith('user-2', 'user-1');
     });
 
     it('should throw if friendship not found', async () => {
-      friendshipRepository.findOne.mockResolvedValue(null);
+      queryRepo.findFriendship.mockResolvedValue(null);
 
       await expect(
         service.removeFriend('user-1', 'user-2'),
@@ -223,14 +211,14 @@ describe('FriendsService', () => {
 
   describe('areFriends', () => {
     it('should return true if friends', async () => {
-      friendshipRepository.findOne.mockResolvedValue({ id: 'fs-1' });
+      queryRepo.findFriendship.mockResolvedValue({ id: 'fs-1' });
 
       const result = await service.areFriends('user-1', 'user-2');
       expect(result).toBe(true);
     });
 
     it('should return false if not friends', async () => {
-      friendshipRepository.findOne.mockResolvedValue(null);
+      queryRepo.findFriendship.mockResolvedValue(null);
 
       const result = await service.areFriends('user-1', 'user-2');
       expect(result).toBe(false);

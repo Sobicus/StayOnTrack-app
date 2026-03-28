@@ -13,16 +13,16 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
-import { FriendsService } from './friends.service';
-import { SendFriendRequestDto } from './dto/send-friend-request.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
+import { FriendsService } from '../services/friends.service';
+import { SendFriendRequestDto } from '../dto/send-friend-request.dto';
 import {
   FriendRequestResponseDto,
   FriendResponseDto,
   LeaderboardEntryDto,
-} from './dto/friend-response.dto';
+} from '../dto/friend-response.dto';
 
 @ApiTags('Friends')
 @ApiBearerAuth('access-token')
