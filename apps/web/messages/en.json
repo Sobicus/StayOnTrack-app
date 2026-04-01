@@ -355,7 +355,23 @@
     "createdBy": "by {username}",
     "joined": "Joined!",
     "joinFailed": "Could not join challenge",
-    "full": "Full"
+    "full": "Full",
+    "leaderboard": "Leaderboard",
+    "participants": "participants",
+    "noParticipantsYet": "No active participants yet",
+    "pendingInvites": "{count} pending",
+    "daysRemaining": "{count} days left",
+    "days": "days",
+    "description": "Description",
+    "cancelChallenge": "Cancel Challenge",
+    "cancelling": "Cancelling...",
+    "cancelFailed": "Failed to cancel",
+    "status": {
+      "ACTIVE": "Active",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "PENDING": "Pending"
+    }
   },
   "quests": {
     "title": "Daily Quests",

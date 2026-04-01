@@ -244,7 +244,24 @@
     "cancelConfirm": "Annuler ce défi ?",
     "statusCompleted": "Terminé",
     "statusCancelled": "Annulé",
-    "you": "vous"
+    "you": "vous",
+    "leaderboard": "Classement",
+    "participants": "participants",
+    "noParticipantsYet": "Aucun participant actif pour l'instant",
+    "pendingInvites": "{count} en attente",
+    "daysRemaining": "{count} jours restants",
+    "days": "jours",
+    "description": "Description",
+    "cancelChallenge": "Annuler le défi",
+    "cancelling": "Annulation...",
+    "cancelFailed": "Échec de l'annulation",
+    "cancelled": "Défi annulé",
+    "status": {
+      "ACTIVE": "Actif",
+      "COMPLETED": "Terminé",
+      "CANCELLED": "Annulé",
+      "PENDING": "En attente"
+    }
   },
   "settings": {
     "title": "Paramètres",
