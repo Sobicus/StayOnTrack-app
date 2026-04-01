@@ -408,6 +408,11 @@ export const api = {
       request<{ sent: boolean }>('/auth/resend-verification', { method: 'POST', token }),
     telegramAuth: (initData: string) =>
       request<AuthResponse>('/auth/telegram', { method: 'POST', body: { initData } }),
+    telegramWidget: (data: {
+      id: number; first_name: string; last_name?: string;
+      username?: string; photo_url?: string; auth_date: number; hash: string;
+    }) =>
+      request<AuthResponse>('/auth/telegram/widget', { method: 'POST', body: data }),
   },
 
   users: {

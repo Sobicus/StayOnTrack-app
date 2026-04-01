@@ -293,6 +293,83 @@ export class AuthService {
     return username;
   }
 
+  /**
+   * Telegram Login Widget auth (https://core.telegram.org/bots/telegram-login).
+   * Verifies HMAC-SHA256(data_check_string, SHA256(bot_token)).
+   * Auto-creates user if not found (like Google OAuth).
+   */
+  async telegramWidgetLogin(data: {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+    auth_date: number;
+    hash: string;
+  }): Promise<AuthResponse> {
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
+      throw new BadRequestException('Telegram auth not configured');
+    }
+
+    // Build data-check-string: all fields except hash, sorted alphabetically
+    const { hash, ...rest } = data;
+    const dataCheckString = Object.entries(rest)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+
+    // secret_key = SHA256(bot_token)
+    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    const computedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    if (computedHash !== hash) {
+      throw new UnauthorizedException('Invalid Telegram auth data');
+    }
+
+    // Reject stale auth (older than 1 day)
+    const ageSeconds = Math.floor(Date.now() / 1000) - data.auth_date;
+    if (ageSeconds > 86400) {
+      throw new UnauthorizedException('Telegram auth data expired');
+    }
+
+    const telegramId = data.id.toString();
+
+    // 1. Find existing user by telegramChatId
+    let user = await this.usersService.findByTelegramChatId(telegramId);
+
+    if (!user) {
+      // 2. Auto-create user (same pattern as Google OAuth)
+      const displayName = [data.first_name, data.last_name].filter(Boolean).join(' ');
+      const username = await this.generateUniqueUsername(data.username || displayName || 'tg_user');
+      const placeholderEmail = `tg_${telegramId}@telegram.internal`;
+
+      user = await this.usersService.create({
+        email: placeholderEmail,
+        passwordHash: await bcrypt.hash(
+          crypto.randomBytes(32).toString('hex'),
+          BCRYPT_SALT_ROUNDS,
+        ),
+        username,
+        avatarUrl: data.photo_url ?? null,
+        emailVerified: true,
+      });
+
+      // Link Telegram to the new account
+      await this.usersService.update(user.id, {
+        telegramChatId: telegramId,
+        telegramLinked: true,
+      });
+
+      user = (await this.usersService.findById(user.id))!;
+    }
+
+    return this.issueTokens(user);
+  }
+
   async telegramAuth(initData: string): Promise<AuthResponse> {
     // Validate Telegram initData hash
     const params = new URLSearchParams(initData);
