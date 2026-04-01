@@ -6,6 +6,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
+import { ClientProviders } from '@/components/common/client-providers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] });
@@ -71,7 +72,9 @@ export default async function RootLayout({
             <AuthProvider>
               <ToastProvider>
                 <ServiceWorkerRegister />
-                {children}
+                <ClientProviders>
+                  {children}
+                </ClientProviders>
               </ToastProvider>
             </AuthProvider>
           </ThemeProvider>

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -7,8 +8,12 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SanitizePipe } from './common/pipes/sanitize.pipe';
+import { validateRequiredEnv } from './config/env.validation';
 
 async function bootstrap() {
+  // Validate required env vars BEFORE creating the NestJS app
+  validateRequiredEnv();
+
   const logger = new Logger('Bootstrap');
 
   const app = await NestFactory.create(AppModule);
