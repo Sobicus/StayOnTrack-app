@@ -309,7 +309,10 @@
     "colorTheme": "Farbthema",
     "accentColor": "Akzentfarbe",
     "lockedTheme": "Freischaltbar auf Stufe {level}",
-    "themeApplied": "Design angewendet!"
+    "themeApplied": "Design angewendet!",
+    "profileFrame": "Avatar-Rahmen",
+    "profileFrameDesc": "Schalte Rahmen durch Errungenschaften frei",
+    "frameApplied": "Rahmen angewendet!"
   },
   "profile": {
     "privateProfile": "Privates Profil",

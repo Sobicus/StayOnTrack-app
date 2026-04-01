@@ -309,7 +309,10 @@
     "colorTheme": "Thème de couleur",
     "accentColor": "Couleur d'accentuation",
     "lockedTheme": "Débloqué au niveau {level}",
-    "themeApplied": "Thème appliqué !"
+    "themeApplied": "Thème appliqué !",
+    "profileFrame": "Cadre d'avatar",
+    "profileFrameDesc": "Débloque des cadres en accomplissant des succès",
+    "frameApplied": "Cadre appliqué !"
   },
   "profile": {
     "privateProfile": "Profil privé",

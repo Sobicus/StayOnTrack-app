@@ -7,6 +7,7 @@ import { api, type PublicProfileDto } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useTranslations } from 'next-intl';
 import { Flame, Zap, Trophy, Swords } from 'lucide-react';
+import { AvatarFrame } from '@/components/ui/avatar-frame';
 
 export default function PublicProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -63,8 +64,13 @@ export default function PublicProfilePage() {
     <AppShell>
       {/* Avatar + Username */}
       <div className="flex flex-col items-center mb-6 pt-2">
-        <div className="w-20 h-20 rounded-full bg-primary/15 border-2 border-primary/30 flex items-center justify-center mb-3">
-          <span className="text-3xl font-bold text-primary">{avatarLetter}</span>
+        <div className="mb-3">
+          <AvatarFrame
+            frameId={profile.profileFrame}
+            size={80}
+            avatarSrc={null}
+            fallback={avatarLetter}
+          />
         </div>
         <h1 className="text-xl font-bold text-[var(--foreground)]">@{profile.username}</h1>
         <p className="text-xs text-[var(--muted)] mt-1">

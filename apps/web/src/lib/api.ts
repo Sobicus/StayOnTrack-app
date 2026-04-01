@@ -57,6 +57,7 @@ export interface UserProfile {
   showStats: boolean;
   showAchievements: boolean;
   showActiveChallenges: boolean;
+  profileFrame: string | null;
 }
 
 export interface AuthResponse {
@@ -297,12 +298,14 @@ export interface UpdateProfileData {
   showStats?: boolean;
   showAchievements?: boolean;
   showActiveChallenges?: boolean;
+  profileFrame?: string | null;
 }
 
 export interface PublicProfileDto {
   username: string;
   joinedAt: string;
   daysTracking: number;
+  profileFrame: string | null;
   streak?: { current: number; best: number };
   stats?: { calories: number; money: number; weightKg: number };
   achievements?: { total: number; unlocked: number; topEmojis: string[] };

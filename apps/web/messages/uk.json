@@ -309,7 +309,10 @@
     "colorTheme": "Колірна тема",
     "accentColor": "Колір акценту",
     "lockedTheme": "Відкривається на {level} рівні",
-    "themeApplied": "Тему застосовано!"
+    "themeApplied": "Тему застосовано!",
+    "profileFrame": "Рамка аватара",
+    "profileFrameDesc": "Розблокуй рамки, виконуючи досягнення",
+    "frameApplied": "Рамку застосовано!"
   },
   "profile": {
     "privateProfile": "Приватний профіль",

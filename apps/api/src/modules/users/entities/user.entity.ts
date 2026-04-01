@@ -80,6 +80,10 @@ export class User {
   @Column({ type: 'boolean', default: false })
   showActiveChallenges!: boolean;
 
+  /** Selected profile avatar frame id. Null = no frame. */
+  @Column({ type: 'varchar', length: 30, nullable: true, default: null })
+  profileFrame!: string | null;
+
   @Column({ type: 'varchar', length: 5, default: 'en' })
   locale!: string;
 

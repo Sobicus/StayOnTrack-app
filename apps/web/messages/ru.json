@@ -461,7 +461,10 @@
     "telegramLinked": "Telegram привязан",
     "unlinkTelegram": "Отвязать Telegram",
     "telegramCodeExpiry": "Код действует 10 минут",
-    "colorTheme": "Цветовая тема"
+    "colorTheme": "Цветовая тема",
+    "profileFrame": "Рамка аватара",
+    "profileFrameDesc": "Разблокируй рамки, выполняя достижения",
+    "frameApplied": "Рамка применена!"
   },
   "profile": {
     "privateProfile": "Приватный профиль",

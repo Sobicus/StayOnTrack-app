@@ -98,4 +98,25 @@ export class UpdateUserDto {
   @Min(0)
   @Max(23)
   reminderHour?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  showStreak?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showStats?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showAchievements?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  showActiveChallenges?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  profileFrame?: string | null;
 }

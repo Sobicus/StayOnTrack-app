@@ -31,6 +31,7 @@ interface User {
   showStats: boolean;
   showAchievements: boolean;
   showActiveChallenges: boolean;
+  profileFrame: string | null;
 }
 
 interface AuthContextType {
