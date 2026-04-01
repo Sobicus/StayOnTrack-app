@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 import { HabitCatalog, CatalogItem } from '@/components/habits/habit-catalog';
+import { EmojiPickerButton } from '@/components/ui/emoji-picker-button';
 import { HabitSparkline } from '@/components/habits/habit-sparkline';
 import { addPendingCheckin, hasPendingCheckins } from '@/lib/offline-queue';
 import { syncPendingCheckins } from '@/lib/sync-manager';
@@ -54,8 +55,6 @@ const CATEGORIES = [
   'CUSTOM',
 ];
 
-const AVOIDANCE_EMOJI_OPTIONS = ['🍔', '🍕', '🍟', '🍩', '🍫', '🥤', '🍺', '🍷', '🚬', '☕', '🛒', '📱', '🎮', '💊'];
-const ACHIEVEMENT_EMOJI_OPTIONS = ['🏃', '🧘', '💧', '📚', '🚶', '✅', '💪', '🏊', '🚴', '🧹', '🎯', '🌅', '🥗', '💤'];
 
 const TARGET_UNITS = ['minutes', 'glasses', 'km', 'pages', 'times'];
 
@@ -308,8 +307,6 @@ export default function HabitsPage() {
       showToast(t('failedToSave'), 'error');
     }
   };
-
-  const emojiOptions = formHabitType === 'ACHIEVEMENT' ? ACHIEVEMENT_EMOJI_OPTIONS : AVOIDANCE_EMOJI_OPTIONS;
 
   if (loading) {
     return (
@@ -565,22 +562,7 @@ export default function HabitsPage() {
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
                   {t('emoji')}
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {emojiOptions.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => setEmoji(e)}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
-                        emoji === e
-                          ? 'bg-primary/20 ring-2 ring-primary scale-110'
-                          : 'bg-[var(--background)] hover:bg-primary/10'
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
+                <EmojiPickerButton value={emoji} onChange={setEmoji} size={48} />
               </div>
 
               {/* Name */}
