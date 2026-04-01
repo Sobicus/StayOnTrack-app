@@ -244,7 +244,24 @@
     "cancelConfirm": "Скасувати цей челендж?",
     "statusCompleted": "Завершено",
     "statusCancelled": "Скасовано",
-    "you": "ви"
+    "you": "ви",
+    "leaderboard": "Таблиця лідерів",
+    "participants": "учасників",
+    "noParticipantsYet": "Поки немає активних учасників",
+    "pendingInvites": "{count} очікує",
+    "daysRemaining": "залишилось {count} дн.",
+    "days": "днів",
+    "description": "Опис",
+    "cancelChallenge": "Скасувати виклик",
+    "cancelling": "Скасування...",
+    "cancelFailed": "Не вдалося скасувати",
+    "cancelled": "Виклик скасовано",
+    "status": {
+      "ACTIVE": "Активний",
+      "COMPLETED": "Завершено",
+      "CANCELLED": "Скасовано",
+      "PENDING": "Очікування"
+    }
   },
   "settings": {
     "title": "Налаштування",

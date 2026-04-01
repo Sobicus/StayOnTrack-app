@@ -313,7 +313,7 @@
     "cancelConfirm": "Отменить этот челлендж?",
     "accepted": "Челлендж принят!",
     "declined": "Челлендж отклонён",
-    "cancelled": "Челлендж отменён",
+    "cancelled": "Вызов отменён",
     "vs": "против",
     "progress": "Прогресс",
     "target_label": "Цель: {value}",
@@ -355,7 +355,23 @@
     "createdBy": "от {username}",
     "joined": "Присоединились!",
     "joinFailed": "Не удалось присоединиться",
-    "full": "Мест нет"
+    "full": "Мест нет",
+    "leaderboard": "Таблица лидеров",
+    "participants": "участников",
+    "noParticipantsYet": "Пока нет активных участников",
+    "pendingInvites": "{count} ожидает",
+    "daysRemaining": "осталось {count} дн.",
+    "days": "дней",
+    "description": "Описание",
+    "cancelChallenge": "Отменить вызов",
+    "cancelling": "Отмена...",
+    "cancelFailed": "Не удалось отменить",
+    "status": {
+      "ACTIVE": "Активный",
+      "COMPLETED": "Завершён",
+      "CANCELLED": "Отменён",
+      "PENDING": "Ожидание"
+    }
   },
   "quests": {
     "title": "Ежедневные квесты",
