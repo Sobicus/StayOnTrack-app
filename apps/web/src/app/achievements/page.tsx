@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { api, type Achievement, type AchievementsSummary } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useTranslations } from 'next-intl';
-import { Trophy, Lock } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY', 'SOCIAL', 'CHALLENGES', 'DISCIPLINE'];
@@ -134,14 +134,15 @@ function AchievementCard({ achievement: a }: { achievement: Achievement }) {
       )}
     >
       <div className="flex items-center gap-3">
-        {/* Emoji or lock */}
+        {/* Emoji — always shown; grayscale + dim when locked */}
         <div
           className={cn(
-            'w-12 h-12 rounded-xl flex items-center justify-center text-2xl',
+            'w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0',
             a.unlocked ? 'bg-achievement/10' : 'bg-[var(--background)]',
           )}
+          style={a.unlocked ? undefined : { filter: 'grayscale(1)', opacity: 0.4 }}
         >
-          {a.unlocked ? a.emoji : <Lock className="w-5 h-5 text-[var(--muted)]" />}
+          {a.emoji}
         </div>
 
         <div className="flex-1 min-w-0">
