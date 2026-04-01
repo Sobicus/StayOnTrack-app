@@ -136,7 +136,9 @@
       "glasses": "Gläser",
       "km": "km",
       "pages": "Seiten",
-      "times": "Mal"
+      "times": "Mal",
+      "custom": "Eigene...",
+      "customPlaceholder": "z. B. Liegestütze, Schritte, Tassen"
     },
     "catalog": {
       "title": "Schnell hinzufügen",

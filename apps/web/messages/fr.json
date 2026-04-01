@@ -136,7 +136,9 @@
       "glasses": "verres",
       "km": "km",
       "pages": "pages",
-      "times": "fois"
+      "times": "fois",
+      "custom": "Personnalisé...",
+      "customPlaceholder": "ex. : pompes, pas, tasses"
     },
     "catalog": {
       "title": "Ajout rapide",
