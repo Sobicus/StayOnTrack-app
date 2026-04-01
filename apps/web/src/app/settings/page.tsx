@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ThemeSelector } from '@/components/settings/theme-selector';
+import { FrameSelector } from '@/components/settings/frame-selector';
 import { LocaleSwitcher } from '@/components/ui/locale-switcher';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
@@ -243,6 +244,11 @@ export default function SettingsPage() {
           <ThemeToggle />
         </div>
         <ThemeSelector userLevel={userLevel} />
+
+        {/* Frame selector */}
+        <div className="mt-5 pt-5 border-t border-[var(--border)]">
+          <FrameSelector token={token!} currentFrame={user?.profileFrame ?? null} />
+        </div>
       </div>
 
       {/* Notifications */}

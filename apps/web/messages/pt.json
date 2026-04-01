@@ -309,7 +309,10 @@
     "colorTheme": "Tema de cor",
     "accentColor": "Cor de destaque",
     "lockedTheme": "Desbloqueado no nível {level}",
-    "themeApplied": "Tema aplicado!"
+    "themeApplied": "Tema aplicado!",
+    "profileFrame": "Moldura de avatar",
+    "profileFrameDesc": "Desbloqueie molduras completando conquistas",
+    "frameApplied": "Moldura aplicada!"
   },
   "profile": {
     "privateProfile": "Perfil privado",

@@ -11,6 +11,7 @@ export interface PublicProfileDto {
   username: string;
   joinedAt: string;
   daysTracking: number;
+  profileFrame: string | null;
   streak?: { current: number; best: number };
   stats?: { calories: number; money: number; weightKg: number };
   achievements?: { total: number; unlocked: number; topEmojis: string[] };
@@ -50,7 +51,12 @@ export class ProfileService {
     const joinedAt = target.createdAt.toISOString();
     const daysTracking = Math.floor((Date.now() - target.createdAt.getTime()) / 86400000);
 
-    const profile: PublicProfileDto = { username: target.username, joinedAt, daysTracking };
+    const profile: PublicProfileDto = {
+      username: target.username,
+      joinedAt,
+      daysTracking,
+      profileFrame: target.profileFrame ?? null,
+    };
 
     // Load sections in parallel based on toggles
     const [streak, stats, achievements, challengeCount] = await Promise.all([

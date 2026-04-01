@@ -309,7 +309,10 @@
     "colorTheme": "Tema de color",
     "accentColor": "Color de acento",
     "lockedTheme": "Se desbloquea en el nivel {level}",
-    "themeApplied": "¡Tema aplicado!"
+    "themeApplied": "¡Tema aplicado!",
+    "profileFrame": "Marco de avatar",
+    "profileFrameDesc": "Desbloquea marcos completando logros",
+    "frameApplied": "¡Marco aplicado!"
   },
   "profile": {
     "privateProfile": "Perfil privado",
