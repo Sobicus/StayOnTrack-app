@@ -132,56 +132,73 @@
 
 | ID | Title | Status |
 |---|---|---|
-| TASK-040 | Invite rewards (shield on friend accept) | 🟡 CREATED |
-| TASK-041 | Extended achievements (SOCIAL, CHALLENGES) | 🟡 CREATED |
+| TASK-040 | Invite rewards (shield on friend accept) | 🟢 COMPLETED |
+| TASK-041 | Extended achievements (SOCIAL, CHALLENGES) | 🟢 COMPLETED |
 
 ## Batch 6: Auth Hardening
 
 | ID | Title | Status |
 |---|---|---|
-| TASK-050 | Email verification (non-blocking, 7-day grace) | 🟡 CREATED |
-| TASK-051 | Google OAuth (passport-google-oauth20, merge) | 🟡 CREATED |
+| TASK-050 | Email verification (non-blocking, 7-day grace) | 🟢 COMPLETED |
+| TASK-051 | Google OAuth (passport-google-oauth20, merge) | 🟢 COMPLETED |
 
 ## Batch 7: Settings & Catalog
 
 | ID | Title | Status |
 |---|---|---|
-| TASK-060 | Extended settings (currency, weekStartDay, units) | 🟡 CREATED |
-| TASK-061 | Habit catalog seed (20+ popular items, quick-add) | 🟡 CREATED |
+| TASK-060 | Extended settings (currency, weekStartDay, units) | 🟢 COMPLETED |
+| TASK-061 | Habit catalog seed (20+ popular items, quick-add) | 🟢 COMPLETED |
 
 ## Batch 8: Telegram Integration
 
 | ID | Title | Status |
 |---|---|---|
-| TASK-070 | Telegram Bot (/link, /start, /stats) | 🟡 CREATED |
-| TASK-071 | Push notifications (Web Push + Telegram) | 🟡 CREATED |
-| TASK-072 | Telegram Mini App | 🟡 CREATED |
+| TASK-070 | Telegram Bot (/link, /start, /stats) | 🟢 COMPLETED |
+| TASK-071 | Push notifications (Web Push + Telegram) | 🟢 COMPLETED |
+| TASK-072 | Telegram Mini App | 🟢 COMPLETED |
 
 ## Batch 9: Analytics & Reports
 
 | ID | Title | Status |
 |---|---|---|
-| TASK-080 | Simple analytics (pattern analysis, SQL) | 🟡 CREATED |
-| TASK-081 | Annual/Monthly report (Wrapped style) | 🟡 CREATED |
-| TASK-082 | Positive habits (habitType: ACHIEVEMENT) | 🟡 CREATED |
+| TASK-080 | Simple analytics (pattern analysis, SQL) | 🟢 COMPLETED |
+| TASK-081 | Annual/Monthly report (Wrapped style) | 🟢 COMPLETED |
+| TASK-082 | Positive habits (habitType: ACHIEVEMENT) | 🟢 COMPLETED |
 
 ## Batch 10: Production Readiness
 
 | ID | Title | Status |
 |---|---|---|
-| OPS-020 | Security hardening (rate limiting, CORS, Helmet) | 🟡 CREATED |
-| OPS-021 | DB optimization (indexes, query analysis) | 🟡 CREATED |
-| OPS-022 | E2E tests expansion (habits, challenges, gamification) | 🟡 CREATED |
-| OPS-023 | Error boundaries + loading states (frontend) | 🟡 CREATED |
-| OPS-024 | Deployment (domain, VPS, CI/CD pipeline) | 🟡 CREATED |
+| OPS-020 | Security hardening (rate limiting, CORS, Helmet) | 🟢 COMPLETED |
+| OPS-021 | DB optimization (indexes, query analysis) | 🟢 COMPLETED |
+| OPS-022 | E2E tests expansion (habits, challenges, gamification) | 🟢 COMPLETED |
+| OPS-023 | Error boundaries + loading states (frontend) | 🟢 COMPLETED |
+| OPS-024 | Deployment (domain, VPS, CI/CD pipeline) | 🟢 COMPLETED |
 
 ## Batch 11: Code Refactoring
 
 | ID | Title | Status |
 |---|---|---|
-| OPS-030 | Code style unification (ESLint + Prettier config) | 🟡 CREATED |
-| OPS-031 | Architecture patterns audit (services, DTOs, hooks) | 🟡 CREATED |
-| OPS-032 | Dead code cleanup + unused imports | 🟡 CREATED |
-| OPS-033 | CSS/Tailwind cleanup + design system tokens | 🟡 CREATED |
-| OPS-034 | API response format standardization | 🟡 CREATED |
-| OPS-035 | Shared types audit (contracts ↔ api ↔ web sync) | 🟡 CREATED |
+| OPS-030 | Code style unification (ESLint + Prettier config) | 🟢 COMPLETED |
+| OPS-031 | Architecture patterns audit (services, DTOs, hooks) | 🟢 COMPLETED |
+| OPS-032 | Dead code cleanup + unused imports | 🟢 COMPLETED |
+| OPS-033 | CSS/Tailwind cleanup + design system tokens | 🟢 COMPLETED |
+| OPS-034 | API response format standardization | 🟢 COMPLETED |
+| OPS-035 | Shared types audit (contracts ↔ api ↔ web sync) | 🟢 COMPLETED |
+
+---
+
+## Post-Batch Work
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-500 | Soft delete (deletedAt) on Habit, HabitLog, User entities | 🟢 COMPLETED |
+| TASK-501 | Domain exception files (common/exceptions/) | 🟢 COMPLETED |
+| TASK-502 | 3-layer CQRS-lite architecture refactor (all 13 modules) | 🟢 COMPLETED |
+| TASK-503 | LiveHero neon ring inline styles fix (DEC-016) | 🟢 COMPLETED |
+| TASK-504 | Timezone auto-sync Europe/Madrid (DEC-017) | 🟢 COMPLETED |
+| TASK-505 | Swagger decorators moved to swagger/ folders | 🟢 COMPLETED |
+| TASK-506 | Remove `as` assertions, typed params throughout backend | 🟢 COMPLETED |
+| TASK-507 | Mandatory env validation on API startup | 🟢 COMPLETED |
+| TASK-508 | OfflineBanner restored via ClientProviders | 🟢 COMPLETED |
+| TASK-509 | Gmail SMTP + Google OAuth + Telegram bot configured | 🟢 COMPLETED |

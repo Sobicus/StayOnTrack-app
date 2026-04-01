@@ -59,43 +59,73 @@ This is the live source of truth for what should be executed next.
 ### Wave 4A: Critical Fixes
 35. FIX-401–404 — Neon ring v3 inline styles, timezone sync, Tailwind conflict, UTC fix
 
----
-
-## 🔵 Next Up — Sequential Execution Order
-
-### Batch 5: Social Rewards + Extended Achievements
+### Batch 5: Social Rewards + Extended Achievements ✅ DONE
 36. TASK-040 — Invite rewards (shield on friend accept, no limit)
 37. TASK-041 — Extended achievements (SOCIAL, CHALLENGES categories)
 
-### Batch 6: Auth Hardening
+### Batch 6: Auth Hardening ✅ DONE
 38. TASK-050 — Email verification (non-blocking, banner, 7-day grace)
 39. TASK-051 — Google OAuth (passport-google-oauth20, account merge)
 
-### Batch 7: Settings & Catalog
+### Batch 7: Settings & Catalog ✅ DONE
 40. TASK-060 — Extended settings (currency, weekStartDay, imperial units)
 41. TASK-061 — Habit catalog seed (20+ popular items, quick-add)
 
-### Batch 8: Telegram Integration
+### Batch 8: Telegram Integration ✅ DONE
 42. TASK-070 — Telegram Bot (basic: /link, /start, /stats)
 43. TASK-071 — Push notifications (Web Push + Telegram)
 44. TASK-072 — Telegram Mini App
 
-### Batch 9: Analytics & Reports
+### Batch 9: Analytics & Reports ✅ DONE
 45. TASK-080 — Simple analytics (pattern analysis, SQL-based)
 46. TASK-081 — Annual/Monthly report (Wrapped style)
 47. TASK-082 — Positive habits (habitType: ACHIEVEMENT)
 
-### Batch 10: Production Readiness (BEFORE LAUNCH)
+### Batch 10: Production Readiness ✅ DONE
 48. OPS-020 — Security hardening (rate limiting, CORS, Helmet)
 49. OPS-021 — DB optimization (indexes, query analysis, N+1)
 50. OPS-022 — E2E tests expansion (habits, challenges, gamification)
 51. OPS-023 — Error boundaries + loading states (frontend)
-52. OPS-024 — Deployment (domain, VPS, CI/CD, SSL, monitoring)
+52. OPS-024 — Deployment baseline (domain, VPS, CI/CD, SSL, monitoring)
 
-### Batch 11: Code Refactoring (FINAL POLISH)
+### Batch 11: Code Refactoring ✅ DONE
 53. OPS-030 — Code style unification (ESLint + Prettier)
 54. OPS-031 — Architecture patterns audit
 55. OPS-032 — Dead code cleanup
 56. OPS-033 — CSS/Tailwind cleanup + design tokens
 57. OPS-034 — API response format standardization
 58. OPS-035 — Shared types audit (contracts sync)
+
+### Post-Batch Work ✅ DONE
+59. TASK-500 — Soft delete (deletedAt) on Habit, HabitLog, User entities
+60. TASK-501 — Domain exception files (common/exceptions/)
+61. TASK-502 — 3-layer CQRS-lite architecture refactor (all 13 modules)
+62. TASK-503 — LiveHero neon ring inline styles fix (DEC-016)
+63. TASK-504 — Timezone auto-sync Europe/Madrid (DEC-017)
+64. TASK-505 — Swagger decorators moved to swagger/ folders
+65. TASK-506 — Remove `as` assertions, typed params throughout backend
+66. TASK-507 — Mandatory env validation on API startup
+67. TASK-508 — OfflineBanner restored via ClientProviders
+68. TASK-509 — Gmail SMTP + Google OAuth + Telegram bot configured
+
+---
+
+## NEXT PHASE: Deployment & Launch
+
+### OPS-100: Deploy to VPS
+- docker-compose.prod.yml
+- Domain + SSL (Let's Encrypt)
+- GitHub Actions auto-deploy to main
+
+### OPS-101: Monitoring
+- Sentry error tracking
+- Health check dashboard
+
+### OPS-102: Quality
+- Frontend test coverage (target 50%+)
+- Fix JWT token rotation on API restart
+
+### DEFERRED (post-launch)
+- React Native / Expo mobile app
+- AI coaching features
+- Premium/monetization model

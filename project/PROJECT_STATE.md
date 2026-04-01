@@ -1,12 +1,13 @@
 # StayOnTrack — Project State
 
-## Last Updated: 2026-03-14
+## Last Updated: 2026-04-01
 
-## Current Phase: Pre-Deployment (Feature-Complete MVP)
+## Current Phase: Post-MVP Polish — All Features Complete, Pre-Deployment
 
 ## Active Focus
-- Wave 4: Testing, optimization, security, analytics
-- Preparing for deployment (domain, server, CI/CD)
+- Preparing for VPS deployment (domain, server, CI/CD)
+- Sentry monitoring setup
+- Frontend test coverage
 
 ## Completed Phases
 
@@ -76,37 +77,49 @@
 - ✅ 118 unit tests pass
 - ✅ 20 E2E tests pass
 
-### Wave 4A — Critical Fixes (2026-03-14)
+### Wave 4A — Critical Fixes
 - ✅ LiveHero neon ring v3 — fully inline styles, immune to Tailwind/cache issues (DEC-016)
 - ✅ Timezone auto-sync from browser on login (DEC-017)
 - ✅ Renamed ring CSS classes from `ring-*` to `neon-*` to avoid Tailwind conflict
 - ✅ LiveStats endpoint uses user.timezone instead of UTC
 
+### Post-Batch Completions (all 11 batches done)
+- ✅ Soft delete (deletedAt) on Habit, HabitLog, User entities
+- ✅ Domain exception files (common/exceptions/)
+- ✅ OfflineBanner restored via ClientProviders
+- ✅ Mandatory env validation on API startup
+- ✅ 3-layer CQRS-lite architecture refactor (all 13 modules)
+- ✅ Gmail SMTP replacing Resend
+- ✅ Google OAuth configured
+- ✅ Telegram bot token configured
+- ✅ CI: `@stayontrack/contracts` build step added
+- ✅ Remove `as` assertions, typed params throughout backend
+- ✅ Swagger decorators moved to swagger/ folders
+
+## Build Status
+- ✅ API builds clean
+- ✅ Web builds clean
+- ✅ Contracts builds clean
+- ✅ 153/153 tests pass (unit + E2E)
+
 ## Known Issues
-- ⚠️ AccentThemeProvider + OfflineBanner cause webpack runtime error in layout.tsx — need page-level integration instead
-- ⚠️ After API server restart, users must re-login (JWT tokens invalidated)
+- ⚠️ JWT rotation on restart — users must re-login after API restart (tokens invalidated)
+- ⚠️ Frontend tests: 0% coverage (no frontend test suite yet)
+- ⚠️ VPS/deployment not started
 
-## Git History (dev branch)
-- `09a4f93` fix: inline ring gradients + remove UTC date from frontend check-ins
-- `42302b2` fix: use user timezone in getLiveStats instead of UTC
-- `362453a` fix: auto-detect and sync browser timezone to backend
-- `d23ef8e` fix: rename ring-* classes to neon-* to avoid Tailwind ring- conflict
-- `a737c0f` fix: use --background for ring inner fill, not --card
-- `8d46b23` fix: restore LiveHero ring colors
-- `25f6529` fix: dynamic import OfflineBanner
-- `bd74bdb` fix: use uppercase ChallengeVisibility enum
-- `dbc0818` feat: Wave D — PWA + notifications (TASK-317–321)
-- `a5753eb` feat: Wave C — group challenges (TASK-312–316)
-- `1dc64db` feat: Wave B — gamification (TASK-305–311)
-- `e574ee5` feat: Wave A — visualization (TASK-300–304)
-- `117290d` feat: Wave 2 — code quality (TASK-200–213)
+## Git History (dev branch, recent)
+- `0030ae3` refactor: as-assertions, typed params, Swagger folders
+- `822fae9` refactor: Wave 3 — 3-layer architecture for 4 complex modules (FINAL)
+- `737500f` refactor: Wave 2 — 3-layer architecture for 5 medium modules
+- `a425c92` refactor: Wave 1 — 3-layer architecture for 5 simple modules
+- `8842ce9` docs: comprehensive PROJECT_MAP.md
+- `fd23c2b` fix: remove duplicate index on friendships
 
-## What's Next — Wave 4: Polish & Harden
-1. **Testing**: E2E tests for habits, challenges, gamification flows
-2. **DB Optimization**: Strategic indexes, query analysis
-3. **Security**: Rate limiting, CORS hardening, Helmet headers
-4. **Analytics**: Retention metrics, user funnels, event tracking
-5. **Deployment**: Domain, server, CI/CD pipeline
+## What's Next
+1. **Deploy to VPS**: docker-compose.prod.yml, domain + SSL (Let's Encrypt), GitHub Actions auto-deploy
+2. **Sentry monitoring**: Error tracking, health check dashboard
+3. **Frontend test coverage**: Target 50%+
+4. **Fix JWT rotation**: Persist token state across API restarts
 
 ## Key Metrics to Track (when MVP launches)
 - Daily check-in completion rate
