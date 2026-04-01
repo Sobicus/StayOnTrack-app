@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
 import { Habit } from '../entities/habit.entity';
@@ -10,6 +9,7 @@ import { UpdateHabitDto } from '../dto/update-habit.dto';
 import { AnalyticsService } from '../../analytics/services/analytics.service';
 import { HabitsQueryRepository } from '../repositories/habits.query.repository';
 import { HabitsCommandRepository } from '../repositories/habits.command.repository';
+import { HabitNotFoundException, HabitNotOwnedException } from '../../../common/exceptions/habit.exception';
 
 @Injectable()
 export class HabitsService {
@@ -54,11 +54,11 @@ export class HabitsService {
     const habit = await this.queryRepo.findOneById(habitId);
 
     if (!habit) {
-      throw new NotFoundException('Habit not found');
+      throw new HabitNotFoundException(habitId);
     }
 
     if (habit.userId !== userId) {
-      throw new ForbiddenException('You do not own this habit');
+      throw new HabitNotOwnedException();
     }
 
     return habit;
@@ -78,7 +78,7 @@ export class HabitsService {
 
   async remove(habitId: string, userId: string): Promise<void> {
     const habit = await this.findOneByUser(habitId, userId);
-    await this.commandRepo.remove(habit);
+    await this.commandRepo.softDelete(habit);
   }
 
   async reorder(

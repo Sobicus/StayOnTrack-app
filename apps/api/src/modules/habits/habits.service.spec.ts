@@ -41,6 +41,7 @@ describe('HabitsService', () => {
       create: jest.fn((data) => ({ ...data, id: 'habit-new', createdAt: new Date(), updatedAt: new Date() })),
       save: jest.fn((data) => Promise.resolve(data)),
       remove: jest.fn().mockResolvedValue(undefined),
+      softDelete: jest.fn().mockResolvedValue(undefined),
       updateSortOrder: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -170,7 +171,7 @@ describe('HabitsService', () => {
     it('should remove the habit', async () => {
       await service.remove('habit-1', 'user-1');
 
-      expect(commandRepo.remove).toHaveBeenCalledWith(mockHabit);
+      expect(commandRepo.softDelete).toHaveBeenCalledWith(mockHabit);
     });
 
     it('should throw NotFoundException for non-existent habit', async () => {

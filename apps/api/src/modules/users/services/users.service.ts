@@ -1,11 +1,12 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { User } from '../entities/user.entity';
 import { UsersQueryRepository } from '../repositories/users.query.repository';
 import { UsersCommandRepository } from '../repositories/users.command.repository';
+import {
+  UserNotFoundException,
+  EmailAlreadyExistsException,
+  UsernameAlreadyExistsException,
+} from '../../../common/exceptions/user.exception';
 
 @Injectable()
 export class UsersService {
@@ -45,13 +46,13 @@ export class UsersService {
     // Check email uniqueness
     const existingEmail = await this.findByEmail(data.email);
     if (existingEmail) {
-      throw new ConflictException('Email is already registered');
+      throw new EmailAlreadyExistsException();
     }
 
     // Check username uniqueness
     const existingUsername = await this.findByUsername(data.username);
     if (existingUsername) {
-      throw new ConflictException('Username is already taken');
+      throw new UsernameAlreadyExistsException();
     }
 
     const user = this.commandRepo.create(data);
@@ -61,14 +62,14 @@ export class UsersService {
   async update(id: string, data: Partial<User>): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UserNotFoundException();
     }
 
     // If updating username, check uniqueness
     if (data.username && data.username !== user.username) {
       const existingUsername = await this.findByUsername(data.username);
       if (existingUsername) {
-        throw new ConflictException('Username is already taken');
+        throw new UsernameAlreadyExistsException();
       }
     }
 
@@ -125,7 +126,7 @@ export class UsersService {
   async exportUserData(userId: string): Promise<Record<string, unknown>> {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UserNotFoundException();
     }
 
     return this.queryRepo.exportUserData(userId);
@@ -138,8 +139,8 @@ export class UsersService {
   async deleteAccount(userId: string): Promise<void> {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UserNotFoundException();
     }
-    await this.commandRepo.remove(user);
+    await this.commandRepo.softDelete(user);
   }
 }

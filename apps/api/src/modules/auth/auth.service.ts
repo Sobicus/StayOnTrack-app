@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +10,8 @@ import { LoginDto } from './dto/login.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { EmailService } from '../../common/email/email.service';
 import { AnalyticsService } from '../analytics/services/analytics.service';
+import { EmailNotVerifiedException } from '../../common/exceptions/auth.exception';
+import { UserNotFoundException, InvalidCredentialsException } from '../../common/exceptions/user.exception';
 
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -112,7 +114,7 @@ export class AuthService {
    */
   async verifyEmail(userId: string, code: string): Promise<{ verified: boolean }> {
     const user = await this.usersService.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new UserNotFoundException();
     if (user.emailVerified) return { verified: true };
     if (!user.emailVerificationCode) {
       throw new BadRequestException('No verification code found. Please request a new one.');
@@ -134,7 +136,7 @@ export class AuthService {
    */
   async resendVerification(userId: string): Promise<{ sent: boolean }> {
     const user = await this.usersService.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new UserNotFoundException();
     if (user.emailVerified) throw new BadRequestException('Email already verified');
 
     // 60-second cooldown
@@ -334,12 +336,12 @@ export class AuthService {
   private async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new InvalidCredentialsException();
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new InvalidCredentialsException();
     }
 
     return user;

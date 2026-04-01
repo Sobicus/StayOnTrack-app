@@ -181,7 +181,7 @@ export class HabitLogsService {
       throw new NotFoundException('Habit log not found');
     }
 
-    await this.habitLogsCommandRepository.remove(log);
+    await this.habitLogsCommandRepository.softDelete(log);
   }
 
   /**

@@ -30,4 +30,11 @@ export class HabitLogsCommandRepository {
   async remove(log: HabitLog): Promise<void> {
     await this.logRepository.remove(log);
   }
+
+  /**
+   * Soft-delete a habit log entity (sets deletedAt timestamp).
+   */
+  async softDelete(log: HabitLog): Promise<void> {
+    await this.logRepository.softRemove(log);
+  }
 }

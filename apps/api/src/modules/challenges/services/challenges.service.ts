@@ -2,8 +2,12 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
+import {
+  ChallengeNotFoundException,
+  ChallengeForbiddenException,
+  ChallengeAlreadyJoinedException,
+} from '../../../common/exceptions/challenge.exception';
 import * as crypto from 'crypto';
 import { Challenge, ChallengeStatus, ChallengeVisibility } from '../entities/challenge.entity';
 import {
@@ -136,7 +140,7 @@ export class ChallengesService {
       (p) => p.userId === userId,
     );
     if (!isParticipant) {
-      throw new ForbiddenException('You are not a participant of this challenge');
+      throw new ChallengeForbiddenException();
     }
 
     return challenge;
@@ -185,11 +189,11 @@ export class ChallengesService {
     const challenge = await this.challengesQueryRepository.findById(challengeId);
 
     if (!challenge) {
-      throw new NotFoundException('Challenge not found');
+      throw new ChallengeNotFoundException();
     }
 
     if (challenge.creatorUserId !== userId) {
-      throw new ForbiddenException('Only the creator can cancel a challenge');
+      throw new ChallengeForbiddenException();
     }
 
     if (challenge.status === ChallengeStatus.COMPLETED) {
@@ -356,7 +360,7 @@ export class ChallengesService {
     const challenge = await this.challengesQueryRepository.findByInviteCode(code);
 
     if (!challenge) {
-      throw new NotFoundException('Challenge not found');
+      throw new ChallengeNotFoundException();
     }
 
     if (challenge.status !== ChallengeStatus.ACTIVE) {
@@ -371,7 +375,7 @@ export class ChallengesService {
     // Check if user is already a participant
     const existing = challenge.participants.find((p) => p.userId === userId);
     if (existing) {
-      throw new BadRequestException('You are already a participant of this challenge');
+      throw new ChallengeAlreadyJoinedException();
     }
 
     // Check participant limit
@@ -405,11 +409,11 @@ export class ChallengesService {
     const challenge = await this.challengesQueryRepository.findByIdWithParticipants(challengeId);
 
     if (!challenge) {
-      throw new NotFoundException('Challenge not found');
+      throw new ChallengeNotFoundException();
     }
 
     if (challenge.creatorUserId !== creatorUserId) {
-      throw new ForbiddenException('Only the creator can invite participants');
+      throw new ChallengeForbiddenException();
     }
 
     // Check participant limit

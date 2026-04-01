@@ -21,4 +21,8 @@ export class UsersCommandRepository {
   async remove(user: User): Promise<void> {
     await this.usersRepository.remove(user);
   }
+
+  async softDelete(user: User): Promise<void> {
+    await this.usersRepository.softRemove(user);
+  }
 }

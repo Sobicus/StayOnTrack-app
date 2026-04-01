@@ -22,6 +22,10 @@ export class HabitsCommandRepository {
     await this.habitRepository.remove(habit);
   }
 
+  async softDelete(habit: Habit): Promise<void> {
+    await this.habitRepository.softRemove(habit);
+  }
+
   async updateSortOrder(habitId: string, userId: string, sortOrder: number): Promise<void> {
     await this.habitRepository.update(
       { id: habitId, userId },
