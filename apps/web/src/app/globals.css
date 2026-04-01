@@ -63,6 +63,32 @@
   animation: fade-in 0.3s ease-out;
 }
 
+/* ===== Profile Frame Animations ===== */
+
+@keyframes frame-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes frame-pulse-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
+.frame-spin {
+  animation: frame-rotate var(--frame-speed, 4s) linear infinite;
+}
+
+.frame-pulse {
+  animation: frame-pulse-glow 2.5s ease-in-out infinite;
+}
+
+.frame-spin-pulse {
+  animation:
+    frame-rotate var(--frame-speed, 4s) linear infinite,
+    frame-pulse-glow 2s ease-in-out infinite;
+}
+
 /* ===== Live Hero — Keyframe animations only (all styles are inline in the component) ===== */
 
 @keyframes hero-ring-spin {
