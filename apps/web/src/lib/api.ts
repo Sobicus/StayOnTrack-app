@@ -73,6 +73,7 @@ export interface Habit {
   category: string;
   habitType: 'AVOIDANCE' | 'ACHIEVEMENT';
   targetUnit: string | null;
+  dailyTarget: number | null;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;
@@ -318,6 +319,7 @@ export interface CreateHabitData {
   category: string;
   habitType?: 'AVOIDANCE' | 'ACHIEVEMENT';
   targetUnit?: string;
+  dailyTarget?: number | null;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;

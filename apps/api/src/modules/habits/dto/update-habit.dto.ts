@@ -21,6 +21,12 @@ export class UpdateHabitDto {
   @IsOptional()
   @MaxLength(20)
   targetUnit?: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100000)
+  @IsOptional()
+  dailyTarget?: number | null;
   @IsString()
   @MinLength(1)
   @MaxLength(255)
