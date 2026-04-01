@@ -15,13 +15,16 @@ import {
   Clock,
   Copy,
   Check,
-  UserPlus,
   Users,
   Flame,
   DollarSign,
   Zap,
   Swords,
+  Medal,
+  CalendarDays,
+  UserPlus,
 } from 'lucide-react';
+import { ShareButton } from '@/components/share/share-button';
 
 const typeIcons: Record<string, typeof Flame> = {
   HABIT: Target,
@@ -307,6 +310,21 @@ export default function ChallengeDetailPage() {
           })}
         </div>
       </div>
+
+      {/* Share win card (current user won) */}
+      {isCompleted && user && challenge.winnerId === user.id && (
+        <div className="flex justify-center mb-4">
+          <ShareButton
+            data={{
+              kind: 'challenge',
+              title: challenge.title,
+              username: user.username,
+              opponentUsername: sortedParticipants.find(p => p.userId !== user.id)?.username,
+            }}
+            filename={`challenge-win-${challenge.id}.png`}
+          />
+        </div>
+      )}
 
       {/* Invite section (creator only, active challenge) */}
       {isCreator && isActive && (

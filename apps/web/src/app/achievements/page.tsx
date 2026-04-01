@@ -6,6 +6,7 @@ import { api, type Achievement, type AchievementsSummary } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useTranslations } from 'next-intl';
 import { Trophy } from 'lucide-react';
+import { ShareButton } from '@/components/share/share-button';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_ORDER = ['CALORIES', 'STREAK', 'CHECKINS', 'MONEY', 'SOCIAL', 'CHALLENGES', 'DISCIPLINE'];
@@ -124,6 +125,8 @@ export default function AchievementsPage() {
 }
 
 function AchievementCard({ achievement: a }: { achievement: Achievement }) {
+  const { user } = useAuth();
+
   return (
     <div
       className={cn(
@@ -176,6 +179,22 @@ function AchievementCard({ achievement: a }: { achievement: Achievement }) {
             </div>
           )}
         </div>
+
+        {/* Share button — unlocked only */}
+        {a.unlocked && user && (
+          <ShareButton
+            size="sm"
+            data={{
+              kind: 'achievement',
+              emoji: a.emoji,
+              title: a.title,
+              description: a.description,
+              category: a.category,
+              username: user.username,
+            }}
+            filename={`achievement-${a.id}.png`}
+          />
+        )}
       </div>
     </div>
   );
