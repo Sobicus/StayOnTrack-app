@@ -169,7 +169,9 @@
       "glasses": "glasses",
       "km": "km",
       "pages": "pages",
-      "times": "times"
+      "times": "times",
+      "custom": "Custom...",
+      "customPlaceholder": "e.g., pushups, steps, cups"
     },
     "catalog": {
       "title": "Quick Add",

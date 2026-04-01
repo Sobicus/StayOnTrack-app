@@ -85,6 +85,7 @@ export default function HabitsPage() {
   const [saving, setSaving] = useState(false);
   const [formHabitType, setFormHabitType] = useState<HabitTab>('AVOIDANCE');
   const [targetUnit, setTargetUnit] = useState('minutes');
+  const [customUnitInput, setCustomUnitInput] = useState('');
 
   useEffect(() => {
     if (token) {
@@ -134,6 +135,7 @@ export default function HabitsPage() {
     setCalories('');
     setCost('');
     setTargetUnit('minutes');
+    setCustomUnitInput('');
     setFrequencyType('DAILY');
     setOccurrencesPerWeek('');
     setFormError('');
@@ -148,7 +150,14 @@ export default function HabitsPage() {
     setCategory(h.category);
     setCalories(h.caloriesPerOccurrence.toString());
     setCost(h.pricePerOccurrence.toString());
-    setTargetUnit(h.targetUnit || 'minutes');
+    const savedUnit = h.targetUnit || 'minutes';
+    if (TARGET_UNITS.includes(savedUnit)) {
+      setTargetUnit(savedUnit);
+      setCustomUnitInput('');
+    } else {
+      setTargetUnit('custom');
+      setCustomUnitInput(savedUnit);
+    }
     setFrequencyType(h.frequencyType || 'DAILY');
     setOccurrencesPerWeek(h.occurrencesPerWeek?.toString() || '');
     setFormError('');
@@ -176,7 +185,9 @@ export default function HabitsPage() {
     };
 
     if (isAchievement) {
-      data.targetUnit = targetUnit;
+      data.targetUnit = targetUnit === 'custom'
+        ? (customUnitInput.trim() || 'times')
+        : targetUnit;
     } else {
       data.targetUnit = null;
     }
@@ -636,13 +647,16 @@ export default function HabitsPage() {
 
               {/* Target Unit — only for achievement */}
               {formHabitType === 'ACHIEVEMENT' && (
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[var(--foreground)]">
                     {t('targetUnit')}
                   </label>
                   <select
                     value={targetUnit}
-                    onChange={(e) => setTargetUnit(e.target.value)}
+                    onChange={(e) => {
+                      setTargetUnit(e.target.value);
+                      if (e.target.value !== 'custom') setCustomUnitInput('');
+                    }}
                     className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
                     {TARGET_UNITS.map((u) => (
@@ -650,7 +664,18 @@ export default function HabitsPage() {
                         {t(`units.${u}`)}
                       </option>
                     ))}
+                    <option value="custom">{t('units.custom')}</option>
                   </select>
+                  {targetUnit === 'custom' && (
+                    <input
+                      type="text"
+                      value={customUnitInput}
+                      onChange={(e) => setCustomUnitInput(e.target.value)}
+                      placeholder={t('units.customPlaceholder')}
+                      maxLength={20}
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  )}
                 </div>
               )}
 

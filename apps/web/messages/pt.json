@@ -136,7 +136,9 @@
       "glasses": "copos",
       "km": "km",
       "pages": "páginas",
-      "times": "vezes"
+      "times": "vezes",
+      "custom": "Personalizado...",
+      "customPlaceholder": "ex.: flexões, passos, xícaras"
     },
     "catalog": {
       "title": "Adicionar rápido",
