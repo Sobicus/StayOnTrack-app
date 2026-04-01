@@ -17,7 +17,10 @@
     "offline": "You're offline. Check-ins will be saved and synced when you're back online.",
     "syncPending": "Syncing {count} check-ins...",
     "synced": "All synced!",
-    "savedOffline": "Saved offline"
+    "savedOffline": "Saved offline",
+    "share": "Share",
+    "sharing": "Sharing...",
+    "downloadPng": "Download PNG"
   },
   "nav": {
     "home": "Home",

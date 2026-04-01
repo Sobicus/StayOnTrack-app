@@ -10,7 +10,10 @@
     "retry": "Erneut versuchen",
     "close": "Schließen",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "share": "Teilen",
+    "sharing": "Teilen...",
+    "downloadPng": "PNG herunterladen"
   },
   "auth": {
     "login": "Anmelden",
