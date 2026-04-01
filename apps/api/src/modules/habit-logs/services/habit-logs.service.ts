@@ -23,6 +23,30 @@ export interface CreateLogResult {
   levelUp: boolean;
 }
 
+export interface CreateLogParams {
+  userId: string;
+  dto: CreateHabitLogDto;
+  timezone?: string;
+}
+
+export interface BatchCheckinParams {
+  userId: string;
+  dto: BatchCheckinDto;
+  timezone?: string;
+}
+
+export interface GetLogsByDateRangeParams {
+  userId: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface GetFrequencyStatusParams {
+  userId: string;
+  date?: string;
+  timezone?: string;
+}
+
 @Injectable()
 export class HabitLogsService {
   constructor(
@@ -38,7 +62,7 @@ export class HabitLogsService {
    * Calculates savedCalories and savedMoney automatically.
    * Enforces frequency limits for WEEKLY/CUSTOM habits.
    */
-  async createLog(userId: string, dto: CreateHabitLogDto, timezone = 'UTC'): Promise<CreateLogResult> {
+  async createLog({ userId, dto, timezone = 'UTC' }: CreateLogParams): Promise<CreateLogResult> {
     // Verify habit belongs to user
     const habit = await this.habitsService.findOneByUser(dto.habitId, userId);
 
@@ -104,11 +128,7 @@ export class HabitLogsService {
    * Batch check-in: submit all habits for a day at once.
    * This is the primary flow — user taps through all habits.
    */
-  async batchCheckin(
-    userId: string,
-    dto: BatchCheckinDto,
-    timezone = 'UTC',
-  ): Promise<CreateLogResult[]> {
+  async batchCheckin({ userId, dto, timezone = 'UTC' }: BatchCheckinParams): Promise<CreateLogResult[]> {
     const results: CreateLogResult[] = [];
 
     for (const logDto of dto.logs) {
@@ -116,7 +136,7 @@ export class HabitLogsService {
       if (!logDto.date && dto.date) {
         logDto.date = dto.date;
       }
-      const result = await this.createLog(userId, logDto, timezone);
+      const result = await this.createLog({ userId, dto: logDto, timezone });
       results.push(result);
     }
 
@@ -148,11 +168,7 @@ export class HabitLogsService {
   /**
    * Get logs for a date range (for history / calendar view).
    */
-  async getLogsByDateRange(
-    userId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<HabitLog[]> {
+  async getLogsByDateRange({ userId, startDate, endDate }: GetLogsByDateRangeParams): Promise<HabitLog[]> {
     return this.habitLogsQueryRepository.findByDateRange(userId, startDate, endDate);
   }
 
@@ -218,9 +234,7 @@ export class HabitLogsService {
    * Get frequency status for all active habits (how many check-ins used/remaining this week).
    */
   async getFrequencyStatus(
-    userId: string,
-    date?: string,
-    timezone = 'UTC',
+    { userId, date, timezone = 'UTC' }: GetFrequencyStatusParams,
   ): Promise<Array<{ habitId: string; used: number; limit: number | null; remaining: number | null }>> {
     const targetDate = date || getTodayInTimezone(timezone);
     const habits = await this.habitsService.findActiveByUser(userId);

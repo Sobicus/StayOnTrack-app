@@ -11,6 +11,21 @@ interface SeededEntity extends ObjectLiteral {
   pricePerOccurrence?: number;
 }
 
+/**
+ * Validates that a raw TypeORM ObjectLiteral result has an `id` string field
+ * and returns it as a SeededEntity.
+ *
+ * TypeORM generic repositories (Repository<ObjectLiteral>) return ObjectLiteral
+ * which lacks typed fields.  We use this function instead of inline `as`
+ * assertions so the shape contract is enforced at runtime.
+ */
+function toSeededEntity(obj: ObjectLiteral): SeededEntity {
+  if (typeof obj['id'] !== 'string') {
+    throw new Error(`Expected entity with string id, got: ${JSON.stringify(obj)}`);
+  }
+  return obj as SeededEntity;
+}
+
 const logger = new Logger('Seed');
 
 dotenv.config();
@@ -111,7 +126,7 @@ async function createUserWithHabits(
         onboardingCompleted: userData.onboardingCompleted,
       }),
     ));
-  const userId = (user as SeededEntity).id;
+  const userId = toSeededEntity(user).id;
   logger.log(`✅ User: ${userData.email} / ${userData.password} (id: ${userId})`);
 
   // Create habits for this user
@@ -121,13 +136,13 @@ async function createUserWithHabits(
       where: { title: hd.title, userId },
     });
     if (existing) {
-      habits.push(existing as SeededEntity);
+      habits.push(toSeededEntity(existing));
       continue;
     }
     const habit = await habitRepo.save(
       habitRepo.create({ ...hd, userId }),
     );
-    habits.push(habit as SeededEntity);
+    habits.push(toSeededEntity(habit));
   }
   logger.log(`✅ ${habits.length} habits created for ${userData.username}`);
 
@@ -250,7 +265,7 @@ async function seed() {
   // 3. Create check-in logs for both users (past 7 days)
   const demoLogsCreated = await createCheckInLogs(
     habitLogRepo,
-    (demoUser as SeededEntity).id,
+    toSeededEntity(demoUser).id,
     demoHabits,
     7,
   );
@@ -258,7 +273,7 @@ async function seed() {
 
   const testLogsCreated = await createCheckInLogs(
     habitLogRepo,
-    (testUser as SeededEntity).id,
+    toSeededEntity(testUser).id,
     testHabits,
     7,
   );
@@ -286,8 +301,8 @@ async function seed() {
   logger.log(`✅ ${activitiesCreated} activities seeded`);
 
   // 5. Create friend request from demo_user to test_user
-  const demoId = (demoUser as SeededEntity).id;
-  const testId = (testUser as SeededEntity).id;
+  const demoId = toSeededEntity(demoUser).id;
+  const testId = toSeededEntity(testUser).id;
 
   const existingFriendRequest = await friendRequestRepo.findOne({
     where: { fromUserId: demoId, toUserId: testId },
@@ -344,7 +359,7 @@ async function seed() {
         status: 'ACTIVE',
       }),
     );
-    const savedChallenge = challenge as SeededEntity;
+    const savedChallenge = toSeededEntity(challenge);
     logger.log(`✅ Challenge created: "${savedChallenge.title}" (id: ${savedChallenge.id})`);
 
     // Add both users as participants

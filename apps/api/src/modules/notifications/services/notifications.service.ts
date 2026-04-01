@@ -7,6 +7,12 @@ import { StreaksService } from '../../streaks/services/streaks.service';
 import { UsersService } from '../../users/services/users.service';
 import { NotificationsQueryRepository } from '../repositories/notifications.query.repository';
 
+export interface SendPushNotificationParams {
+  userId: string;
+  title: string;
+  body: string;
+}
+
 @Injectable()
 export class NotificationsService implements OnModuleInit {
   private readonly logger = new Logger(NotificationsService.name);
@@ -41,7 +47,7 @@ export class NotificationsService implements OnModuleInit {
     await this.usersService.update(userId, { pushSubscription: null });
   }
 
-  async sendPushNotification(userId: string, title: string, body: string): Promise<void> {
+  async sendPushNotification({ userId, title, body }: SendPushNotificationParams): Promise<void> {
     if (!this.pushEnabled) return;
 
     const user = await this.usersService.findById(userId);
@@ -143,11 +149,11 @@ export class NotificationsService implements OnModuleInit {
         );
 
         // Also send push notification if user has a subscription
-        await this.sendPushNotification(
-          user.id,
-          'Daily Reminder',
-          `Don't forget to check in today! Current streak: ${currentStreak} day(s).`,
-        ).catch(() => {});
+        await this.sendPushNotification({
+          userId: user.id,
+          title: 'Daily Reminder',
+          body: `Don't forget to check in today! Current streak: ${currentStreak} day(s).`,
+        }).catch(() => {});
 
         sent++;
       } catch (error) {

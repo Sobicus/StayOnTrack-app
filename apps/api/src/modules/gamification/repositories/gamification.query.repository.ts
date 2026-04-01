@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Quest } from '../entities/quest.entity';
-import { HabitLog } from '../../habit-logs/entities/habit-log.entity';
+import { Quest, QuestType } from '../entities/quest.entity';
+import { HabitLog, HabitLogStatus } from '../../habit-logs/entities/habit-log.entity';
 import { Habit } from '../../habits/entities/habit.entity';
 
 @Injectable()
@@ -32,11 +32,11 @@ export class GamificationQueryRepository {
 
   async findQuestByUserTypeAndDate(
     userId: string,
-    questType: string,
+    questType: QuestType,
     date: string,
   ): Promise<Quest | null> {
     return this.questRepository.findOne({
-      where: { userId, questType: questType as any, date },
+      where: { userId, questType, date },
     });
   }
 
@@ -55,10 +55,10 @@ export class GamificationQueryRepository {
   async countHabitLogsByUserDateAndStatus(
     userId: string,
     date: string,
-    status: string,
+    status: HabitLogStatus,
   ): Promise<number> {
     return this.habitLogRepository.count({
-      where: { userId, date, status: status as any },
+      where: { userId, date, status },
     });
   }
 

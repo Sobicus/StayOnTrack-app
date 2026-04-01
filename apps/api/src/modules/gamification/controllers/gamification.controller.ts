@@ -1,12 +1,14 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { GamificationService } from '../services/gamification.service';
+import { ApiGetLevel } from '../swagger/get-level.swagger';
+import { ApiGetQuests } from '../swagger/get-quests.swagger';
+import { ApiCheckQuests } from '../swagger/check-quests.swagger';
 
 @ApiTags('Gamification')
-@ApiBearerAuth('access-token')
 @Controller('gamification')
 @UseGuards(JwtAuthGuard)
 export class GamificationController {
@@ -16,7 +18,7 @@ export class GamificationController {
    * GET /gamification/level — Get current level info for the authenticated user
    */
   @Get('level')
-  @ApiOperation({ summary: 'Get current level info' })
+  @ApiGetLevel()
   async getLevel(@CurrentUser() user: User) {
     return this.gamificationService.getLevelInfo(user.id);
   }
@@ -25,7 +27,7 @@ export class GamificationController {
    * GET /gamification/quests — Get today's daily quests with completion status
    */
   @Get('quests')
-  @ApiOperation({ summary: "Get today's daily quests" })
+  @ApiGetQuests()
   async getDailyQuests(@CurrentUser() user: User) {
     return this.gamificationService.getDailyQuests(user.id);
   }
@@ -34,7 +36,7 @@ export class GamificationController {
    * POST /gamification/quests/check — Check all quests and award XP for completed ones
    */
   @Post('quests/check')
-  @ApiOperation({ summary: 'Check and update all daily quests' })
+  @ApiCheckQuests()
   async checkQuests(@CurrentUser() user: User) {
     return this.gamificationService.checkAllQuests(user.id);
   }

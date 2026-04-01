@@ -12,7 +12,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
@@ -23,9 +23,16 @@ import {
   FriendResponseDto,
   LeaderboardEntryDto,
 } from '../dto/friend-response.dto';
+import { ApiSendRequest } from '../swagger/send-request.swagger';
+import { ApiGetIncoming } from '../swagger/get-incoming.swagger';
+import { ApiGetOutgoing } from '../swagger/get-outgoing.swagger';
+import { ApiAcceptRequest } from '../swagger/accept-request.swagger';
+import { ApiDeclineRequest } from '../swagger/decline-request.swagger';
+import { ApiGetFriends } from '../swagger/get-friends.swagger';
+import { ApiRemoveFriend } from '../swagger/remove-friend.swagger';
+import { ApiGetLeaderboard } from '../swagger/get-leaderboard.swagger';
 
 @ApiTags('Friends')
-@ApiBearerAuth('access-token')
 @Controller('friends')
 @UseGuards(JwtAuthGuard)
 export class FriendsController {
@@ -35,6 +42,7 @@ export class FriendsController {
    * POST /friends/requests — Send a friend request by username
    */
   @Post('requests')
+  @ApiSendRequest()
   async sendRequest(
     @CurrentUser() user: User,
     @Body() dto: SendFriendRequestDto,
@@ -47,6 +55,7 @@ export class FriendsController {
    * GET /friends/requests/incoming — Get incoming friend requests
    */
   @Get('requests/incoming')
+  @ApiGetIncoming()
   async getIncoming(
     @CurrentUser() user: User,
   ): Promise<FriendRequestResponseDto[]> {
@@ -58,6 +67,7 @@ export class FriendsController {
    * GET /friends/requests/outgoing — Get outgoing friend requests
    */
   @Get('requests/outgoing')
+  @ApiGetOutgoing()
   async getOutgoing(
     @CurrentUser() user: User,
   ): Promise<FriendRequestResponseDto[]> {
@@ -70,6 +80,7 @@ export class FriendsController {
    */
   @Patch('requests/:id/accept')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiAcceptRequest()
   async acceptRequest(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,6 +93,7 @@ export class FriendsController {
    */
   @Patch('requests/:id/decline')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiDeclineRequest()
   async declineRequest(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,6 +105,7 @@ export class FriendsController {
    * GET /friends — List all friends
    */
   @Get()
+  @ApiGetFriends()
   async getFriends(
     @CurrentUser() user: User,
   ): Promise<FriendResponseDto[]> {
@@ -105,6 +118,7 @@ export class FriendsController {
    */
   @Delete(':friendId')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiRemoveFriend()
   async removeFriend(
     @CurrentUser() user: User,
     @Param('friendId', ParseUUIDPipe) friendId: string,
@@ -117,6 +131,7 @@ export class FriendsController {
    * Get friend leaderboard
    */
   @Get('leaderboard')
+  @ApiGetLeaderboard()
   async getLeaderboard(
     @CurrentUser() user: User,
     @Query('metric') metric?: string,

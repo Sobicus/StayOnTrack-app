@@ -227,7 +227,7 @@ describe('StatsService', () => {
         totalDaysTracked: '7',
       });
 
-      const result = await service.getStatsByDateRange('user-1', '2026-03-01', '2026-03-07');
+      const result = await service.getStatsByDateRange({ userId: 'user-1', startDate: '2026-03-01', endDate: '2026-03-07' });
 
       expect(statsQueryRepository.getAggregatedStatsByDateRange).toHaveBeenCalledWith(
         'user-1',
@@ -250,7 +250,7 @@ describe('StatsService', () => {
         totalDaysTracked: '0',
       });
 
-      const result = await service.getStatsByDateRange('user-1', '2025-01-01', '2025-01-07');
+      const result = await service.getStatsByDateRange({ userId: 'user-1', startDate: '2025-01-01', endDate: '2025-01-07' });
 
       expect(result.totalSavedCalories).toBe(0);
       expect(result.totalSavedMoney).toBe(0);

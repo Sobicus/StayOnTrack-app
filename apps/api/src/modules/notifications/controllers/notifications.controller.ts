@@ -1,9 +1,15 @@
 import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { NotificationsService } from '../services/notifications.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
+import { ApiSendDailyReminders } from '../swagger/send-daily-reminders.swagger';
+import { ApiSendWeeklyDigest } from '../swagger/send-weekly-digest.swagger';
+import { ApiSubscribePush } from '../swagger/subscribe-push.swagger';
+import { ApiUnsubscribePush } from '../swagger/unsubscribe-push.swagger';
 
+@ApiTags('Notifications')
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
@@ -18,6 +24,7 @@ export class NotificationsController {
    */
   @Post('send-daily-reminders')
   @HttpCode(200)
+  @ApiSendDailyReminders()
   async sendDailyReminders() {
     return this.notificationsService.sendDailyReminders();
   }
@@ -29,6 +36,7 @@ export class NotificationsController {
    */
   @Post('send-weekly-digest')
   @HttpCode(200)
+  @ApiSendWeeklyDigest()
   async sendWeeklyDigest() {
     return this.notificationsService.sendWeeklyDigests();
   }
@@ -39,6 +47,7 @@ export class NotificationsController {
    */
   @Post('subscribe')
   @HttpCode(200)
+  @ApiSubscribePush()
   async subscribePush(
     @CurrentUser() user: User,
     @Body() body: { subscription: any },
@@ -53,6 +62,7 @@ export class NotificationsController {
    */
   @Post('unsubscribe')
   @HttpCode(204)
+  @ApiUnsubscribePush()
   async unsubscribePush(@CurrentUser() user: User) {
     await this.notificationsService.unsubscribePush(user.id);
   }

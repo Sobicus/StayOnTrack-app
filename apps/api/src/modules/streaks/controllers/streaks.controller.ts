@@ -4,14 +4,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { StreaksService } from '../services/streaks.service';
+import { ApiGetStreaks } from '../swagger/get-streaks.swagger';
+import { ApiRecoverStreak } from '../swagger/recover-streak.swagger';
 
 @ApiTags('Streaks')
-@ApiBearerAuth('access-token')
 @Controller('streaks')
 @UseGuards(JwtAuthGuard)
 export class StreaksController {
@@ -21,6 +22,7 @@ export class StreaksController {
    * GET /streaks — Get current streak, best streak, shield status
    */
   @Get()
+  @ApiGetStreaks()
   async getStreak(@CurrentUser() user: User) {
     return this.streaksService.getStreak(user.id);
   }
@@ -29,6 +31,7 @@ export class StreaksController {
    * POST /streaks/recover — Recover a broken streak by spending XP
    */
   @Post('recover')
+  @ApiRecoverStreak()
   async recoverStreak(@CurrentUser() user: User) {
     return this.streaksService.recoverStreak(user.id);
   }

@@ -11,7 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
@@ -20,9 +20,15 @@ import { CreateHabitLogDto } from '../dto/create-habit-log.dto';
 import { BatchCheckinDto } from '../dto/batch-checkin.dto';
 import { HabitLogResponseDto, DaySummaryDto } from '../dto/habit-log-response.dto';
 import { getTodayInTimezone } from '../../../common/utils/date.utils';
+import { ApiCreateLog } from '../swagger/create-log.swagger';
+import { ApiBatchCheckin } from '../swagger/batch-checkin.swagger';
+import { ApiGetFrequencyStatus } from '../swagger/get-frequency-status.swagger';
+import { ApiGetDaySummary } from '../swagger/get-day-summary.swagger';
+import { ApiGetByDateRange } from '../swagger/get-by-date-range.swagger';
+import { ApiGetByHabit } from '../swagger/get-by-habit.swagger';
+import { ApiDeleteLog } from '../swagger/delete-log.swagger';
 
 @ApiTags('Check-ins')
-@ApiBearerAuth('access-token')
 @Controller('habit-logs')
 @UseGuards(JwtAuthGuard)
 export class HabitLogsController {
@@ -32,11 +38,12 @@ export class HabitLogsController {
    * POST /habit-logs — Single habit check-in
    */
   @Post()
+  @ApiCreateLog()
   async createLog(
     @CurrentUser() user: User,
     @Body() dto: CreateHabitLogDto,
   ): Promise<HabitLogResponseDto> {
-    const { log, xpEarned, levelUp } = await this.habitLogsService.createLog(user.id, dto, user.timezone);
+    const { log, xpEarned, levelUp } = await this.habitLogsService.createLog({ userId: user.id, dto, timezone: user.timezone });
     return HabitLogResponseDto.fromEntity(log, { xpEarned, levelUp });
   }
 
@@ -45,11 +52,12 @@ export class HabitLogsController {
    * Primary flow: user swipes through all habits → submit
    */
   @Post('batch')
+  @ApiBatchCheckin()
   async batchCheckin(
     @CurrentUser() user: User,
     @Body() dto: BatchCheckinDto,
   ): Promise<HabitLogResponseDto[]> {
-    const results = await this.habitLogsService.batchCheckin(user.id, dto, user.timezone);
+    const results = await this.habitLogsService.batchCheckin({ userId: user.id, dto, timezone: user.timezone });
     return results.map((r) => HabitLogResponseDto.fromEntity(r.log, { xpEarned: r.xpEarned, levelUp: r.levelUp }));
   }
 
@@ -59,11 +67,12 @@ export class HabitLogsController {
    * Returns used/limit/remaining for each habit.
    */
   @Get('frequency-status')
+  @ApiGetFrequencyStatus()
   async getFrequencyStatus(
     @CurrentUser() user: User,
     @Query('date') date?: string,
   ) {
-    return this.habitLogsService.getFrequencyStatus(user.id, date, user.timezone);
+    return this.habitLogsService.getFrequencyStatus({ userId: user.id, date, timezone: user.timezone });
   }
 
   /**
@@ -71,6 +80,7 @@ export class HabitLogsController {
    * Get summary for a specific day (or today)
    */
   @Get('day')
+  @ApiGetDaySummary()
   async getDaySummary(
     @CurrentUser() user: User,
     @Query('date') date?: string,
@@ -84,16 +94,17 @@ export class HabitLogsController {
    * Get logs for a date range (calendar / history view)
    */
   @Get('range')
+  @ApiGetByDateRange()
   async getByDateRange(
     @CurrentUser() user: User,
     @Query('start') start: string,
     @Query('end') end: string,
   ): Promise<HabitLogResponseDto[]> {
-    const logs = await this.habitLogsService.getLogsByDateRange(
-      user.id,
-      start,
-      end,
-    );
+    const logs = await this.habitLogsService.getLogsByDateRange({
+      userId: user.id,
+      startDate: start,
+      endDate: end,
+    });
     return logs.map((log) => HabitLogResponseDto.fromEntity(log));
   }
 
@@ -102,6 +113,7 @@ export class HabitLogsController {
    * Get logs for a specific habit
    */
   @Get('habit/:habitId')
+  @ApiGetByHabit()
   async getByHabit(
     @CurrentUser() user: User,
     @Param('habitId', ParseUUIDPipe) habitId: string,
@@ -122,6 +134,7 @@ export class HabitLogsController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiDeleteLog()
   async deleteLog(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,

@@ -7,18 +7,22 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AnalyticsService } from '../services/analytics.service';
+import { ApiGetRetention } from '../swagger/get-retention.swagger';
+import { ApiGetDAU } from '../swagger/get-dau.swagger';
+import { ApiGetFunnel } from '../swagger/get-funnel.swagger';
+import { ApiGetEventsByType } from '../swagger/get-events-by-type.swagger';
 
 @ApiTags('Analytics')
-@ApiBearerAuth('access-token')
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('retention')
+  @ApiGetRetention()
   async getRetention(
     @Query('start') start: string,
     @Query('end') end: string,
@@ -29,6 +33,7 @@ export class AnalyticsController {
   }
 
   @Get('dau')
+  @ApiGetDAU()
   async getDailyActiveUsers(
     @Query('days', new DefaultValuePipe(30), ParseIntPipe) days: number,
   ) {
@@ -49,11 +54,13 @@ export class AnalyticsController {
   }
 
   @Get('funnel')
+  @ApiGetFunnel()
   async getFunnel() {
     return this.analyticsService.getUserFunnel();
   }
 
   @Get('events/:type')
+  @ApiGetEventsByType()
   async getEventCounts(
     @Param('type') type: string,
     @Query('days', new DefaultValuePipe(30), ParseIntPipe) days: number,

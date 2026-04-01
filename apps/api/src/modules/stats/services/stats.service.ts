@@ -48,6 +48,44 @@ export interface EffortEquivalentResult {
   amount: number;
 }
 
+export interface DayRate {
+  day: number;
+  rate: number;
+  total: number;
+}
+
+export interface HabitCalorieStat {
+  habitId: string;
+  title: string;
+  calories: number;
+}
+
+export interface CategoryCalorieStat {
+  category: string;
+  calories: number;
+}
+
+export interface PatternsResult {
+  dayRates: DayRate[];
+  bestDay: DayRate;
+  worstDay: DayRate;
+  categories: CategoryCalorieStat[];
+  topHabits: HabitCalorieStat[];
+  totalLogs: number;
+}
+
+export interface GetStatsByDateRangeParams {
+  userId: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface GetReportParams {
+  userId: string;
+  period: 'month' | 'year';
+  date: string;
+}
+
 @Injectable()
 export class StatsService {
   constructor(
@@ -182,11 +220,7 @@ export class StatsService {
   /**
    * Get stats for a specific date range.
    */
-  async getStatsByDateRange(
-    userId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<UserStatsResult> {
+  async getStatsByDateRange({ userId, startDate, endDate }: GetStatsByDateRangeParams): Promise<UserStatsResult> {
     const result = await this.statsQueryRepository.getAggregatedStatsByDateRange(
       userId,
       startDate,
@@ -210,7 +244,7 @@ export class StatsService {
   /**
    * Get pattern analysis for a user (day-of-week rates, category breakdown, top habits).
    */
-  async getPatterns(userId: string): Promise<Record<string, unknown> | null> {
+  async getPatterns(userId: string): Promise<PatternsResult | null> {
     const logs = await this.statsQueryRepository.findAllLogsByUser(userId);
 
     if (logs.length < 7) return null;
@@ -298,25 +332,7 @@ export class StatsService {
       'Saturday',
     ];
     const insights: string[] = [];
-    const bestDay = patterns.bestDay as {
-      day: number;
-      rate: number;
-      total: number;
-    };
-    const worstDay = patterns.worstDay as {
-      day: number;
-      rate: number;
-      total: number;
-    };
-    const topHabits = patterns.topHabits as {
-      habitId: string;
-      title: string;
-      calories: number;
-    }[];
-    const categories = patterns.categories as {
-      category: string;
-      calories: number;
-    }[];
+    const { bestDay, worstDay, topHabits, categories } = patterns;
 
     if (bestDay.rate > 0) {
       insights.push(
@@ -345,11 +361,7 @@ export class StatsService {
   /**
    * Get a monthly or yearly report (Wrapped style).
    */
-  async getReport(
-    userId: string,
-    period: 'month' | 'year',
-    date: string,
-  ): Promise<Record<string, unknown> | null> {
+  async getReport({ userId, period, date }: GetReportParams): Promise<Record<string, unknown> | null> {
     const d = new Date(date + '-01');
     let startDate: string;
     let endDate: string;

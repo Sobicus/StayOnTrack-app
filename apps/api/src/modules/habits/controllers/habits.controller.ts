@@ -12,7 +12,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
@@ -20,20 +20,28 @@ import { HabitsService } from '../services/habits.service';
 import { CreateHabitDto } from '../dto/create-habit.dto';
 import { UpdateHabitDto } from '../dto/update-habit.dto';
 import { HabitResponseDto } from '../dto/habit-response.dto';
+import { ApiGetHabitTemplates } from '../swagger/get-templates.swagger';
+import { ApiCreateHabit } from '../swagger/create-habit.swagger';
+import { ApiGetHabits } from '../swagger/get-habits.swagger';
+import { ApiGetHabit } from '../swagger/get-habit.swagger';
+import { ApiUpdateHabit } from '../swagger/update-habit.swagger';
+import { ApiDeleteHabit } from '../swagger/delete-habit.swagger';
+import { ApiReorderHabits } from '../swagger/reorder-habits.swagger';
 
 @ApiTags('Habits')
-@ApiBearerAuth('access-token')
 @Controller('habits')
 export class HabitsController {
   constructor(private readonly habitsService: HabitsService) {}
 
   @Get('templates')
+  @ApiGetHabitTemplates()
   async getTemplates() {
     return this.habitsService.getTemplates();
   }
 
   @UseGuards(JwtAuthGuard)
   @Post()
+  @ApiCreateHabit()
   async create(
     @CurrentUser() user: User,
     @Body() dto: CreateHabitDto,
@@ -44,6 +52,7 @@ export class HabitsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
+  @ApiGetHabits()
   async findAll(
     @CurrentUser() user: User,
     @Query('active') active?: string,
@@ -57,6 +66,7 @@ export class HabitsController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
+  @ApiGetHabit()
   async findOne(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -67,6 +77,7 @@ export class HabitsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
+  @ApiUpdateHabit()
   async update(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -79,6 +90,7 @@ export class HabitsController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiDeleteHabit()
   async remove(
     @CurrentUser() user: User,
     @Param('id', ParseUUIDPipe) id: string,
@@ -88,6 +100,7 @@ export class HabitsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('reorder/bulk')
+  @ApiReorderHabits()
   async reorder(
     @CurrentUser() user: User,
     @Body('habitIds') habitIds: string[],

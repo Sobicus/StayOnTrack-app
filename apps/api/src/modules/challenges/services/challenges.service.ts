@@ -3,6 +3,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+
+export interface InviteMultipleParams {
+  challengeId: string;
+  creatorUserId: string;
+  usernames: string[];
+}
 import {
   ChallengeNotFoundException,
   ChallengeForbiddenException,
@@ -263,20 +269,20 @@ export class ChallengesService {
   ): Promise<number> {
     switch (challenge.type) {
       case ChallengeType.CALORIES: {
-        const stats = await this.statsService.getStatsByDateRange(
+        const stats = await this.statsService.getStatsByDateRange({
           userId,
-          challenge.startDate,
-          challenge.endDate,
-        );
+          startDate: challenge.startDate,
+          endDate: challenge.endDate,
+        });
         return stats.totalSavedCalories;
       }
 
       case ChallengeType.MONEY: {
-        const stats = await this.statsService.getStatsByDateRange(
+        const stats = await this.statsService.getStatsByDateRange({
           userId,
-          challenge.startDate,
-          challenge.endDate,
-        );
+          startDate: challenge.startDate,
+          endDate: challenge.endDate,
+        });
         return stats.totalSavedMoney;
       }
 
@@ -401,11 +407,7 @@ export class ChallengesService {
   /**
    * Invite multiple users to a challenge (creator only).
    */
-  async inviteMultiple(
-    challengeId: string,
-    creatorUserId: string,
-    usernames: string[],
-  ): Promise<ChallengeParticipant[]> {
+  async inviteMultiple({ challengeId, creatorUserId, usernames }: InviteMultipleParams): Promise<ChallengeParticipant[]> {
     const challenge = await this.challengesQueryRepository.findByIdWithParticipants(challengeId);
 
     if (!challenge) {
@@ -452,7 +454,7 @@ export class ChallengesService {
       }),
     );
 
-    return this.challengesCommandRepository.saveParticipants(participants) as Promise<ChallengeParticipant[]>;
+    return this.challengesCommandRepository.saveParticipants(participants);
   }
 
   /**

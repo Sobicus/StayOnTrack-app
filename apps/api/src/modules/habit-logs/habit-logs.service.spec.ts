@@ -65,10 +65,13 @@ describe('HabitLogsService', () => {
     it('should create a new log for a daily habit', async () => {
       queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
-      const result = await service.createLog('user-1', {
-        habitId: 'habit-1',
-        status: HabitLogStatus.AVOIDED,
-        date: '2026-03-13',
+      const result = await service.createLog({
+        userId: 'user-1',
+        dto: {
+          habitId: 'habit-1',
+          status: HabitLogStatus.AVOIDED,
+          date: '2026-03-13',
+        },
       });
 
       expect(result).toBeDefined();
@@ -88,10 +91,13 @@ describe('HabitLogsService', () => {
       };
       queryRepo.findByHabitAndDate.mockResolvedValue(existingLog);
 
-      await service.createLog('user-1', {
-        habitId: 'habit-1',
-        status: HabitLogStatus.AVOIDED,
-        date: '2026-03-13',
+      await service.createLog({
+        userId: 'user-1',
+        dto: {
+          habitId: 'habit-1',
+          status: HabitLogStatus.AVOIDED,
+          date: '2026-03-13',
+        },
       });
 
       expect(commandRepo.save).toHaveBeenCalledWith(
@@ -107,10 +113,13 @@ describe('HabitLogsService', () => {
       queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
       await expect(
-        service.createLog('user-1', {
-          habitId: 'habit-1',
-          status: HabitLogStatus.PARTIAL,
-          date: '2026-03-13',
+        service.createLog({
+          userId: 'user-1',
+          dto: {
+            habitId: 'habit-1',
+            status: HabitLogStatus.PARTIAL,
+            date: '2026-03-13',
+          },
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -118,10 +127,13 @@ describe('HabitLogsService', () => {
     it('should calculate saved calories correctly for AVOIDED', async () => {
       queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
-      await service.createLog('user-1', {
-        habitId: 'habit-1',
-        status: HabitLogStatus.AVOIDED,
-        date: '2026-03-13',
+      await service.createLog({
+        userId: 'user-1',
+        dto: {
+          habitId: 'habit-1',
+          status: HabitLogStatus.AVOIDED,
+          date: '2026-03-13',
+        },
       });
 
       expect(commandRepo.create).toHaveBeenCalledWith(
@@ -135,11 +147,14 @@ describe('HabitLogsService', () => {
     it('should calculate saved calories correctly for PARTIAL', async () => {
       queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
-      await service.createLog('user-1', {
-        habitId: 'habit-1',
-        status: HabitLogStatus.PARTIAL,
-        portionRatio: 0.5,
-        date: '2026-03-13',
+      await service.createLog({
+        userId: 'user-1',
+        dto: {
+          habitId: 'habit-1',
+          status: HabitLogStatus.PARTIAL,
+          portionRatio: 0.5,
+          date: '2026-03-13',
+        },
       });
 
       expect(commandRepo.create).toHaveBeenCalledWith(
@@ -153,10 +168,13 @@ describe('HabitLogsService', () => {
     it('should calculate zero savings for CONSUMED', async () => {
       queryRepo.findByHabitAndDate.mockResolvedValue(null);
 
-      await service.createLog('user-1', {
-        habitId: 'habit-1',
-        status: HabitLogStatus.CONSUMED,
-        date: '2026-03-13',
+      await service.createLog({
+        userId: 'user-1',
+        dto: {
+          habitId: 'habit-1',
+          status: HabitLogStatus.CONSUMED,
+          date: '2026-03-13',
+        },
       });
 
       expect(commandRepo.create).toHaveBeenCalledWith(
@@ -174,10 +192,13 @@ describe('HabitLogsService', () => {
       queryRepo.countByHabitAndDateRange.mockResolvedValue(5);
 
       await expect(
-        service.createLog('user-1', {
-          habitId: 'habit-1',
-          status: HabitLogStatus.AVOIDED,
-          date: '2026-03-13',
+        service.createLog({
+          userId: 'user-1',
+          dto: {
+            habitId: 'habit-1',
+            status: HabitLogStatus.AVOIDED,
+            date: '2026-03-13',
+          },
         }),
       ).resolves.toBeDefined();
     });
@@ -193,10 +214,13 @@ describe('HabitLogsService', () => {
       queryRepo.countByHabitAndDateRange.mockResolvedValue(2); // Already 2 this week
 
       await expect(
-        service.createLog('user-1', {
-          habitId: 'habit-1',
-          status: HabitLogStatus.AVOIDED,
-          date: '2026-03-13',
+        service.createLog({
+          userId: 'user-1',
+          dto: {
+            habitId: 'habit-1',
+            status: HabitLogStatus.AVOIDED,
+            date: '2026-03-13',
+          },
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -212,10 +236,13 @@ describe('HabitLogsService', () => {
       queryRepo.countByHabitAndDateRange.mockResolvedValue(1); // Only 1 this week, limit is 3
 
       await expect(
-        service.createLog('user-1', {
-          habitId: 'habit-1',
-          status: HabitLogStatus.AVOIDED,
-          date: '2026-03-13',
+        service.createLog({
+          userId: 'user-1',
+          dto: {
+            habitId: 'habit-1',
+            status: HabitLogStatus.AVOIDED,
+            date: '2026-03-13',
+          },
         }),
       ).resolves.toBeDefined();
     });
@@ -231,10 +258,13 @@ describe('HabitLogsService', () => {
       queryRepo.countByHabitAndDateRange.mockResolvedValue(4); // Already 4 this week
 
       await expect(
-        service.createLog('user-1', {
-          habitId: 'habit-1',
-          status: HabitLogStatus.AVOIDED,
-          date: '2026-03-13',
+        service.createLog({
+          userId: 'user-1',
+          dto: {
+            habitId: 'habit-1',
+            status: HabitLogStatus.AVOIDED,
+            date: '2026-03-13',
+          },
         }),
       ).rejects.toThrow(BadRequestException);
     });
@@ -242,7 +272,7 @@ describe('HabitLogsService', () => {
 
   describe('getFrequencyStatus', () => {
     it('should return null limits for daily habits', async () => {
-      const result = await service.getFrequencyStatus('user-1');
+      const result = await service.getFrequencyStatus({ userId: 'user-1' });
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -262,7 +292,7 @@ describe('HabitLogsService', () => {
       habitsService.findActiveByUser.mockResolvedValue([weeklyHabit]);
       queryRepo.countByHabitAndDateRange.mockResolvedValue(1);
 
-      const result = await service.getFrequencyStatus('user-1');
+      const result = await service.getFrequencyStatus({ userId: 'user-1' });
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({

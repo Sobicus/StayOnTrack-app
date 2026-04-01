@@ -39,10 +39,8 @@ export class ChallengesCommandRepository {
   /**
    * Save one or more participant entities.
    */
-  async saveParticipants(
-    participants: ChallengeParticipant | ChallengeParticipant[],
-  ): Promise<ChallengeParticipant | ChallengeParticipant[]> {
-    return this.participantRepository.save(participants as any);
+  async saveParticipants(participants: ChallengeParticipant[]): Promise<ChallengeParticipant[]> {
+    return this.participantRepository.save(participants);
   }
 
   /**
