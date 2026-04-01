@@ -4,9 +4,10 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
-import { ApiError } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, LogIn, Flame } from 'lucide-react';
+import { TelegramLoginButton } from '@/components/auth/telegram-login-button';
 
 export default function LoginPage() {
   return (
@@ -23,7 +24,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, loginWithResponse } = useAuth();
   const t = useTranslations('auth');
   const redirectTo = searchParams.get('redirect') || '/dashboard';
 
@@ -32,6 +33,25 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const tgBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '';
+
+  const handleTelegramAuth = async (tgUser: {
+    id: number; first_name: string; last_name?: string;
+    username?: string; photo_url?: string; auth_date: number; hash: string;
+  }) => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const result = await api.auth.telegramWidget(tgUser);
+      loginWithResponse(result);
+      router.push(redirectTo);
+    } catch {
+      setError(t('genericError'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +91,7 @@ function LoginForm() {
         {/* Google Sign In */}
         <a
           href="http://localhost:4800/api/v1/auth/google"
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--card)] transition-all mb-4"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--card)] transition-all mb-3"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -81,6 +101,14 @@ function LoginForm() {
           </svg>
           {t('googleSignIn')}
         </a>
+
+        {/* Telegram Sign In */}
+        {tgBotUsername && (
+          <div className="mb-3">
+            <TelegramLoginButton botUsername={tgBotUsername} onAuth={handleTelegramAuth} />
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-[var(--border)]" />
           <span className="text-xs text-[var(--muted)]">{t('or')}</span>

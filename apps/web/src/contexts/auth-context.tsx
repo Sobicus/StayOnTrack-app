@@ -40,6 +40,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithResponse: (result: { accessToken: string; refreshToken: string; user: User }) => void;
   register: (email: string, password: string, username: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -183,6 +184,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncTimezone(result.accessToken, result.user);
   };
 
+  const loginWithResponse = (result: { accessToken: string; refreshToken: string; user: User }) => {
+    saveTokens(result.accessToken, result.refreshToken);
+    setUser(result.user);
+    syncTimezone(result.accessToken, result.user);
+  };
+
   const register = async (email: string, password: string, username: string) => {
     const result = await api.auth.register({ email, password, username });
     saveTokens(result.accessToken, result.refreshToken);
@@ -207,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
+        loginWithResponse,
         register,
         logout,
         refreshUser,

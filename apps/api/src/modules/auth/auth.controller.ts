@@ -30,6 +30,7 @@ import { ApiResetPassword } from './swagger/reset-password.swagger';
 import { ApiVerifyEmail } from './swagger/verify-email.swagger';
 import { ApiResendVerification } from './swagger/resend-verification.swagger';
 import { ApiTelegramAuth } from './swagger/telegram-auth.swagger';
+import { TelegramWidgetDto } from './dto/telegram-widget.dto';
 import { ApiGoogleAuth, ApiGoogleCallback } from './swagger/google-auth.swagger';
 import { ApiGetMe } from './swagger/get-me.swagger';
 
@@ -116,6 +117,13 @@ export class AuthController {
   @ApiTelegramAuth()
   async telegramAuth(@Body() body: { initData: string }) {
     return this.authService.telegramAuth(body.initData);
+  }
+
+  @Post('telegram/widget')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  async telegramWidgetLogin(@Body() dto: TelegramWidgetDto) {
+    return this.authService.telegramWidgetLogin(dto);
   }
 
   @Get('google')
