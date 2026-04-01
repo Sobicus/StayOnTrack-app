@@ -10,9 +10,17 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { HabitCategory, HabitFrequencyType } from '../entities/habit.entity';
+import { HabitCategory, HabitFrequencyType, HabitType } from '../entities/habit.entity';
 
 export class UpdateHabitDto {
+  @IsEnum(HabitType)
+  @IsOptional()
+  habitType?: HabitType;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  targetUnit?: string;
   @IsString()
   @MinLength(1)
   @MaxLength(255)

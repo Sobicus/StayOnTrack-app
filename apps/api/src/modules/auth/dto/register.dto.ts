@@ -10,11 +10,13 @@ import {
 export class RegisterDto {
   @IsEmail()
   @IsNotEmpty()
+  @MaxLength(255)
   email!: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   @MaxLength(100)
+  @Matches(/(?=.*[A-Z])(?=.*\d)/, { message: 'Password must contain at least one uppercase letter and one number' })
   password!: string;
 
   @IsString()

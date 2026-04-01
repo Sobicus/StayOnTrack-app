@@ -9,6 +9,7 @@
     --foreground: #111827;
     --muted: #6B7280;
     --border: #E5E7EB;
+    --accent-color: #3b82f6;
   }
 
   .dark {
@@ -17,6 +18,7 @@
     --foreground: #F9FAFB;
     --muted: #9CA3AF;
     --border: #2D3139;
+    --accent-color: #3b82f6;
   }
 
   body {
@@ -59,4 +61,123 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* ===== Live Hero — Keyframe animations only (all styles are inline in the component) ===== */
+
+@keyframes hero-ring-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes hero-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.04); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.8; r: 5; }
+  50%      { opacity: 1;   r: 7; }
+}
+
+@keyframes sparkle-1 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(-8px, -12px) scale(1); }
+}
+@keyframes sparkle-2 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(10px, -8px) scale(1); }
+}
+@keyframes sparkle-3 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0); }
+  50%      { opacity: 1; transform: translate(-5px, 10px) scale(1); }
+}
+
+/* ===== Color Themes — applied via data-color-theme on <html> ===== */
+
+[data-color-theme="midnight"] {
+  --background: #06080F;
+  --card: #0D1117;
+  --foreground: #E2EAFF;
+  --muted: #7B91B8;
+  --border: #1A2035;
+  --accent-color: #3B82F6;
+}
+
+[data-color-theme="forest"] {
+  --background: #060E09;
+  --card: #0B1A10;
+  --foreground: #D0EDDA;
+  --muted: #6B9E7D;
+  --border: #142A1C;
+  --accent-color: #10B981;
+}
+
+[data-color-theme="sunset"] {
+  --background: #0E0804;
+  --card: #1A1008;
+  --foreground: #FFE8D0;
+  --muted: #A07050;
+  --border: #2A180A;
+  --accent-color: #F97316;
+}
+
+[data-color-theme="arctic"] {
+  --background: #EFF6FF;
+  --card: #FFFFFF;
+  --foreground: #0F172A;
+  --muted: #64748B;
+  --border: #BFDBFE;
+  --accent-color: #0EA5E9;
+}
+
+[data-color-theme="sakura"] {
+  --background: #FFF0F8;
+  --card: #FFFFFF;
+  --foreground: #1A0A12;
+  --muted: #9D6080;
+  --border: #FBBDD8;
+  --accent-color: #EC4899;
+}
+
+[data-color-theme="neoncity"] {
+  --background: #080010;
+  --card: #0F0020;
+  --foreground: #F0E0FF;
+  --muted: #9060C0;
+  --border: #1C0035;
+  --accent-color: #A855F7;
+}
+
+/* Safe area for iOS notch / home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent text selection on interactive elements */
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth touch scrolling */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch target sizing — minimum 44px for accessibility */
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Hide scrollbar on overflow containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   IsNumber,
+  IsBoolean,
   IsEnum,
   IsIn,
   MinLength,
@@ -20,6 +21,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   avatarUrl?: string;
 
   @IsOptional()
@@ -36,6 +38,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   goal?: string;
 
   @IsOptional()
@@ -44,6 +47,55 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(10)
   @IsIn(['en', 'ru'])
   locale?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(23)
+  dayEndHour?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  timezone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @IsIn(['EUR', 'USD', 'GBP', 'PLN', 'UAH', 'RUB'])
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @IsIn(['monday', 'sunday'])
+  weekStartDay?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @IsIn(['metric', 'imperial'])
+  unitSystem?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  onboardingCompleted?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  monthlySavingsGoal?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  emailReminders?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(23)
+  reminderHour?: number;
 }

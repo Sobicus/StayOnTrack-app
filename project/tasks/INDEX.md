@@ -30,34 +30,175 @@
 | ID | Title | Status | Phase |
 |---|---|---|---|
 | TASK-001 | Auth module (register, login, JWT, profile) | 🟢 COMPLETED | 1.1 |
-| TASK-002 | Habits CRUD module | 🟡 CREATED | 1.2 |
-| TASK-003 | Daily check-in module (habit logs) | 🟡 CREATED | 1.3 |
-| TASK-004 | Stats & equivalents module | 🟡 CREATED | 1.4 |
-| TASK-005 | Activities catalog (seed data) | 🟡 CREATED | 1.4 |
-| TASK-006 | Streak logic + Streak Shield | 🟡 CREATED | 1.5 |
-| TASK-007 | Frontend: Auth pages (register, login) | 🟡 CREATED | 1.1 |
-| TASK-008 | Frontend: Home screen | 🟡 CREATED | 1.6 |
-| TASK-009 | Frontend: Habits management pages | 🟡 CREATED | 1.2 |
-| TASK-010 | Frontend: Daily check-in screen + rewards | 🟡 CREATED | 1.3 |
-| TASK-011 | Frontend: Stats & equivalents screens | 🟡 CREATED | 1.4 |
-| TASK-012 | Frontend: Onboarding flow | 🟡 CREATED | 1.6 |
-| TASK-013 | i18n setup (EN + RU) | 🟡 CREATED | 1.6 |
-| TASK-014 | Habit catalog seed (popular items) | 🟡 CREATED | 1.2 |
+| TASK-002 | Habits CRUD module (backend + frontend) | 🟢 COMPLETED | 1.2 |
+| TASK-003 | Daily check-in module (habit logs, batch) | 🟢 COMPLETED | 1.3 |
+| TASK-004 | Stats & equivalents module (charts, heatmap) | 🟢 COMPLETED | 1.4 |
+| TASK-005 | Activities catalog (seed data) | 🟢 COMPLETED | 1.4 |
+| TASK-006 | Streak logic + Streak Shield | 🟢 COMPLETED | 1.5 |
+| TASK-007 | Frontend: Auth pages (register, login) | 🟢 COMPLETED | 1.1 |
+| TASK-008 | Frontend: Home screen (dashboard) | 🟢 COMPLETED | 1.6 |
+| TASK-009 | Frontend: Habits management pages | 🟢 COMPLETED | 1.2 |
+| TASK-010 | Frontend: Daily check-in + rewards | 🟢 COMPLETED | 1.3 |
+| TASK-011 | Frontend: Stats & equivalents screens | 🟢 COMPLETED | 1.4 |
+| TASK-012 | Frontend: Onboarding flow (4-step wizard) | 🟢 COMPLETED | 1.6 |
+| TASK-013 | i18n setup (EN + RU, cookie-based) | 🟢 COMPLETED | 1.6 |
+| TASK-015 | Frequency limits (daily/weekly/custom) | 🟢 COMPLETED | 1.2 |
+| TASK-016 | Achievements system (25 milestones) | 🟢 COMPLETED | 1.6 |
 
 ## Phase 2: Basic Social
 
 | ID | Title | Status | Phase |
 |---|---|---|---|
-| TASK-020 | Friends module (requests, friendships) | 🟡 CREATED | 2.1 |
-| TASK-021 | Privacy settings module | 🟡 CREATED | 2.2 |
-| TASK-022 | Friend leaderboard module | 🟡 CREATED | 2.3 |
-| TASK-023 | Frontend: Friends pages | 🟡 CREATED | 2.1 |
-| TASK-024 | Frontend: Privacy settings page | 🟡 CREATED | 2.2 |
-| TASK-025 | Frontend: Leaderboard page | 🟡 CREATED | 2.3 |
+| TASK-020 | Friends module (requests, friendships) | 🟢 COMPLETED | 2.1 |
+| TASK-021 | Privacy settings (visibility levels) | 🟢 COMPLETED | 2.2 |
+| TASK-022 | Friend leaderboard | 🟢 COMPLETED | 2.3 |
+| TASK-023 | Frontend: Friends page (3 tabs) | 🟢 COMPLETED | 2.1 |
+| TASK-024 | Frontend: Privacy settings | 🟢 COMPLETED | 2.2 |
+| TASK-025 | Frontend: Leaderboard | 🟢 COMPLETED | 2.3 |
 
-## Phase 3: Challenges
+## Infrastructure
 
 | ID | Title | Status | Phase |
 |---|---|---|---|
-| TASK-030 | Challenges module (CRUD, invite, progress, winner) | 🟡 CREATED | 3 |
-| TASK-031 | Frontend: Challenge pages | 🟡 CREATED | 3 |
+| OPS-010 | PWA manifest | 🟢 COMPLETED | — |
+| OPS-011 | Unit tests (24) + CI/CD (GitHub Actions) | 🟢 COMPLETED | — |
+| OPS-012 | Dark mode + mobile-first UI | 🟢 COMPLETED | — |
+
+## Wave 2: Code Quality (TASK-200–213)
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-200 | Input validation (@MaxLength on all DTOs) | 🟢 COMPLETED |
+| TASK-201 | TypeScript strict (remove all `any` from backend) | 🟢 COMPLETED |
+| TASK-202 | Frontend type safety (shared types from api.ts) | 🟢 COMPLETED |
+| TASK-203 | Timezone-aware utilities (user.timezone column) | 🟢 COMPLETED |
+| TASK-210 | Unit tests expansion (118 tests) | 🟢 COMPLETED |
+| TASK-211 | E2E tests (20 auth flow tests) | 🟢 COMPLETED |
+| TASK-213 | Rich seed data (2 demo users, friendship, challenge) | 🟢 COMPLETED |
+
+## Wave 3A: Visualization (TASK-300–304)
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-300 | Monthly trend LineChart with weekly averages | 🟢 COMPLETED |
+| TASK-301 | GitHub-style calorie intensity heatmap | 🟢 COMPLETED |
+| TASK-302 | Animated count-up counters on stat cards | 🟢 COMPLETED |
+| TASK-303 | Per-habit 7-dot sparkline | 🟢 COMPLETED |
+| TASK-304 | Monthly savings goal with progress bar | 🟢 COMPLETED |
+
+## Wave 3B: Gamification (TASK-305–311)
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-305 | XP & Level system (17 levels, 0–50000 XP) | 🟢 COMPLETED |
+| TASK-306 | XP progress bar + level badges | 🟢 COMPLETED |
+| TASK-307 | Award XP on check-in, avoidance, streaks | 🟢 COMPLETED |
+| TASK-308 | Daily quests system (3/day, 50 XP each) | 🟢 COMPLETED |
+| TASK-309 | Streak recovery for 200 XP | 🟢 COMPLETED |
+| TASK-311 | 6 unlockable accent themes by level | 🟢 COMPLETED |
+
+## Wave 3C: Group Challenges (TASK-312–316)
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-312 | Extended challenge entity (maxParticipants, inviteCode) | 🟢 COMPLETED |
+| TASK-313 | Join by invite code, invite multiple users | 🟢 COMPLETED |
+| TASK-314 | Group challenge create flow (1v1 vs Group) | 🟢 COMPLETED |
+| TASK-315 | Challenge detail page with leaderboard | 🟢 COMPLETED |
+| TASK-316 | Browse public challenges tab | 🟢 COMPLETED |
+
+## Wave 3D: PWA + Notifications (TASK-317–321)
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-317 | Offline check-in queue with auto-sync | 🟢 COMPLETED |
+| TASK-318 | Daily reminder email | 🟢 COMPLETED |
+| TASK-319 | Streak warning email | 🟢 COMPLETED |
+| TASK-320 | Weekly digest email | 🟢 COMPLETED |
+| TASK-321 | Notification settings UI | 🟢 COMPLETED |
+
+## Wave 4A: Critical Fixes
+
+| ID | Title | Status |
+|---|---|---|
+| FIX-401 | LiveHero neon ring v3 — inline styles (DEC-016) | 🟢 COMPLETED |
+| FIX-402 | Timezone auto-sync from browser (DEC-017) | 🟢 COMPLETED |
+| FIX-403 | Rename ring-* to neon-* (Tailwind conflict) | 🟢 COMPLETED |
+| FIX-404 | LiveStats uses user.timezone not UTC | 🟢 COMPLETED |
+
+---
+
+## Batch 5: Social Rewards + Extended Achievements
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-040 | Invite rewards (shield on friend accept) | 🟢 COMPLETED |
+| TASK-041 | Extended achievements (SOCIAL, CHALLENGES) | 🟢 COMPLETED |
+
+## Batch 6: Auth Hardening
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-050 | Email verification (non-blocking, 7-day grace) | 🟢 COMPLETED |
+| TASK-051 | Google OAuth (passport-google-oauth20, merge) | 🟢 COMPLETED |
+
+## Batch 7: Settings & Catalog
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-060 | Extended settings (currency, weekStartDay, units) | 🟢 COMPLETED |
+| TASK-061 | Habit catalog seed (20+ popular items, quick-add) | 🟢 COMPLETED |
+
+## Batch 8: Telegram Integration
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-070 | Telegram Bot (/link, /start, /stats) | 🟢 COMPLETED |
+| TASK-071 | Push notifications (Web Push + Telegram) | 🟢 COMPLETED |
+| TASK-072 | Telegram Mini App | 🟢 COMPLETED |
+
+## Batch 9: Analytics & Reports
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-080 | Simple analytics (pattern analysis, SQL) | 🟢 COMPLETED |
+| TASK-081 | Annual/Monthly report (Wrapped style) | 🟢 COMPLETED |
+| TASK-082 | Positive habits (habitType: ACHIEVEMENT) | 🟢 COMPLETED |
+
+## Batch 10: Production Readiness
+
+| ID | Title | Status |
+|---|---|---|
+| OPS-020 | Security hardening (rate limiting, CORS, Helmet) | 🟢 COMPLETED |
+| OPS-021 | DB optimization (indexes, query analysis) | 🟢 COMPLETED |
+| OPS-022 | E2E tests expansion (habits, challenges, gamification) | 🟢 COMPLETED |
+| OPS-023 | Error boundaries + loading states (frontend) | 🟢 COMPLETED |
+| OPS-024 | Deployment (domain, VPS, CI/CD pipeline) | 🟢 COMPLETED |
+
+## Batch 11: Code Refactoring
+
+| ID | Title | Status |
+|---|---|---|
+| OPS-030 | Code style unification (ESLint + Prettier config) | 🟢 COMPLETED |
+| OPS-031 | Architecture patterns audit (services, DTOs, hooks) | 🟢 COMPLETED |
+| OPS-032 | Dead code cleanup + unused imports | 🟢 COMPLETED |
+| OPS-033 | CSS/Tailwind cleanup + design system tokens | 🟢 COMPLETED |
+| OPS-034 | API response format standardization | 🟢 COMPLETED |
+| OPS-035 | Shared types audit (contracts ↔ api ↔ web sync) | 🟢 COMPLETED |
+
+---
+
+## Post-Batch Work
+
+| ID | Title | Status |
+|---|---|---|
+| TASK-500 | Soft delete (deletedAt) on Habit, HabitLog, User entities | 🟢 COMPLETED |
+| TASK-501 | Domain exception files (common/exceptions/) | 🟢 COMPLETED |
+| TASK-502 | 3-layer CQRS-lite architecture refactor (all 13 modules) | 🟢 COMPLETED |
+| TASK-503 | LiveHero neon ring inline styles fix (DEC-016) | 🟢 COMPLETED |
+| TASK-504 | Timezone auto-sync Europe/Madrid (DEC-017) | 🟢 COMPLETED |
+| TASK-505 | Swagger decorators moved to swagger/ folders | 🟢 COMPLETED |
+| TASK-506 | Remove `as` assertions, typed params throughout backend | 🟢 COMPLETED |
+| TASK-507 | Mandatory env validation on API startup | 🟢 COMPLETED |
+| TASK-508 | OfflineBanner restored via ClientProviders | 🟢 COMPLETED |
+| TASK-509 | Gmail SMTP + Google OAuth + Telegram bot configured | 🟢 COMPLETED |

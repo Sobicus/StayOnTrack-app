@@ -1,0 +1,95 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: stayontrack_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-stayontrack}
+      POSTGRES_USER: ${DB_USER:-stayontrack}
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-stayontrack}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: stayontrack_api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4800
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-stayontrack}
+      DB_PASS: ${DB_PASS:?DB_PASS is required}
+      DB_NAME: ${DB_NAME:-stayontrack}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4801}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4800/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: stayontrack_web
+    restart: always
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4800}
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: stayontrack_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_data:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - web
+    networks:
+      - internal
+
+  # Certbot for SSL (run manually: docker compose run certbot)
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    profiles:
+      - ssl
+
+volumes:
+  pgdata:
+    driver: local
+  certbot_data:
+  certbot_www:
+
+networks:
+  internal:
+    driver: bridge

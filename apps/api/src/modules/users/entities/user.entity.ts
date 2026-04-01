@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -31,6 +32,22 @@ export class User {
   @Column({ type: 'varchar', length: 500, nullable: true })
   avatarUrl!: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  googleId!: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  telegramChatId!: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  telegramLinked!: boolean;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  @Exclude()
+  telegramLinkCode!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  telegramLinkCodeExpiresAt!: Date | null;
+
   @Column({ type: 'float', nullable: true })
   weightKg!: number | null;
 
@@ -47,11 +64,93 @@ export class User {
   })
   visibility!: ProfileVisibility;
 
+  /** Whether to show streak on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showStreak!: boolean;
+
+  /** Whether to show stats (calories/money) on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showStats!: boolean;
+
+  /** Whether to show achievements on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showAchievements!: boolean;
+
+  /** Whether to show active challenges on public profile. */
+  @Column({ type: 'boolean', default: false })
+  showActiveChallenges!: boolean;
+
   @Column({ type: 'varchar', length: 5, default: 'en' })
   locale!: string;
 
   @Column({ type: 'int', default: 1 })
   streakShieldsRemaining!: number;
+
+  /** Hour when "today" ends (0-23). Default 0 = midnight. E.g., 21 means day ends at 9 PM. */
+  @Column({ type: 'int', default: 0 })
+  dayEndHour!: number;
+
+  /** IANA timezone identifier (e.g. 'Europe/Warsaw', 'America/New_York'). Default 'UTC'. */
+  @Column({ type: 'varchar', length: 50, default: 'UTC' })
+  timezone!: string;
+
+  /** Currency symbol for money display. Default EUR (€). */
+  @Column({ type: 'varchar', length: 5, default: 'EUR' })
+  currency!: string;
+
+  /** Monthly savings goal amount in user's currency. Null means no goal set. */
+  @Column({ type: 'float', nullable: true })
+  monthlySavingsGoal!: number | null;
+
+  /** Day the week starts on: 'monday' or 'sunday'. Default 'monday'. */
+  @Column({ type: 'varchar', length: 10, default: 'monday' })
+  weekStartDay!: string;
+
+  /** Unit system: 'metric' or 'imperial'. Default 'metric'. */
+  @Column({ type: 'varchar', length: 10, default: 'metric' })
+  unitSystem!: string;
+
+  /** Whether the user has completed the onboarding wizard. */
+  @Column({ type: 'boolean', default: false })
+  onboardingCompleted!: boolean;
+
+  /** Whether the user wants daily reminder emails. */
+  @Column({ type: 'boolean', default: true })
+  emailReminders!: boolean;
+
+  /** Hour (0-23) when daily reminder should be sent. Default 20 (8 PM). */
+  @Column({ type: 'int', default: 20 })
+  reminderHour!: number;
+
+  /** Hashed refresh token (null when logged out). */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  refreshTokenHash!: string | null;
+
+  /** Hashed password reset token + expiry. */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  passwordResetTokenHash!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  passwordResetExpires!: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  emailVerified!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Exclude()
+  emailVerificationCode!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerificationSentAt!: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  totalXp!: number;
+
+  /** Push notification subscription (Web Push API). */
+  @Column({ type: 'jsonb', nullable: true })
+  pushSubscription!: any | null;
 
   @Column({ type: 'date', nullable: true })
   lastShieldReplenishDate!: Date | null;
@@ -61,4 +160,7 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date;
 }

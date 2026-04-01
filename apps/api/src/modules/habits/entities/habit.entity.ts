@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -30,6 +32,7 @@ export enum HabitFrequencyType {
 }
 
 @Entity('habits')
+@Index(['userId'])
 export class Habit {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -61,6 +64,9 @@ export class Habit {
   })
   habitType!: HabitType;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  targetUnit!: string | null;
+
   @Column({ type: 'float', default: 0 })
   caloriesPerOccurrence!: number;
 
@@ -88,4 +94,7 @@ export class Habit {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date;
 }

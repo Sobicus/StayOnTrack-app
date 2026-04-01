@@ -8,7 +8,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#4F7CF7',
+        primary: 'var(--accent-color)',
         success: '#2ECC71',
         warning: '#F39C12',
         danger: '#E74C3C',

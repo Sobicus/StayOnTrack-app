@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api } from '@/lib/api';
+import { api, LevelInfo, Quest } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { OnboardingScreen, useOnboarding } from '@/components/onboarding';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { LiveHero } from '@/components/dashboard/live-hero';
+import { AnimatedCounter } from '@/components/dashboard/animated-counter';
+import { XpProgressBar } from '@/components/gamification/xp-progress-bar';
+import { StreakRecovery } from '@/components/gamification/streak-recovery';
+import { DailyQuests } from '@/components/gamification/daily-quests';
 import {
   Flame,
   DollarSign,
@@ -16,6 +22,10 @@ import {
   AlertCircle,
   XCircle,
 } from 'lucide-react';
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€', USD: '$', GBP: '£', PLN: 'zł', UAH: '₴', RUB: '₽',
+};
 
 interface Stats {
   totalSavedCalories: number;
@@ -30,6 +40,7 @@ interface Streak {
   bestStreak: number;
   streakShieldsRemaining: number;
   isShieldActive: boolean;
+  lastCheckinDate: string | null;
 }
 
 interface TodayLog {
@@ -42,7 +53,7 @@ interface TodayLog {
 }
 
 export default function DashboardPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const t = useTranslations('dashboard');
   const { showOnboarding, completeOnboarding } = useOnboarding();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -50,6 +61,8 @@ export default function DashboardPage() {
   const [todayLogs, setTodayLogs] = useState<TodayLog[]>([]);
   const [equivalents, setEquivalents] = useState<any[]>([]);
   const [habits, setHabits] = useState<Record<string, { title: string; emoji: string }>>({});
+  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
+  const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,17 +72,21 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [s, st, logs, eq, h] = await Promise.all([
+      const [s, st, logs, eq, h, lvl, q] = await Promise.all([
         api.stats.get(token!),
         api.streaks.get(token!),
         api.habitLogs.today(token!).catch(() => []),
         api.stats.equivalents(token!).catch(() => []),
         api.habits.list(token!).catch(() => []),
+        api.gamification.getLevel(token!).catch(() => null),
+        api.gamification.getQuests(token!).catch(() => []),
       ]);
       setStats(s);
       setStreak(st);
       setTodayLogs(logs);
       setEquivalents(eq.slice(0, 4));
+      setLevelInfo(lvl);
+      setQuests(q);
       const map: Record<string, { title: string; emoji: string }> = {};
       for (const habit of h) {
         map[habit.id] = { title: habit.title, emoji: habit.emoji };
@@ -97,6 +114,28 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
+      {/* Email Verification Banner */}
+      {user && !user.emailVerified && (
+        <Link href="/auth/verify-email" className="block mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm text-center hover:bg-amber-500/20 transition-all">
+          {t('verifyEmailBanner')} &rarr;
+        </Link>
+      )}
+
+      {/* Live Progress Hero */}
+      <LiveHero />
+
+      {/* XP Progress Bar */}
+      {levelInfo && (
+        <div className="mb-6">
+          <XpProgressBar
+            level={levelInfo.level}
+            currentXp={levelInfo.currentXp}
+            nextLevelXp={levelInfo.nextLevelXp}
+            progress={levelInfo.progress}
+          />
+        </div>
+      )}
+
       {/* Streak Banner */}
       {streak && (
         <div className="bg-gradient-to-r from-streak/20 to-primary/20 rounded-2xl p-4 mb-6 border border-streak/20">
@@ -126,36 +165,90 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Streak Recovery Banner */}
+      {streak && streak.currentStreak === 0 && streak.lastCheckinDate && levelInfo && (
+        <StreakRecovery
+          currentXp={levelInfo.currentXp}
+          onRecovered={loadData}
+        />
+      )}
+
+      {/* Daily Quests */}
+      <DailyQuests quests={quests} onQuestsUpdated={setQuests} />
+
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard
             icon={<Zap className="w-5 h-5 text-warning" />}
             label={t('caloriesSaved')}
-            value={Math.round(stats.totalSavedCalories).toLocaleString()}
+            value={
+              <AnimatedCounter value={Math.round(stats.totalSavedCalories)} />
+            }
             unit="kcal"
             color="warning"
           />
           <StatCard
             icon={<DollarSign className="w-5 h-5 text-success" />}
             label={t('moneySaved')}
-            value={`€${stats.totalSavedMoney.toFixed(2)}`}
+            value={
+              <AnimatedCounter
+                value={stats.totalSavedMoney}
+                decimals={2}
+                prefix={CURRENCY_SYMBOLS[user?.currency || 'EUR'] || '€'}
+              />
+            }
             color="success"
           />
           <StatCard
             icon={<Scale className="w-5 h-5 text-primary" />}
             label={t('weightAvoided')}
-            value={stats.potentialWeightAvoidedKg.toFixed(2)}
+            value={
+              <AnimatedCounter
+                value={stats.potentialWeightAvoidedKg}
+                decimals={2}
+              />
+            }
             unit="kg"
             color="primary"
           />
           <StatCard
             icon={<CheckCircle2 className="w-5 h-5 text-streak" />}
             label={t('checkIns')}
-            value={stats.totalCheckIns.toString()}
+            value={<AnimatedCounter value={stats.totalCheckIns} />}
             unit="total"
             color="streak"
           />
+        </div>
+      )}
+
+      {/* Savings Goal Progress Bar */}
+      {stats && user?.monthlySavingsGoal && user.monthlySavingsGoal > 0 && (
+        <div className="mb-6 p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-success" />
+              <span className="text-sm font-semibold text-[var(--foreground)]">
+                {t('savingsGoalProgress')}
+              </span>
+            </div>
+            <span className="text-xs text-[var(--muted)]">
+              {CURRENCY_SYMBOLS[user.currency || 'EUR'] || '€'}
+              {stats.totalSavedMoney.toFixed(2)} / {CURRENCY_SYMBOLS[user.currency || 'EUR'] || '€'}
+              {user.monthlySavingsGoal.toFixed(2)} {t('ofGoal')}
+            </span>
+          </div>
+          <div className="w-full h-3 rounded-full bg-[var(--border)] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-success transition-all duration-500"
+              style={{
+                width: `${Math.min(100, (stats.totalSavedMoney / user.monthlySavingsGoal) * 100)}%`,
+              }}
+            />
+          </div>
+          <p className="text-xs text-[var(--muted)] mt-1 text-right">
+            {Math.min(100, Math.round((stats.totalSavedMoney / user.monthlySavingsGoal) * 100))}%
+          </p>
         </div>
       )}
 
@@ -235,7 +328,7 @@ function StatCard({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: React.ReactNode;
   unit?: string;
   color: string;
 }) {

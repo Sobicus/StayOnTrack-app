@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api } from '@/lib/api';
+import { api, ApiError, HabitLog } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
+import { HabitCatalog, CatalogItem } from '@/components/habits/habit-catalog';
+import { HabitSparkline } from '@/components/habits/habit-sparkline';
+import { addPendingCheckin, hasPendingCheckins } from '@/lib/offline-queue';
+import { syncPendingCheckins } from '@/lib/sync-manager';
 import {
   Plus,
   Pencil,
@@ -15,6 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Lock,
 } from 'lucide-react';
 
 interface Habit {
@@ -22,12 +27,23 @@ interface Habit {
   title: string;
   emoji: string;
   category: string;
+  habitType: 'AVOIDANCE' | 'ACHIEVEMENT';
+  targetUnit: string | null;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;
   occurrencesPerWeek: number | null;
   isActive: boolean;
 }
+
+interface FrequencyStatus {
+  habitId: string;
+  used: number;
+  limit: number | null;
+  remaining: number | null;
+}
+
+type HabitTab = 'AVOIDANCE' | 'ACHIEVEMENT';
 
 const CATEGORIES = [
   'SWEETS',
@@ -38,7 +54,10 @@ const CATEGORIES = [
   'CUSTOM',
 ];
 
-const EMOJI_OPTIONS = ['🍔', '🍕', '🍟', '🍩', '🍫', '🥤', '🍺', '🍷', '🚬', '☕', '🛒', '📱', '🎮', '💊'];
+const AVOIDANCE_EMOJI_OPTIONS = ['🍔', '🍕', '🍟', '🍩', '🍫', '🥤', '🍺', '🍷', '🚬', '☕', '🛒', '📱', '🎮', '💊'];
+const ACHIEVEMENT_EMOJI_OPTIONS = ['🏃', '🧘', '💧', '📚', '🚶', '✅', '💪', '🏊', '🚴', '🧹', '🎯', '🌅', '🥗', '💤'];
+
+const TARGET_UNITS = ['minutes', 'glasses', 'km', 'pages', 'times'];
 
 export default function HabitsPage() {
   const { token } = useAuth();
@@ -51,6 +70,9 @@ export default function HabitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [todayLogs, setTodayLogs] = useState<any[]>([]);
+  const [rangeLogs, setRangeLogs] = useState<HabitLog[]>([]);
+  const [freqStatus, setFreqStatus] = useState<FrequencyStatus[]>([]);
+  const [activeTab, setActiveTab] = useState<HabitTab>('AVOIDANCE');
 
   // Form state
   const [title, setTitle] = useState('');
@@ -62,32 +84,57 @@ export default function HabitsPage() {
   const [occurrencesPerWeek, setOccurrencesPerWeek] = useState('');
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [formHabitType, setFormHabitType] = useState<HabitTab>('AVOIDANCE');
+  const [targetUnit, setTargetUnit] = useState('minutes');
 
   useEffect(() => {
-    if (token) loadData();
+    if (token) {
+      loadData();
+      // Sync any pending offline check-ins when online
+      if (typeof window !== 'undefined' && navigator.onLine && hasPendingCheckins()) {
+        syncPendingCheckins(token).then(() => loadData());
+      }
+    }
   }, [token]);
 
   const loadData = async () => {
     try {
-      const [h, logs] = await Promise.all([
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      const startDate = sevenDaysAgo.toISOString().split('T')[0];
+      const endDate = today.toISOString().split('T')[0];
+
+      const [h, logs, freq, range] = await Promise.all([
         api.habits.list(token!),
         api.habitLogs.today(token!).catch(() => []),
+        api.habitLogs.frequencyStatus(token!).catch(() => []),
+        api.habitLogs.range(token!, startDate, endDate).catch(() => []),
       ]);
       setHabits(h);
       setTodayLogs(logs);
+      setFreqStatus(freq);
+      setRangeLogs(range);
     } catch {
     } finally {
       setLoading(false);
     }
   };
 
+  const filteredHabits = useMemo(
+    () => habits.filter((h) => (h.habitType || 'AVOIDANCE') === activeTab),
+    [habits, activeTab],
+  );
+
   const openCreate = () => {
     setEditingHabit(null);
     setTitle('');
-    setEmoji('🍔');
+    setFormHabitType(activeTab);
+    setEmoji(activeTab === 'ACHIEVEMENT' ? '🏃' : '🍔');
     setCategory('CUSTOM');
     setCalories('');
     setCost('');
+    setTargetUnit('minutes');
     setFrequencyType('DAILY');
     setOccurrencesPerWeek('');
     setFormError('');
@@ -97,10 +144,12 @@ export default function HabitsPage() {
   const openEdit = (h: Habit) => {
     setEditingHabit(h);
     setTitle(h.title);
+    setFormHabitType((h.habitType || 'AVOIDANCE') as HabitTab);
     setEmoji(h.emoji || '🍔');
     setCategory(h.category);
     setCalories(h.caloriesPerOccurrence.toString());
     setCost(h.pricePerOccurrence.toString());
+    setTargetUnit(h.targetUnit || 'minutes');
     setFrequencyType(h.frequencyType || 'DAILY');
     setOccurrencesPerWeek(h.occurrencesPerWeek?.toString() || '');
     setFormError('');
@@ -115,14 +164,24 @@ export default function HabitsPage() {
     setSaving(true);
     setFormError('');
 
+    const isAchievement = formHabitType === 'ACHIEVEMENT';
+
     const data: any = {
       title: title.trim(),
       emoji,
       category,
-      caloriesPerOccurrence: parseFloat(calories) || 0,
-      pricePerOccurrence: parseFloat(cost) || 0,
+      habitType: formHabitType,
+      caloriesPerOccurrence: isAchievement ? 0 : (parseFloat(calories) || 0),
+      pricePerOccurrence: isAchievement ? 0 : (parseFloat(cost) || 0),
       frequencyType,
     };
+
+    if (isAchievement) {
+      data.targetUnit = targetUnit;
+    } else {
+      data.targetUnit = null;
+    }
+
     if (frequencyType === 'CUSTOM' && occurrencesPerWeek) {
       data.occurrencesPerWeek = parseInt(occurrencesPerWeek, 10);
     } else {
@@ -152,33 +211,105 @@ export default function HabitsPage() {
     } catch {}
   };
 
-  const handleCheckin = async (habitId: string, status: string, portionRatio: number = 0) => {
+  const handleCheckin = async (habitId: string, status: string, portionRatio: number = 0, completedAmount?: number) => {
     try {
-      await api.habitLogs.checkin(token!, {
+      const checkinData: any = {
         habitId,
         status,
         portionRatio,
-        date: new Date().toISOString().split('T')[0],
-      });
-      if (status === 'AVOIDED') {
+      };
+      if (completedAmount !== undefined) {
+        checkinData.completedAmount = completedAmount;
+      }
+      await api.habitLogs.checkin(token!, checkinData);
+
+      const habit = habits.find((h) => h.id === habitId);
+      const isAchievement = habit?.habitType === 'ACHIEVEMENT';
+
+      if (isAchievement || status === 'AVOIDED') {
         setCelebratingId(habitId);
-        const habit = habits.find((h) => h.id === habitId);
-        showToast(
-          `${habit?.emoji || '✅'} ${t('avoidedBadge')} ${habit?.caloriesPerOccurrence ? t('kcalSaved', { count: habit.caloriesPerOccurrence }) : ''}`,
-          'success',
-        );
+        const toastMsg = isAchievement
+          ? `${habit?.emoji || '✅'} ${t('didIt')}`
+          : `${habit?.emoji || '✅'} ${t('avoidedBadge')} ${habit?.caloriesPerOccurrence ? t('kcalSaved', { count: habit.caloriesPerOccurrence }) : ''}`;
+        showToast(toastMsg, 'success');
         setTimeout(() => setCelebratingId(null), 500);
       } else if (status === 'PARTIAL') {
         showToast(t('partial'), 'warning');
       }
       await loadData();
     } catch (err: any) {
-      showToast(t('failedToSave'), 'error');
+      // Network error (not an API error) — save offline
+      if (!(err instanceof ApiError)) {
+        addPendingCheckin({ habitId, portionRatio, timestamp: Date.now() });
+        showToast(tc('savedOffline'), 'warning');
+        return;
+      }
+      const rawMsg = err?.data?.message || t('failedToSave');
+      const msg = Array.isArray(rawMsg) ? rawMsg.join(', ') : rawMsg;
+      showToast(msg, 'error');
     }
   };
 
   const getLogForHabit = (habitId: string) =>
     todayLogs.find((l: any) => l.habitId === habitId);
+
+  const getFreqForHabit = (habitId: string): FrequencyStatus | undefined =>
+    freqStatus.find((f) => f.habitId === habitId);
+
+  /** Check if a habit has reached its weekly limit and has no log for today */
+  const isWeeklyLimitReached = (habitId: string): boolean => {
+    const freq = getFreqForHabit(habitId);
+    if (!freq || freq.limit === null) return false;
+    return freq.remaining === 0;
+  };
+
+  /** Build sparkline data (last 7 days) grouped by habitId */
+  const sparklineByHabit = useMemo(() => {
+    const today = new Date();
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+
+    const logsByHabitDate = new Map<string, Map<string, string>>();
+    for (const log of rangeLogs) {
+      if (!logsByHabitDate.has(log.habitId)) {
+        logsByHabitDate.set(log.habitId, new Map());
+      }
+      logsByHabitDate.get(log.habitId)!.set(log.date, log.status);
+    }
+
+    const result: Record<string, { date: string; status: string | null }[]> = {};
+    for (const habit of habits) {
+      const habitLogs = logsByHabitDate.get(habit.id);
+      result[habit.id] = days.map((date) => ({
+        date,
+        status: habitLogs?.get(date) ?? null,
+      }));
+    }
+    return result;
+  }, [rangeLogs, habits]);
+
+  const handleQuickAdd = async (item: CatalogItem) => {
+    try {
+      await api.habits.create(token!, {
+        title: item.titleKey,
+        emoji: item.emoji,
+        category: item.category,
+        caloriesPerOccurrence: item.calories,
+        pricePerOccurrence: item.price,
+        frequencyType: 'DAILY',
+      });
+      showToast(`${item.emoji} ${t('catalog.addedToast')}`, 'success');
+      await loadData();
+    } catch {
+      showToast(t('failedToSave'), 'error');
+    }
+  };
+
+  const emojiOptions = formHabitType === 'ACHIEVEMENT' ? ACHIEVEMENT_EMOJI_OPTIONS : AVOIDANCE_EMOJI_OPTIONS;
 
   if (loading) {
     return (
@@ -203,18 +334,57 @@ export default function HabitsPage() {
         </button>
       </div>
 
-      {/* Habit list with check-in */}
-      {habits.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+      {/* Tabs: Avoiding / Doing */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setActiveTab('AVOIDANCE')}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeTab === 'AVOIDANCE'
+              ? 'bg-primary text-white'
+              : 'bg-[var(--card)] text-[var(--muted)] border border-[var(--border)] hover:text-[var(--foreground)]'
+          }`}
+        >
+          {t('avoiding')}
+        </button>
+        <button
+          onClick={() => setActiveTab('ACHIEVEMENT')}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeTab === 'ACHIEVEMENT'
+              ? 'bg-primary text-white'
+              : 'bg-[var(--card)] text-[var(--muted)] border border-[var(--border)] hover:text-[var(--foreground)]'
+          }`}
+        >
+          {t('doing')}
+        </button>
+      </div>
+
+      {/* Quick Add Catalog — show only on avoidance tab when no habits */}
+      {activeTab === 'AVOIDANCE' && habits.length === 0 && (
+        <div className="text-center py-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-6">
           <p className="text-[var(--muted)] mb-2">{t('noHabitsYet')}</p>
-          <p className="text-sm text-[var(--muted)]">
-            {t('noHabitsHint')}
+          <p className="text-sm text-[var(--muted)]">{t('noHabitsHint')}</p>
+        </div>
+      )}
+
+      {activeTab === 'AVOIDANCE' && <HabitCatalog onQuickAdd={handleQuickAdd} />}
+
+      {/* Empty state for current tab */}
+      {filteredHabits.length === 0 && habits.length > 0 && (
+        <div className="text-center py-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-6">
+          <p className="text-[var(--muted)] mb-2">
+            {activeTab === 'ACHIEVEMENT' ? t('noAchievementHabitsYet') : t('noHabitsYet')}
           </p>
         </div>
-      ) : (
+      )}
+
+      {/* Habit list with check-in */}
+      {filteredHabits.length > 0 && (
         <div className="space-y-3">
-          {habits.map((habit, index) => {
+          {filteredHabits.map((habit) => {
             const log = getLogForHabit(habit.id);
+            const freq = getFreqForHabit(habit.id);
+            const limitReached = !log && isWeeklyLimitReached(habit.id);
+            const isAchievement = habit.habitType === 'ACHIEVEMENT';
             return (
               <div
                 key={habit.id}
@@ -228,15 +398,31 @@ export default function HabitsPage() {
                     <div>
                       <p className="font-medium text-[var(--foreground)]">{habit.title}</p>
                       <p className="text-xs text-[var(--muted)]">
-                        {habit.caloriesPerOccurrence} {tc('kcal')} · €{habit.pricePerOccurrence}
+                        {isAchievement ? (
+                          <>
+                            {habit.targetUnit && t(`units.${habit.targetUnit}`, { fallback: habit.targetUnit })}
+                          </>
+                        ) : (
+                          <>
+                            {habit.caloriesPerOccurrence} {tc('kcal')} · €{habit.pricePerOccurrence}
+                          </>
+                        )}
                         {habit.frequencyType && habit.frequencyType !== 'DAILY' && (
                           <span className="ml-1.5 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium">
                             {habit.frequencyType === 'WEEKLY'
                               ? t('frequencyWeekly')
                               : t('frequencyCustom', { count: habit.occurrencesPerWeek || 0 })}
+                            {freq && freq.limit !== null && (
+                              <span className="ml-1">
+                                ({freq.used}/{freq.limit})
+                              </span>
+                            )}
                           </span>
                         )}
                       </p>
+                      {sparklineByHabit[habit.id] && (
+                        <HabitSparkline days={sparklineByHabit[habit.id]} />
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -258,13 +444,31 @@ export default function HabitsPage() {
                 {/* Check-in buttons */}
                 {log ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--background)]">
-                    <StatusBadge status={log.status} />
-                    {log.savedCalories > 0 && (
+                    <StatusBadge status={log.status} isAchievement={isAchievement} />
+                    {!isAchievement && log.savedCalories > 0 && (
                       <span className="text-xs text-success ml-auto">
                         {t('kcalSaved', { count: Math.round(log.savedCalories) })}
                       </span>
                     )}
+                    {isAchievement && log.completedAmount != null && (
+                      <span className="text-xs text-success ml-auto">
+                        {log.completedAmount} {habit.targetUnit ? t(`units.${habit.targetUnit}`, { fallback: habit.targetUnit }) : ''}
+                      </span>
+                    )}
                   </div>
+                ) : limitReached ? (
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                    <Lock className="w-4 h-4 text-[var(--muted)]" />
+                    <span className="text-xs text-[var(--muted)] font-medium">
+                      {t('weeklyLimitReached')}
+                    </span>
+                  </div>
+                ) : isAchievement ? (
+                  <AchievementCheckinButton
+                    habitId={habit.id}
+                    targetUnit={habit.targetUnit}
+                    onCheckin={handleCheckin}
+                  />
                 ) : (
                   <div className="flex items-center gap-2">
                     <button
@@ -319,13 +523,50 @@ export default function HabitsPage() {
             )}
 
             <div className="space-y-4">
+              {/* Habit Type Toggle */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                  {t('habitTypeLabel')}
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormHabitType('AVOIDANCE');
+                      setEmoji('🍔');
+                    }}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      formHabitType === 'AVOIDANCE'
+                        ? 'bg-primary text-white'
+                        : 'bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]'
+                    }`}
+                  >
+                    {t('avoidanceHabit')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormHabitType('ACHIEVEMENT');
+                      setEmoji('🏃');
+                    }}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      formHabitType === 'ACHIEVEMENT'
+                        ? 'bg-primary text-white'
+                        : 'bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]'
+                    }`}
+                  >
+                    {t('achievementHabit')}
+                  </button>
+                </div>
+              </div>
+
               {/* Emoji picker */}
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
                   {t('emoji')}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {EMOJI_OPTIONS.map((e) => (
+                  {emojiOptions.map((e) => (
                     <button
                       key={e}
                       type="button"
@@ -351,59 +592,85 @@ export default function HabitsPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t('namePlaceholder')}
+                  placeholder={formHabitType === 'ACHIEVEMENT' ? t('achievementNamePlaceholder') : t('namePlaceholder')}
                   className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  {t('category')}
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {t(`categories.${c}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Category — only for avoidance */}
+              {formHabitType === 'AVOIDANCE' && (
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                    {t('category')}
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {t(`categories.${c}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-              {/* Calories */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  {t('caloriesPerOccurrence')}
-                </label>
-                <input
-                  type="number"
-                  value={calories}
-                  onChange={(e) => setCalories(e.target.value)}
-                  placeholder={t('caloriesPlaceholder')}
-                  min="0"
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+              {/* Calories — only for avoidance */}
+              {formHabitType === 'AVOIDANCE' && (
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                    {t('caloriesPerOccurrence')}
+                  </label>
+                  <input
+                    type="number"
+                    value={calories}
+                    onChange={(e) => setCalories(e.target.value)}
+                    placeholder={t('caloriesPlaceholder')}
+                    min="0"
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
 
-              {/* Cost */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  {t('costPerOccurrence')}
-                </label>
-                <input
-                  type="number"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                  placeholder={t('costPlaceholder')}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+              {/* Cost — only for avoidance */}
+              {formHabitType === 'AVOIDANCE' && (
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                    {t('costPerOccurrence')}
+                  </label>
+                  <input
+                    type="number"
+                    value={cost}
+                    onChange={(e) => setCost(e.target.value)}
+                    placeholder={t('costPlaceholder')}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
+
+              {/* Target Unit — only for achievement */}
+              {formHabitType === 'ACHIEVEMENT' && (
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
+                    {t('targetUnit')}
+                  </label>
+                  <select
+                    value={targetUnit}
+                    onChange={(e) => setTargetUnit(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {TARGET_UNITS.map((u) => (
+                      <option key={u} value={u}>
+                        {t(`units.${u}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Frequency */}
               <div>
@@ -440,6 +707,11 @@ export default function HabitsPage() {
                       max="7"
                       className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
+                    {occurrencesPerWeek && Number(occurrencesPerWeek) > 0 && (
+                      <p className="mt-1.5 text-xs text-primary font-medium px-1">
+                        = {t('frequencyCustom', { count: occurrencesPerWeek })}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -466,8 +738,101 @@ export default function HabitsPage() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+/** Check-in button for achievement habits with optional amount input */
+function AchievementCheckinButton({
+  habitId,
+  targetUnit,
+  onCheckin,
+}: {
+  habitId: string;
+  targetUnit: string | null;
+  onCheckin: (habitId: string, status: string, portionRatio: number, completedAmount?: number) => void;
+}) {
   const t = useTranslations('habits');
+  const [showAmountInput, setShowAmountInput] = useState(false);
+  const [amount, setAmount] = useState('');
+
+  const handleDidIt = () => {
+    if (showAmountInput) {
+      const parsedAmount = parseFloat(amount) || 0;
+      onCheckin(habitId, 'AVOIDED', 0, parsedAmount > 0 ? parsedAmount : undefined);
+      setShowAmountInput(false);
+      setAmount('');
+    } else {
+      setShowAmountInput(true);
+    }
+  };
+
+  const handleQuickCheckin = () => {
+    onCheckin(habitId, 'AVOIDED', 0);
+  };
+
+  if (showAmountInput) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder={`${t('completedAmount')} (${targetUnit ? t(`units.${targetUnit}`, { fallback: targetUnit }) : ''})`}
+          min="0"
+          step="any"
+          className="flex-1 px-3 py-2.5 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          autoFocus
+        />
+        <button
+          onClick={handleDidIt}
+          className="px-4 py-2.5 rounded-xl bg-success/10 text-success text-sm font-medium hover:bg-success/20 transition-all"
+        >
+          <CheckCircle2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => {
+            setShowAmountInput(false);
+            setAmount('');
+          }}
+          className="px-3 py-2.5 rounded-xl bg-[var(--background)] text-[var(--muted)] text-sm hover:text-[var(--foreground)] transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleQuickCheckin}
+        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-success/10 text-success text-sm font-medium hover:bg-success/20 transition-all"
+      >
+        <CheckCircle2 className="w-4 h-4" />
+        {t('didIt')}
+      </button>
+      {targetUnit && (
+        <button
+          onClick={() => setShowAmountInput(true)}
+          className="px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-all"
+          title={t('completedAmount')}
+        >
+          +{t(`units.${targetUnit}`, { fallback: targetUnit })}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status, isAchievement }: { status: string; isAchievement?: boolean }) {
+  const t = useTranslations('habits');
+
+  if (isAchievement) {
+    return (
+      <div className="flex items-center gap-1.5 text-sm font-medium text-success">
+        <CheckCircle2 className="w-4 h-4" />
+        {t('didIt')}
+      </div>
+    );
+  }
+
   const config: Record<string, { icon: typeof CheckCircle2; textKey: string; color: string }> = {
     AVOIDED: { icon: CheckCircle2, textKey: 'avoidedBadge', color: 'text-success' },
     PARTIAL: { icon: AlertCircle, textKey: 'partial', color: 'text-warning' },

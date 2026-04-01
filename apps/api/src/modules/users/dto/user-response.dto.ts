@@ -11,6 +11,18 @@ export class UserResponseDto {
   visibility!: string;
   locale!: string;
   streakShieldsRemaining!: number;
+  dayEndHour!: number;
+  timezone!: string;
+  monthlySavingsGoal!: number | null;
+  currency!: string;
+  weekStartDay!: string;
+  unitSystem!: string;
+  emailReminders!: boolean;
+  reminderHour!: number;
+  emailVerified!: boolean;
+  totalXp!: number;
+  googleId!: string | null;
+  telegramLinked!: boolean;
   createdAt!: Date;
 
   static fromEntity(user: User): UserResponseDto {
@@ -25,6 +37,18 @@ export class UserResponseDto {
     dto.visibility = user.visibility;
     dto.locale = user.locale;
     dto.streakShieldsRemaining = user.streakShieldsRemaining;
+    dto.dayEndHour = user.dayEndHour;
+    dto.timezone = user.timezone;
+    dto.currency = user.currency;
+    dto.weekStartDay = user.weekStartDay;
+    dto.unitSystem = user.unitSystem;
+    dto.monthlySavingsGoal = user.monthlySavingsGoal;
+    dto.emailReminders = user.emailReminders;
+    dto.reminderHour = user.reminderHour;
+    dto.emailVerified = user.emailVerified;
+    dto.totalXp = user.totalXp;
+    dto.googleId = user.googleId ?? null;
+    dto.telegramLinked = user.telegramLinked ?? false;
     dto.createdAt = user.createdAt;
     return dto;
   }

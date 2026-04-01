@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/contexts/auth-context';
+import { api } from '@/lib/api';
 import { Flame, ListChecks, CheckCircle2, BarChart3, ChevronRight } from 'lucide-react';
 
 const ONBOARDING_KEY = 'stayontrack_onboarding_done';
@@ -11,14 +13,27 @@ const stepColors = ['text-primary', 'text-warning', 'text-success', 'text-streak
 const stepBgColors = ['bg-primary/10', 'bg-warning/10', 'bg-success/10', 'bg-streak/10'];
 
 export function useOnboarding() {
+  const { user, token, refreshUser } = useAuth();
+
   const [done, setDone] = useState(() => {
+    // Check server-side flag first, then localStorage fallback
+    if (user?.onboardingCompleted) return true;
     if (typeof window === 'undefined') return true;
     return localStorage.getItem(ONBOARDING_KEY) === 'true';
   });
 
-  const complete = () => {
+  const complete = async () => {
     localStorage.setItem(ONBOARDING_KEY, 'true');
     setDone(true);
+    // Persist to server
+    if (token) {
+      try {
+        await api.users.updateProfile(token, { onboardingCompleted: true });
+        await refreshUser();
+      } catch {
+        // localStorage fallback is fine
+      }
+    }
   };
 
   return { showOnboarding: !done, completeOnboarding: complete };
