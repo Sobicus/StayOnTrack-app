@@ -19,9 +19,9 @@ export class StreaksQueryRepository {
   async getDistinctDatesDesc(userId: string): Promise<Array<{ date: string }>> {
     return this.logRepository
       .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
+      .select("DISTINCT TO_CHAR(log.date, 'YYYY-MM-DD')", 'date')
       .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'DESC')
+      .orderBy("TO_CHAR(log.date, 'YYYY-MM-DD')", 'DESC')
       .getRawMany();
   }
 
@@ -31,9 +31,9 @@ export class StreaksQueryRepository {
   async getDistinctDatesAsc(userId: string): Promise<Array<{ date: string }>> {
     return this.logRepository
       .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
+      .select("DISTINCT TO_CHAR(log.date, 'YYYY-MM-DD')", 'date')
       .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'ASC')
+      .orderBy("TO_CHAR(log.date, 'YYYY-MM-DD')", 'ASC')
       .getRawMany();
   }
 
@@ -43,9 +43,9 @@ export class StreaksQueryRepository {
   async getMostRecentDate(userId: string): Promise<Array<{ date: string }>> {
     return this.logRepository
       .createQueryBuilder('log')
-      .select('DISTINCT log.date', 'date')
+      .select("DISTINCT TO_CHAR(log.date, 'YYYY-MM-DD')", 'date')
       .where('log.userId = :userId', { userId })
-      .orderBy('log.date', 'DESC')
+      .orderBy("TO_CHAR(log.date, 'YYYY-MM-DD')", 'DESC')
       .limit(1)
       .getRawMany();
   }

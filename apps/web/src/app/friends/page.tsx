@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/app-shell';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import {
   UserPlus,
   Users,
@@ -215,7 +216,7 @@ export default function FriendsPage() {
                   key={friend.id}
                   className="flex items-center justify-between p-3 rounded-xl bg-[var(--card)] border border-[var(--border)]"
                 >
-                  <div className="flex items-center gap-3">
+                  <Link href={`/u/${friend.username}`} className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-sm font-bold text-primary">
                         {friend.username.charAt(0).toUpperCase()}
@@ -227,7 +228,7 @@ export default function FriendsPage() {
                         {t('friendSince', { date: new Date(friend.since).toLocaleDateString() })}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                   <button
                     onClick={() => handleRemove(friend.friendId)}
                     className="p-2 rounded-lg text-[var(--muted)] hover:text-danger hover:bg-danger/10 transition-all"

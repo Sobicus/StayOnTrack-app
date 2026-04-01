@@ -16,6 +16,7 @@ export default function AchievementsPage() {
   const t = useTranslations('achievements');
   const [data, setData] = useState<AchievementsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('ALL');
 
   useEffect(() => {
@@ -23,7 +24,11 @@ export default function AchievementsPage() {
     api.achievements
       .get(token)
       .then(setData)
-      .catch(() => {})
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[Awards] Failed to load achievements:', msg);
+        setError(msg);
+      })
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -42,6 +47,9 @@ export default function AchievementsPage() {
       <AppShell>
         <div className="text-center py-12 text-[var(--muted)]">
           {t('couldNotLoad')}
+          {error && (
+            <p className="mt-2 text-xs text-red-400 font-mono break-all px-4">{error}</p>
+          )}
         </div>
       </AppShell>
     );

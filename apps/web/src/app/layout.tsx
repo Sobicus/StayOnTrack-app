@@ -63,6 +63,24 @@ export default async function RootLayout({
       <head>
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        {/* Restore color theme instantly to avoid flash of default colors */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{
+  var ct=localStorage.getItem('color-theme');
+  if(ct&&ct!=='system'){
+    document.documentElement.setAttribute('data-color-theme',ct);
+    var ak='color-theme-'+ct+'-accent';
+    var acc=localStorage.getItem(ak);
+    if(acc)document.documentElement.style.setProperty('--accent-color',acc);
+  } else {
+    var ac=localStorage.getItem('accent-theme');
+    var map={'default':'#3b82f6','emerald':'#10b981','amber':'#f59e0b','rose':'#f43f5e','violet':'#8b5cf6','crimson':'#dc2626'};
+    if(ac&&map[ac])document.documentElement.style.setProperty('--accent-color',map[ac]);
+  }
+}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         className={`${inter.className} antialiased bg-[var(--background)] text-[var(--foreground)] transition-colors`}

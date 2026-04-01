@@ -64,6 +64,22 @@ export class User {
   })
   visibility!: ProfileVisibility;
 
+  /** Whether to show streak on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showStreak!: boolean;
+
+  /** Whether to show stats (calories/money) on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showStats!: boolean;
+
+  /** Whether to show achievements on public profile. */
+  @Column({ type: 'boolean', default: true })
+  showAchievements!: boolean;
+
+  /** Whether to show active challenges on public profile. */
+  @Column({ type: 'boolean', default: false })
+  showActiveChallenges!: boolean;
+
   @Column({ type: 'varchar', length: 5, default: 'en' })
   locale!: string;
 

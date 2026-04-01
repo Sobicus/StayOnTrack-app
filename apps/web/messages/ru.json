@@ -19,7 +19,6 @@
     "synced": "Всё синхронизировано!",
     "savedOffline": "Сохранено офлайн"
   },
-
   "nav": {
     "home": "Главная",
     "habits": "Привычки",
@@ -30,13 +29,11 @@
     "settings": "Настройки",
     "signOut": "Выйти"
   },
-
   "landing": {
     "tagline": "Отслеживай то, от чего воздержался, а не то, что потребил",
     "getStarted": "Начать",
     "signIn": "Войти"
   },
-
   "auth": {
     "welcomeBack": "С возвращением",
     "signInSubtitle": "Войдите, чтобы продолжить прогресс",
@@ -50,7 +47,6 @@
     "invalidCredentials": "Неверный email или пароль",
     "genericError": "Что-то пошло не так. Попробуйте ещё раз.",
     "connectionError": "Ошибка подключения. Сервер запущен?",
-
     "createAccount": "Создать аккаунт",
     "registerSubtitle": "Начни отслеживать то, от чего воздерживаешься",
     "username": "Имя пользователя",
@@ -90,7 +86,6 @@
     "googleSignUp": "Зарегистрироваться через Google",
     "or": "или"
   },
-
   "dashboard": {
     "daysSingular": "{count} день",
     "daysPlural": "{count} дн.",
@@ -116,7 +111,6 @@
     "ofGoal": "от цели",
     "verifyEmailBanner": "Подтвердите ваш email адрес"
   },
-
   "habits": {
     "myHabits": "Мои привычки",
     "noHabitsYet": "Привычек пока нет",
@@ -145,11 +139,11 @@
     "frequencyTypes": {
       "DAILY": "Ежедневно",
       "WEEKLY": "Еженедельно",
-      "CUSTOM": "Своя"
+      "CUSTOM": "N раз/нед"
     },
     "frequencyWeekly": "раз/нед",
-    "frequencyCustom": "{count}x/нед",
-    "timesPerWeek": "Раз в неделю (1-7)",
+    "frequencyCustom": "{count} раз в неделю",
+    "timesPerWeek": "Сколько раз в неделю? (1–7)",
     "last7Days": "7д",
     "weeklyLimitReached": "Лимит на неделю достигнут — возвращайся на следующей!",
     "categories": {
@@ -192,7 +186,6 @@
       "noResults": "Шаблоны не найдены"
     }
   },
-
   "achievements": {
     "title": "Достижения",
     "couldNotLoad": "Не удалось загрузить достижения",
@@ -207,7 +200,6 @@
     },
     "ALL": "Все"
   },
-
   "stats": {
     "yourProgress": "Ваш прогресс",
     "caloriesSaved": "Калории",
@@ -243,7 +235,6 @@
     "equivalentBigMacs": "Биг Маков по калориям",
     "noReportData": "Нет данных за этот период"
   },
-
   "onboarding": {
     "step1Title": "Добро пожаловать в StayOnTrack!",
     "step1Text": "Отслеживай то, от чего воздержался. Каждая маленькая победа считается.",
@@ -257,7 +248,6 @@
     "skip": "Пропустить",
     "letsGo": "Поехали!"
   },
-
   "friends": {
     "title": "Друзья",
     "add": "Добавить",
@@ -283,7 +273,6 @@
     "rewardEarned": "+1 Streak Shield и 50 XP получены!",
     "inviteRewardBoth": "Вы оба получили Streak Shield!"
   },
-
   "challenges": {
     "title": "Челленджи",
     "newChallenge": "Новый челлендж",
@@ -366,7 +355,6 @@
     "joinFailed": "Не удалось присоединиться",
     "full": "Мест нет"
   },
-
   "quests": {
     "title": "Ежедневные квесты",
     "checkProgress": "Проверить прогресс",
@@ -374,14 +362,12 @@
     "xpReward": "+{xp} XP",
     "allDone": "Все квесты выполнены!"
   },
-
   "gamification": {
     "level": "Уровень",
     "xp": "Опыт",
     "xpProgress": "{current} / {next} XP",
     "levelUp": "Новый уровень!"
   },
-
   "streakRecovery": {
     "title": "Восстановить серию",
     "description": "Вы пропустили вчерашний день, но можете восстановить серию!",
@@ -395,7 +381,6 @@
     "dismiss": "Скрыть",
     "error": "Что-то пошло не так"
   },
-
   "settings": {
     "title": "Настройки",
     "weightKg": "Вес (кг)",
@@ -411,6 +396,12 @@
       "FRIENDS": "Друзья",
       "PUBLIC": "Открытый"
     },
+    "profileSections": "Показывать в профиле",
+    "profileSectionsDescription": "Что могут видеть посетители вашего профиля",
+    "showStreak": "Серия",
+    "showStats": "Статистика",
+    "showAchievements": "Достижения",
+    "showActiveChallenges": "Активные челенджи",
     "theme": "Тема",
     "themeDescription": "Светлая / Тёмная тема",
     "language": "Язык",
@@ -449,7 +440,7 @@
     "reminderTime": "Время напоминания",
     "reminderDescription": "Получать напоминание, если не отметились",
     "accentColor": "Цвет акцента",
-    "lockedTheme": "Откроется на уровне {level}",
+    "lockedTheme": "Открывается на {level} уровне",
     "themeApplied": "Тема применена!",
     "streakShields": "Щиты серии",
     "dangerZone": "Опасная зона",
@@ -467,6 +458,23 @@
     "telegramCodeInstructions": "Отправьте это @StayOnTrackBot в Telegram: /link",
     "telegramLinked": "Telegram привязан",
     "unlinkTelegram": "Отвязать Telegram",
-    "telegramCodeExpiry": "Код действует 10 минут"
+    "telegramCodeExpiry": "Код действует 10 минут",
+    "colorTheme": "Цветовая тема"
+  },
+  "profile": {
+    "privateProfile": "Приватный профиль",
+    "privateProfileDesc": "Этот пользователь закрыл свой профиль.",
+    "notFound": "Профиль не найден",
+    "notFoundDesc": "Такого пользователя не существует.",
+    "memberSince": "С нами с {date}",
+    "daysTracking": "{count} дней в трекинге",
+    "streak": "Серия",
+    "currentStreak": "Текущая",
+    "bestStreak": "Лучшая",
+    "stats": "Всего избежано",
+    "moneySaved": "сэкономлено",
+    "achievements": "Достижения",
+    "noAchievementsYet": "Пока нет достижений",
+    "activeChallenges": "{count} активных челенджа"
   }
 }

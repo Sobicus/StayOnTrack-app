@@ -707,6 +707,11 @@ export default function HabitsPage() {
                       max="7"
                       className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
+                    {occurrencesPerWeek && Number(occurrencesPerWeek) > 0 && (
+                      <p className="mt-1.5 text-xs text-primary font-medium px-1">
+                        = {t('frequencyCustom', { count: occurrencesPerWeek })}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

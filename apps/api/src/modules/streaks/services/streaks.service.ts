@@ -350,9 +350,15 @@ export class StreaksService {
     }
   }
 
-  private getDateOffset(date: string, days: number): string {
-    const d = new Date(date + 'T12:00:00Z'); // noon UTC to avoid DST edge cases
-    d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().split('T')[0];
+  private getDateOffset(date: string | Date, days: number): string {
+    // Normalise to YYYY-MM-DD string — pg driver may return a Date object
+    const dateStr =
+      date instanceof Date
+        ? date.toISOString().split('T')[0]
+        : String(date).split('T')[0]; // trim any accidental time part
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon UTC — DST-safe
+    dt.setUTCDate(dt.getUTCDate() + days);
+    return dt.toISOString().split('T')[0];
   }
 }

@@ -152,15 +152,14 @@ export function LiveHero() {
     });
     setDayProgress(progress);
 
-    const totalSec = Math.floor(elapsedMs / 1000);
-    const h = Math.floor(totalSec / 3600)
-      .toString()
-      .padStart(2, '0');
-    const m = Math.floor((totalSec % 3600) / 60)
-      .toString()
-      .padStart(2, '0');
+    // Timer = total time since the user's journey started
+    const journeyMs = Math.max(0, now.getTime() - new Date(stats.startedAt).getTime());
+    const totalSec = Math.floor(journeyMs / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const h = Math.floor((totalSec % 86400) / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
     const s = (totalSec % 60).toString().padStart(2, '0');
-    setElapsedLabel(`${h}:${m}:${s}`);
+    setElapsedLabel(days > 0 ? `${days}d ${h}:${m}:${s}` : `${h}:${m}:${s}`);
 
     frameRef.current = requestAnimationFrame(tick);
   }, [getDayBounds]);

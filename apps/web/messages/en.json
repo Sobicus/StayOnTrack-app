@@ -19,7 +19,6 @@
     "synced": "All synced!",
     "savedOffline": "Saved offline"
   },
-
   "nav": {
     "home": "Home",
     "habits": "Habits",
@@ -30,13 +29,11 @@
     "settings": "Settings",
     "signOut": "Sign out"
   },
-
   "landing": {
     "tagline": "Track what you avoided, not what you consumed",
     "getStarted": "Get Started",
     "signIn": "Sign In"
   },
-
   "auth": {
     "welcomeBack": "Welcome back",
     "signInSubtitle": "Sign in to continue your progress",
@@ -50,7 +47,6 @@
     "invalidCredentials": "Invalid email or password",
     "genericError": "Something went wrong. Please try again.",
     "connectionError": "Connection error. Is the server running?",
-
     "createAccount": "Create Account",
     "registerSubtitle": "Start tracking what you avoid",
     "username": "Username",
@@ -90,7 +86,6 @@
     "googleSignUp": "Sign up with Google",
     "or": "or"
   },
-
   "dashboard": {
     "daysSingular": "{count} day",
     "daysPlural": "{count} days",
@@ -116,7 +111,6 @@
     "ofGoal": "of goal",
     "verifyEmailBanner": "Please verify your email address"
   },
-
   "habits": {
     "myHabits": "My Habits",
     "noHabitsYet": "No habits yet",
@@ -145,11 +139,11 @@
     "frequencyTypes": {
       "DAILY": "Daily",
       "WEEKLY": "Weekly",
-      "CUSTOM": "Custom"
+      "CUSTOM": "N×/week"
     },
     "frequencyWeekly": "weekly",
-    "frequencyCustom": "{count}x/week",
-    "timesPerWeek": "Times per week (1-7)",
+    "frequencyCustom": "{count} times per week",
+    "timesPerWeek": "How many times per week? (1–7)",
     "last7Days": "7d",
     "weeklyLimitReached": "Weekly limit reached — check back next week!",
     "categories": {
@@ -192,7 +186,6 @@
       "noResults": "No templates found"
     }
   },
-
   "achievements": {
     "title": "Achievements",
     "couldNotLoad": "Could not load achievements",
@@ -207,7 +200,6 @@
     },
     "ALL": "All"
   },
-
   "stats": {
     "yourProgress": "Your Progress",
     "caloriesSaved": "Calories Saved",
@@ -243,7 +235,6 @@
     "equivalentBigMacs": "Big Macs worth of calories",
     "noReportData": "No data for this period yet"
   },
-
   "onboarding": {
     "step1Title": "Welcome to StayOnTrack!",
     "step1Text": "Track what you avoid, not what you consume. Every small victory counts.",
@@ -257,7 +248,6 @@
     "skip": "Skip",
     "letsGo": "Let's Go!"
   },
-
   "friends": {
     "title": "Friends",
     "add": "Add",
@@ -283,7 +273,6 @@
     "rewardEarned": "+1 Streak Shield & 50 XP earned!",
     "inviteRewardBoth": "You both received a Streak Shield!"
   },
-
   "challenges": {
     "title": "Challenges",
     "newChallenge": "New Challenge",
@@ -366,7 +355,6 @@
     "joinFailed": "Could not join challenge",
     "full": "Full"
   },
-
   "quests": {
     "title": "Daily Quests",
     "checkProgress": "Check Progress",
@@ -374,14 +362,12 @@
     "xpReward": "+{xp} XP",
     "allDone": "All quests complete!"
   },
-
   "gamification": {
     "level": "Level",
     "xp": "XP",
     "xpProgress": "{current} / {next} XP",
     "levelUp": "Level Up!"
   },
-
   "streakRecovery": {
     "title": "Recover Your Streak",
     "description": "You missed yesterday, but you can recover your streak!",
@@ -395,7 +381,6 @@
     "dismiss": "Dismiss",
     "error": "Something went wrong"
   },
-
   "settings": {
     "title": "Settings",
     "weightKg": "Weight (kg)",
@@ -411,6 +396,12 @@
       "FRIENDS": "Friends",
       "PUBLIC": "Public"
     },
+    "profileSections": "Show on Profile",
+    "profileSectionsDescription": "Choose what visitors can see on your public profile",
+    "showStreak": "Streak",
+    "showStats": "Stats",
+    "showAchievements": "Achievements",
+    "showActiveChallenges": "Active Challenges",
     "theme": "Theme",
     "themeDescription": "Light / Dark mode",
     "language": "Language",
@@ -467,6 +458,23 @@
     "telegramCodeInstructions": "Send this to @StayOnTrackBot in Telegram: /link",
     "telegramLinked": "Telegram Linked",
     "unlinkTelegram": "Unlink Telegram",
-    "telegramCodeExpiry": "Code expires in 10 minutes"
+    "telegramCodeExpiry": "Code expires in 10 minutes",
+    "colorTheme": "Color Theme"
+  },
+  "profile": {
+    "privateProfile": "Private Profile",
+    "privateProfileDesc": "This user has set their profile to private.",
+    "notFound": "Profile Not Found",
+    "notFoundDesc": "This user doesn't exist or has been deleted.",
+    "memberSince": "Member since {date}",
+    "daysTracking": "{count} days tracking",
+    "streak": "Streak",
+    "currentStreak": "Current",
+    "bestStreak": "Best",
+    "stats": "Total Avoided",
+    "moneySaved": "saved",
+    "achievements": "Achievements",
+    "noAchievementsYet": "No achievements unlocked yet",
+    "activeChallenges": "{count} active challenge(s)"
   }
 }

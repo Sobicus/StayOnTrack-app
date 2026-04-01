@@ -20,6 +20,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TelegramModule } from './modules/telegram/telegram.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { EmailModule } from './common/email/email.module';
 
@@ -81,6 +82,7 @@ import { EmailModule } from './common/email/email.module';
     AchievementsModule,
     FriendsModule,
     ChallengesModule,
+    ProfileModule,
     GamificationModule,
     NotificationsModule,
     AnalyticsModule,

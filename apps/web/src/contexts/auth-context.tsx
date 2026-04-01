@@ -27,6 +27,10 @@ interface User {
   timezone: string;
   telegramLinked: boolean;
   createdAt: string;
+  showStreak: boolean;
+  showStats: boolean;
+  showAchievements: boolean;
+  showActiveChallenges: boolean;
 }
 
 interface AuthContextType {

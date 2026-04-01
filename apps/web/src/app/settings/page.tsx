@@ -24,6 +24,10 @@ export default function SettingsPage() {
   const [heightCm, setHeightCm] = useState(user?.heightCm?.toString() || '');
   const [goal, setGoal] = useState(user?.goal || '');
   const [visibility, setVisibility] = useState(user?.visibility || 'PRIVATE');
+  const [showStreak, setShowStreak] = useState(user?.showStreak ?? true);
+  const [showStats, setShowStats] = useState(user?.showStats ?? true);
+  const [showAchievements, setShowAchievements] = useState(user?.showAchievements ?? true);
+  const [showActiveChallenges, setShowActiveChallenges] = useState(user?.showActiveChallenges ?? false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -178,6 +182,42 @@ export default function SettingsPage() {
             >
               {t(`visibility.${opt}`)}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Profile Section Toggles */}
+      <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Eye className="w-4 h-4 text-primary" />
+          <p className="font-medium text-[var(--foreground)]">{t('profileSections')}</p>
+        </div>
+        <p className="text-xs text-[var(--muted)] mb-3">{t('profileSectionsDescription')}</p>
+        <div className="space-y-2">
+          {([
+            { key: 'showStreak' as const, value: showStreak, setter: setShowStreak, label: t('showStreak') },
+            { key: 'showStats' as const, value: showStats, setter: setShowStats, label: t('showStats') },
+            { key: 'showAchievements' as const, value: showAchievements, setter: setShowAchievements, label: t('showAchievements') },
+            { key: 'showActiveChallenges' as const, value: showActiveChallenges, setter: setShowActiveChallenges, label: t('showActiveChallenges') },
+          ]).map(({ key, value, setter, label }) => (
+            <div key={key} className="flex items-center justify-between">
+              <span className="text-sm text-[var(--foreground)]">{label}</span>
+              <button
+                onClick={() => {
+                  const newVal = !value;
+                  setter(newVal);
+                  api.users.updateProfile(token!, { [key]: newVal }).then(() => {
+                    refreshUser();
+                    showToast(t('saved'), 'success');
+                  }).catch(() => showToast(tc('error'), 'error'));
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${value ? 'bg-primary' : 'bg-[var(--border)]'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-0'}`}
+                />
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -374,7 +414,7 @@ export default function SettingsPage() {
         </div>
         <p className="text-xs text-[var(--muted)] mb-3">{t('currencyDescription')}</p>
         <div className="flex items-center gap-2 flex-wrap">
-          {['EUR', 'USD', 'GBP', 'PLN', 'UAH', 'RUB'].map((cur) => (
+          {['EUR', 'USD', 'GBP', 'PLN', 'UAH'].map((cur) => (
             <button
               key={cur}
               onClick={() => {

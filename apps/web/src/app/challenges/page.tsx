@@ -879,8 +879,10 @@ function ChallengeCard({
 
   return (
     <div
-      className={`p-4 rounded-2xl border transition-all ${
-        onClick ? 'cursor-pointer hover:border-primary/30' : ''
+      className={`p-4 rounded-2xl border transition-all duration-200 ${
+        onClick
+          ? 'cursor-pointer hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 active:scale-[0.99]'
+          : ''
       } ${
         isWinner
           ? 'bg-warning/5 border-warning/20'

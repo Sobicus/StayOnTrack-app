@@ -53,6 +53,10 @@ export interface UserProfile {
   totalXp: number;
   telegramLinked: boolean;
   createdAt: string;
+  showStreak: boolean;
+  showStats: boolean;
+  showAchievements: boolean;
+  showActiveChallenges: boolean;
 }
 
 export interface AuthResponse {
@@ -289,6 +293,20 @@ export interface UpdateProfileData {
   emailReminders?: boolean;
   reminderHour?: number;
   timezone?: string;
+  showStreak?: boolean;
+  showStats?: boolean;
+  showAchievements?: boolean;
+  showActiveChallenges?: boolean;
+}
+
+export interface PublicProfileDto {
+  username: string;
+  joinedAt: string;
+  daysTracking: number;
+  streak?: { current: number; best: number };
+  stats?: { calories: number; money: number; weightKg: number };
+  achievements?: { total: number; unlocked: number; topEmojis: string[] };
+  activeChallengesCount?: number;
 }
 
 export interface CreateHabitData {
@@ -400,6 +418,8 @@ export const api = {
       request<{ code: string; expiresIn: number }>('/users/me/telegram-code', { method: 'POST', token }),
     unlinkTelegram: (token: string) =>
       request<void>('/users/me/telegram', { method: 'DELETE', token }),
+    getPublicProfile: (username: string, token?: string) =>
+      request<PublicProfileDto>(`/profile/${username}`, token ? { token } : {}),
   },
 
   habits: {
