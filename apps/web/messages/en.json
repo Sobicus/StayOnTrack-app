@@ -108,7 +108,9 @@
       "calories": "Calories",
       "money": "Money",
       "weight": "Weight",
-      "saved": "saved"
+      "habit": "Habit",
+      "saved": "saved",
+      "noHabitTarget": "Set a daily target on a Doing habit to track it here"
     },
     "savingsGoalProgress": "Savings Goal",
     "ofGoal": "of goal",
@@ -164,6 +166,10 @@
     "avoidanceHabit": "Avoidance Habit",
     "didIt": "Did it!",
     "targetUnit": "Unit",
+    "dailyTarget": "Daily goal",
+    "dailyTargetPlaceholder": "e.g. 30",
+    "dailyTargetHint": "Goal: {value} {unit} per day",
+    "goalPrefix": "Goal:",
     "completedAmount": "Amount",
     "achievementNamePlaceholder": "e.g., Morning run",
     "noAchievementHabitsYet": "No positive habits yet",

@@ -106,6 +106,8 @@
     "habit": "Привычка",
     "liveHero": {
       "calories": "Калории",
+      "habit": "Привычка",
+      "noHabitTarget": "Укажите дневную цель в привычке чтобы отслеживать её здесь",
       "money": "Деньги",
       "weight": "Вес",
       "saved": "сэконом."
@@ -164,6 +166,10 @@
     "avoidanceHabit": "Привычка избегания",
     "didIt": "Сделал!",
     "targetUnit": "Единица",
+    "dailyTarget": "Дневная цель",
+    "dailyTargetPlaceholder": "напр. 30",
+    "dailyTargetHint": "Цель: {value} {unit} в день",
+    "goalPrefix": "Цель:",
     "completedAmount": "Количество",
     "achievementNamePlaceholder": "напр., Утренняя пробежка",
     "noAchievementHabitsYet": "Позитивных привычек пока нет",

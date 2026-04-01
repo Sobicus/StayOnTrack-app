@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { api } from '@/lib/api';
+import { api, type Habit, type HabitLog } from '@/lib/api';
 import { useTranslations } from 'next-intl';
-import { Zap, DollarSign, Scale } from 'lucide-react';
+import { Zap, DollarSign, Scale, Activity } from 'lucide-react';
 
 interface LiveStats {
   pastCalories: number;
@@ -18,10 +18,10 @@ interface LiveStats {
   dayEndHour: number;
 }
 
-type MetricKey = 'calories' | 'money' | 'weight';
+type MetricKey = 'calories' | 'money' | 'weight' | 'habit';
 
 const METRIC_CONFIG: Record<
-  MetricKey,
+  Exclude<MetricKey, 'habit'>,
   {
     icon: typeof Zap;
     cssColor: string;
@@ -73,7 +73,19 @@ const METRIC_CONFIG: Record<
   },
 };
 
-const METRICS: MetricKey[] = ['calories', 'money', 'weight'];
+// 'habit' tab config (dynamic color)
+const HABIT_METRIC_CONFIG = {
+  icon: Activity,
+  cssColor: 'rgba(20,184,166,0.8)',
+  textColor: 'text-teal-400',
+  sparkleColor: '#14b8a6',
+  ringGradient:
+    'conic-gradient(from 0deg, rgba(20,184,166,0.05), rgba(20,184,166,0.9), rgba(13,148,136,0.6), rgba(20,184,166,0.05), rgba(20,184,166,0.8), rgba(20,184,166,0.05))',
+  glowBg: 'radial-gradient(circle, rgba(20,184,166,0.25) 0%, transparent 70%)',
+  glowShadow: '0 0 30px 8px rgba(20,184,166,0.2), 0 0 60px 20px rgba(20,184,166,0.1)',
+};
+
+const METRICS: MetricKey[] = ['calories', 'money', 'weight', 'habit'];
 
 /** Sparkle positions & animations — inline so no CSS dependency */
 const SPARKLE_STYLES: React.CSSProperties[] = [
@@ -104,6 +116,12 @@ export function LiveHero() {
   const frameRef = useRef<number>(0);
   const statsRef = useRef<LiveStats | null>(null);
 
+  // Habit tab state
+  const [habitList, setHabitList] = useState<Habit[]>([]);
+  const [todayLogs, setTodayLogs] = useState<HabitLog[]>([]);
+  const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+  const [habitLoaded, setHabitLoaded] = useState(false);
+
   // Fetch live stats
   useEffect(() => {
     if (!token) return;
@@ -115,6 +133,25 @@ export function LiveHero() {
       })
       .catch(() => {});
   }, [token]);
+
+  // Lazy-load habits + today logs when "habit" tab is selected
+  useEffect(() => {
+    if (activeMetric !== 'habit' || habitLoaded || !token) return;
+    Promise.all([
+      api.habits.list(token),
+      api.habitLogs.today(token).catch(() => [] as HabitLog[]),
+    ]).then(([habits, logs]) => {
+      const trackable = habits.filter(
+        (h: Habit) => h.habitType === 'ACHIEVEMENT' && h.dailyTarget != null && h.dailyTarget > 0,
+      );
+      setHabitList(trackable);
+      setTodayLogs(logs);
+      if (trackable.length > 0 && !selectedHabitId) {
+        setSelectedHabitId(trackable[0].id);
+      }
+      setHabitLoaded(true);
+    }).catch(() => {});
+  }, [activeMetric, habitLoaded, token, selectedHabitId]);
 
   const getDayBounds = useCallback((dayEndHour: number) => {
     const now = new Date();
@@ -180,9 +217,24 @@ export function LiveHero() {
   const angle = dayProgress * 2 * Math.PI - Math.PI / 2; // -90° offset because arc starts at top
   const dotX = SIZE / 2 + RADIUS * Math.cos(angle);
   const dotY = SIZE / 2 + RADIUS * Math.sin(angle);
+  // (arcOffset, arcDotX, arcDotY computed below after config)
 
-  const config = METRIC_CONFIG[activeMetric];
+  const config = activeMetric === 'habit' ? HABIT_METRIC_CONFIG : METRIC_CONFIG[activeMetric];
   const Icon = config.icon;
+
+  // Habit progress calculation
+  const selectedHabit = habitList.find(h => h.id === selectedHabitId);
+  const habitLog = todayLogs.find(l => l.habitId === selectedHabitId);
+  const habitCompleted = habitLog?.completedAmount ?? 0;
+  const habitTarget = selectedHabit?.dailyTarget ?? 0;
+  const habitProgress = habitTarget > 0 ? Math.min(habitCompleted / habitTarget, 1) : 0;
+
+  // Override dayProgress for habit tab
+  const arcProgress = activeMetric === 'habit' ? habitProgress : dayProgress;
+  const arcOffset = CIRCUMFERENCE * (1 - arcProgress);
+  const arcAngle = arcProgress * 2 * Math.PI - Math.PI / 2;
+  const arcDotX = SIZE / 2 + RADIUS * Math.cos(arcAngle);
+  const arcDotY = SIZE / 2 + RADIUS * Math.sin(arcAngle);
 
   const formatValue = (metric: MetricKey): string => {
     switch (metric) {
@@ -194,6 +246,8 @@ export function LiveHero() {
       }
       case 'weight':
         return `${interpolated.weight.toFixed(3)}`;
+      case 'habit':
+        return '';
     }
   };
 
@@ -205,6 +259,8 @@ export function LiveHero() {
         return t('liveHero.saved');
       case 'weight':
         return 'kg';
+      case 'habit':
+        return '';
     }
   };
 
@@ -303,7 +359,7 @@ export function LiveHero() {
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={offset}
+              strokeDashoffset={activeMetric === 'habit' ? arcOffset : offset}
               className="transform -rotate-90 origin-center transition-[stroke-dashoffset] duration-1000 ease-linear"
             />
             {/* Glow dot at progress leading edge */}
@@ -318,8 +374,8 @@ export function LiveHero() {
               </filter>
             </defs>
             <circle
-              cx={dotX}
-              cy={dotY}
+              cx={activeMetric === 'habit' ? arcDotX : dotX}
+              cy={activeMetric === 'habit' ? arcDotY : dotY}
               r={5}
               fill={config.cssColor}
               filter="url(#dot-glow)"
@@ -330,21 +386,47 @@ export function LiveHero() {
 
         {/* Layer 5: Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ zIndex: 10 }}>
-          <Icon className={`w-5 h-5 ${config.textColor} mb-1 drop-shadow-lg`} />
-          <p className="text-2xl font-bold text-[var(--foreground)] tabular-nums leading-tight drop-shadow-sm">
-            {formatValue(activeMetric)}
-          </p>
-          <p className="text-xs text-[var(--muted)]">{formatUnit(activeMetric)}</p>
-          <p className="text-[10px] text-[var(--muted)] tabular-nums mt-1.5 font-mono opacity-70">
-            {elapsedLabel}
-          </p>
+          {activeMetric === 'habit' ? (
+            selectedHabit ? (
+              <>
+                <span className="text-2xl mb-1">{selectedHabit.emoji}</span>
+                <p className="text-2xl font-bold text-[var(--foreground)] tabular-nums leading-tight drop-shadow-sm">
+                  {habitCompleted}
+                  <span className="text-sm font-normal text-[var(--muted)]">/{habitTarget}</span>
+                </p>
+                <p className="text-xs text-[var(--muted)]">
+                  {selectedHabit.targetUnit || ''}
+                </p>
+                <p className="text-[10px] text-teal-400 font-medium mt-1">
+                  {Math.round(habitProgress * 100)}%
+                </p>
+              </>
+            ) : (
+              <>
+                <Activity className="w-6 h-6 text-teal-400 mb-2" />
+                <p className="text-xs text-[var(--muted)] text-center px-4">{t('liveHero.noHabitTarget')}</p>
+              </>
+            )
+          ) : (
+            <>
+              <Icon className={`w-5 h-5 ${config.textColor} mb-1 drop-shadow-lg`} />
+              <p className="text-2xl font-bold text-[var(--foreground)] tabular-nums leading-tight drop-shadow-sm">
+                {formatValue(activeMetric)}
+              </p>
+              <p className="text-xs text-[var(--muted)]">{formatUnit(activeMetric)}</p>
+              <p className="text-[10px] text-[var(--muted)] tabular-nums mt-1.5 font-mono opacity-70">
+                {elapsedLabel}
+              </p>
+            </>
+          )}
         </div>
       </div>
 
       {/* Metric switcher pills */}
-      <div className="flex items-center gap-2 mt-5">
+      <div className="flex items-center gap-2 mt-5 flex-wrap justify-center">
         {METRICS.map((m) => {
-          const MIcon = METRIC_CONFIG[m].icon;
+          const cfg = m === 'habit' ? HABIT_METRIC_CONFIG : METRIC_CONFIG[m];
+          const MIcon = cfg.icon;
           const isActive = activeMetric === m;
           return (
             <button
@@ -352,7 +434,7 @@ export function LiveHero() {
               onClick={() => setActiveMetric(m)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium transition-all ${
                 isActive
-                  ? `${METRIC_CONFIG[m].textColor} bg-[var(--card)] shadow-lg border border-[var(--border)]`
+                  ? `${cfg.textColor} bg-[var(--card)] shadow-lg border border-[var(--border)]`
                   : 'text-[var(--muted)] hover:text-[var(--foreground)]'
               }`}
             >
@@ -362,6 +444,23 @@ export function LiveHero() {
           );
         })}
       </div>
+
+      {/* Habit selector — shown only when habit tab active + multiple habits */}
+      {activeMetric === 'habit' && habitList.length > 1 && (
+        <div className="mt-3 w-full max-w-[260px]">
+          <select
+            value={selectedHabitId ?? ''}
+            onChange={(e) => setSelectedHabitId(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+          >
+            {habitList.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.emoji} {h.title} (goal: {h.dailyTarget} {h.targetUnit})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

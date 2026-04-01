@@ -67,6 +67,10 @@ export class Habit {
   @Column({ type: 'varchar', length: 20, nullable: true })
   targetUnit!: string | null;
 
+  /** Daily goal for ACHIEVEMENT habits (e.g. 30 minutes, 5 km). null = no target set. */
+  @Column({ type: 'float', nullable: true })
+  dailyTarget!: number | null;
+
   @Column({ type: 'float', default: 0 })
   caloriesPerOccurrence!: number;
 

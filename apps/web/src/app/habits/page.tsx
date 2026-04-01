@@ -30,6 +30,7 @@ interface Habit {
   category: string;
   habitType: 'AVOIDANCE' | 'ACHIEVEMENT';
   targetUnit: string | null;
+  dailyTarget: number | null;
   caloriesPerOccurrence: number;
   pricePerOccurrence: number;
   frequencyType: string;
@@ -86,6 +87,7 @@ export default function HabitsPage() {
   const [formHabitType, setFormHabitType] = useState<HabitTab>('AVOIDANCE');
   const [targetUnit, setTargetUnit] = useState('minutes');
   const [customUnitInput, setCustomUnitInput] = useState('');
+  const [dailyTarget, setDailyTarget] = useState('');
 
   useEffect(() => {
     if (token) {
@@ -136,6 +138,7 @@ export default function HabitsPage() {
     setCost('');
     setTargetUnit('minutes');
     setCustomUnitInput('');
+    setDailyTarget('');
     setFrequencyType('DAILY');
     setOccurrencesPerWeek('');
     setFormError('');
@@ -158,6 +161,7 @@ export default function HabitsPage() {
       setTargetUnit('custom');
       setCustomUnitInput(savedUnit);
     }
+    setDailyTarget(h.dailyTarget != null ? h.dailyTarget.toString() : '');
     setFrequencyType(h.frequencyType || 'DAILY');
     setOccurrencesPerWeek(h.occurrencesPerWeek?.toString() || '');
     setFormError('');
@@ -188,8 +192,10 @@ export default function HabitsPage() {
       data.targetUnit = targetUnit === 'custom'
         ? (customUnitInput.trim() || 'times')
         : targetUnit;
+      data.dailyTarget = dailyTarget ? (parseFloat(dailyTarget) || null) : null;
     } else {
       data.targetUnit = null;
+      data.dailyTarget = null;
     }
 
     if (frequencyType === 'CUSTOM' && occurrencesPerWeek) {
@@ -408,7 +414,9 @@ export default function HabitsPage() {
                       <p className="text-xs text-[var(--muted)]">
                         {isAchievement ? (
                           <>
-                            {habit.targetUnit && t(`units.${habit.targetUnit}`, { fallback: habit.targetUnit })}
+                            {habit.dailyTarget != null && habit.targetUnit
+                              ? `${t('goalPrefix')} ${habit.dailyTarget} ${t(`units.${habit.targetUnit}`, { fallback: habit.targetUnit })}`
+                              : habit.targetUnit && t(`units.${habit.targetUnit}`, { fallback: habit.targetUnit })}
                           </>
                         ) : (
                           <>
@@ -675,6 +683,37 @@ export default function HabitsPage() {
                       maxLength={20}
                       className="w-full px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
+                  )}
+                </div>
+              )}
+
+              {/* Daily target — only for achievement with a numeric unit */}
+              {formHabitType === 'ACHIEVEMENT' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[var(--foreground)]">
+                    {t('dailyTarget')}
+                    <span className="ml-1 text-[var(--muted)] font-normal text-xs">({t('optional')})</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={dailyTarget}
+                      onChange={(e) => setDailyTarget(e.target.value)}
+                      placeholder={t('dailyTargetPlaceholder')}
+                      min="0"
+                      step="any"
+                      className="flex-1 px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                    <span className="text-sm text-[var(--muted)] whitespace-nowrap min-w-[60px]">
+                      {targetUnit === 'custom'
+                        ? (customUnitInput.trim() || t('units.times'))
+                        : t(`units.${targetUnit}`, { defaultValue: targetUnit })}
+                    </span>
+                  </div>
+                  {dailyTarget && Number(dailyTarget) > 0 && (
+                    <p className="text-xs text-primary font-medium px-1">
+                      {t('dailyTargetHint', { value: dailyTarget, unit: targetUnit === 'custom' ? (customUnitInput.trim() || 'times') : targetUnit })}
+                    </p>
                   )}
                 </div>
               )}

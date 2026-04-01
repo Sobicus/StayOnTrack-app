@@ -37,6 +37,12 @@ export class CreateHabitDto {
 
   @IsNumber()
   @Min(0)
+  @Max(100000)
+  @IsOptional()
+  dailyTarget?: number | null;
+
+  @IsNumber()
+  @Min(0)
   @Max(50000)
   @IsOptional()
   caloriesPerOccurrence?: number;
