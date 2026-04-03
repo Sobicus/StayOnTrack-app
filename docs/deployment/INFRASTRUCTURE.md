@@ -1,271 +1,134 @@
-# StayOnTrack — Полный план деплоя на VPS
+# StayOnTrack — Деплой на VPS: полное руководство
 
+> Для тех, кто делает это впервые. Всё объяснено простыми словами.
 > Последнее обновление: апрель 2026
-> Статус: **Готов к выполнению** — все фазы расписаны пошагово
 
 ---
 
-## Обзор инфраструктуры
+## Словарь — что всё это значит
 
-```
-Internet (HTTPS)
-     │
-     ▼
-Nginx (порт 80 → редирект, порт 443 → SSL)
-     │
-     ├── stayontrack.day          → web контейнер (порт 4801, Next.js)
-     └── api.stayontrack.day      → api контейнер (порт 4800, NestJS /api/v1)
-                                         │
-                                         └── db контейнер (PostgreSQL, только internal)
-```
+**VPS** (Virtual Private Server) — твой арендованный компьютер в интернете. Работает 24/7, на нём живёт приложение. Наш сервер: Hetzner CX23, Ubuntu 24.04, IP: `204.168.219.189`.
 
-| Параметр | Значение |
-|----------|---------|
-| Провайдер | Hetzner Cloud (CX23) |
-| IP | `204.168.219.189` |
-| ОС | Ubuntu 24.04 LTS |
-| CPU / RAM / SSD | 2 vCPU / 4 GB / 40 GB NVMe |
-| Домен | `stayontrack.day` (Namecheap) |
-| SSL | Let's Encrypt (автообновление) |
-| Управление | `docker compose -f docker-compose.prod.yml` |
+**SSH** — способ подключиться к серверу и управлять им через терминал. Как TeamViewer, только текстом.
 
-### DNS записи (уже настроены в Namecheap)
+**Docker** — программа, которая упаковывает приложение в "контейнер" — изолированный ящик со всем нужным. Запускаешь контейнер — приложение работает, не важно что за сервер.
 
-| Type | Host | Value | Назначение |
-|------|------|-------|-----------|
-| A | @ | 204.168.219.189 | stayontrack.day → frontend |
-| A | www | 204.168.219.189 | www → frontend |
-| A | api | 204.168.219.189 | api.stayontrack.day → backend |
+**Docker Compose** — инструмент для запуска нескольких контейнеров сразу. У нас 4 контейнера: база данных, API, сайт, Nginx.
+
+**Nginx** — программа-роутер. Пользователь заходит на `stayontrack.day` → Nginx решает куда отправить запрос: на сайт или на API. Ещё отвечает за SSL.
+
+**SSL / HTTPS** — шифрование соединения. Замочек в браузере. Без него браузеры пишут "Небезопасно" и `.day` домены вообще не открываются без HTTPS (это их обязательное требование).
+
+**Let's Encrypt / Certbot** — бесплатный сервис для SSL-сертификата. Certbot — программа, которая получает и продлевает его автоматически.
+
+**CI/CD** (Continuous Integration / Continuous Deployment) — автоматический конвейер. При каждом push в main → GitHub сам запускает тесты и деплоит на сервер. Без CI/CD нужно деплоить вручную.
+
+**ENV файл** — файл с секретами (пароли, ключи API). Никогда не попадает в git. Живёт только на сервере.
+
+**Миграции БД** — скрипты изменения структуры базы данных. Запускаются автоматически при старте API — таблицы создадутся сами.
 
 ---
 
-## ⚠️ Критические исправления ДО деплоя
+## Наша архитектура (как всё устроено)
 
-Эти проблемы **сломают деплой** если не исправить заранее.
-
-### 1. `NEXT_PUBLIC_API_URL` не попадает в Next.js build
-
-**Проблема:** `NEXT_PUBLIC_*` переменные в Next.js статически встраиваются **во время сборки** (build time), а не runtime. В `docker-compose.prod.yml` переменная передаётся как runtime env — frontend никогда не узнает реальный URL API.
-
-**Исправление** в `apps/web/Dockerfile` — добавить ARG перед `npm run build`:
-
-```dockerfile
-# ---- Builder ----
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-# ... (копирование файлов) ...
-
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# ДОБАВИТЬ ЭТИ ДВЕ СТРОКИ:
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
-RUN cd apps/web && npm run build
 ```
+Пользователь в браузере
+        │
+        ▼
+   stayontrack.day  ←── Nginx (порты 80 и 443)
+        │
+        ├── api.stayontrack.day ──→ API контейнер (NestJS, порт 4800)
+        │                                  │
+        │                                  └──→ БД контейнер (PostgreSQL)
+        │
+        └── stayontrack.day ────→ Web контейнер (Next.js, порт 4801)
 
-**Исправление** в `docker-compose.prod.yml` для сервиса `web` — добавить build args:
-
-```yaml
-web:
-  build:
-    context: .
-    dockerfile: apps/web/Dockerfile
-    args:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-```
-
-### 2. JWT_REFRESH_SECRET отсутствует в docker-compose.prod.yml
-
-**Проблема:** API использует `JWT_REFRESH_SECRET` для refresh-токенов, но в `docker-compose.prod.yml` передаётся только `JWT_SECRET`.
-
-**Исправление** в `docker-compose.prod.yml` в блоке `api.environment`:
-
-```yaml
-JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}  # ДОБАВИТЬ
-```
-
-### 3. `.env.production.example` содержит неправильный домен
-
-**Проблема:** Все URL в примере используют `stayontrack.app` вместо `stayontrack.day`.
-
-**Что исправить в своём `.env.production` на сервере:**
-- `CORS_ORIGIN=https://stayontrack.day`
-- `NEXT_PUBLIC_API_URL=https://api.stayontrack.day/api/v1`
-- `GOOGLE_CALLBACK_URL=https://api.stayontrack.day/api/v1/auth/google/callback`
-- `FROM_EMAIL=noreply@stayontrack.day`
-- `VAPID_EMAIL=mailto:noreply@stayontrack.day`
-
-### 4. nginx.conf не настроен для subdomain-роутинга и SSL
-
-**Проблема:** Текущий `nginx/nginx.conf` роутит по пути (`/api/` → api, `/` → web) на порту 80. Нет subdomain-роутинга, нет HTTPS. Домен `.day` **обязан** работать через HTTPS (HSTS preload).
-
-**Исправление:** Заменить содержимое `nginx/nginx.conf` готовой конфигурацией (см. раздел ниже).
-
-### 5. NEXT_PUBLIC_TELEGRAM_BOT_USERNAME не передаётся в контейнер
-
-**Проблема:** Telegram Login Widget требует имя бота в env переменной.
-
-**Исправление** в `docker-compose.prod.yml` в блоке `web.build.args` и `web.environment`:
-
-```yaml
-web:
-  build:
-    args:
-      NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME:-}
-  environment:
-    NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME:-}
+Сервер: 204.168.219.189 (Hetzner, Германия)
+Домен: stayontrack.day (DNS уже настроен)
 ```
 
 ---
 
-## Финальный nginx.conf (заменить перед деплоем)
+## Кто что делает
 
-Сохранить в `nginx/nginx.conf` — полностью заменить содержимое:
+| Шаг | Что | Кто |
+|-----|-----|-----|
+| 1 | Подключиться к серверу | **Ты** |
+| 2 | Настроить безопасность сервера | **Ты** (команды даю я) |
+| 3 | Установить Docker | **Ты** (команды даю я) |
+| 4 | Загрузить код на сервер | **Ты** (одна команда) |
+| 5 | Создать файл с секретами | **Ты** (заполнить значения) |
+| 6 | Запустить приложение | **Ты** (одна команда) |
+| 7 | Получить SSL сертификат | **Ты** (одна команда) |
+| 8 | Включить HTTPS | **Я** обновляю конфиг + **ты** перезапускаешь |
+| 9 | Настроить автобэкап | **Ты** (две команды) |
+| 10 | Настроить автодеплой CI/CD | **Я** создаю файл + **ты** добавляешь ключ в GitHub |
 
-```nginx
-events {
-    worker_connections 1024;
-}
-
-http {
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-
-    # Gzip
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript image/svg+xml;
-
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone=general:10m rate=30r/s;
-    limit_req_zone $binary_remote_addr zone=api:10m rate=20r/s;
-
-    # Upstreams
-    upstream api  { server api:4800; }
-    upstream web  { server web:4801; }
-
-    # ──────────────────────────────────────────
-    # HTTP: только для certbot challenge и редиректа на HTTPS
-    # ──────────────────────────────────────────
-    server {
-        listen 80;
-        server_name stayontrack.day www.stayontrack.day api.stayontrack.day;
-
-        location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
-        }
-
-        location / {
-            return 301 https://$host$request_uri;
-        }
-    }
-
-    # ──────────────────────────────────────────
-    # HTTPS: Frontend — stayontrack.day
-    # ──────────────────────────────────────────
-    server {
-        listen 443 ssl http2;
-        server_name stayontrack.day www.stayontrack.day;
-
-        ssl_certificate     /etc/letsencrypt/live/stayontrack.day/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/stayontrack.day/privkey.pem;
-        ssl_protocols       TLSv1.2 TLSv1.3;
-        ssl_ciphers         HIGH:!aNULL:!MD5;
-        ssl_session_cache   shared:SSL:10m;
-
-        limit_req zone=general burst=50 nodelay;
-
-        location / {
-            proxy_pass http://web;
-            proxy_http_version 1.1;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-    }
-
-    # ──────────────────────────────────────────
-    # HTTPS: API — api.stayontrack.day
-    # ──────────────────────────────────────────
-    server {
-        listen 443 ssl http2;
-        server_name api.stayontrack.day;
-
-        ssl_certificate     /etc/letsencrypt/live/stayontrack.day/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/stayontrack.day/privkey.pem;
-        ssl_protocols       TLSv1.2 TLSv1.3;
-        ssl_ciphers         HIGH:!aNULL:!MD5;
-        ssl_session_cache   shared:SSL:10m;
-
-        limit_req zone=api burst=30 nodelay;
-
-        location / {
-            proxy_pass http://api;
-            proxy_http_version 1.1;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_connect_timeout 30s;
-            proxy_send_timeout 30s;
-            proxy_read_timeout 30s;
-        }
-    }
-}
-```
-
-> ⚠️ **До получения SSL-сертификата** оставь только HTTP-блок (без HTTPS server-блоков) — иначе nginx не запустится.
+**Принцип:** я штурман, ты водитель. Я говорю что писать — ты пишешь на сервере.
 
 ---
 
-## Фаза 1 — Первичная настройка сервера
+## ШАГ 1 — Подключиться к серверу
+
+> 👤 **Делаешь: ты**
+
+Открой Terminal (Mac/Linux) или PowerShell (Windows):
 
 ```bash
-# Подключиться к серверу
 ssh root@204.168.219.189
+```
 
-# Обновить систему
+Введи пароль от сервера (тот что прислал Hetzner).
+Увидишь `root@ubuntu:~#` — ты на сервере, можно работать.
+
+---
+
+## ШАГ 2 — Настроить безопасность
+
+> 👤 **Делаешь: ты** — вставляй команды блок за блоком
+
+### 2а. Обновить систему
+```bash
 apt update && apt upgrade -y
+```
+_Обновляем все системные пакеты. Как Windows Update. Займёт минуту-две._
 
-# Создать non-root пользователя deploy
-adduser deploy
-usermod -aG sudo deploy
-
-# Скопировать SSH-ключ для deploy пользователя
-rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy
-
-# Настроить UFW файрвол
+### 2б. Настроить файрвол
+```bash
 ufw allow OpenSSH
 ufw allow 80
 ufw allow 443
 ufw --force enable
 ufw status
+```
+_UFW — файрвол (брандмауэр). Разрешаем только SSH, HTTP и HTTPS. Всё остальное заблокировано — защита от атак._
 
-# Отключить вход по паролю (безопасность)
-sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-sed -i 's/^#PasswordAuthentication no/PasswordAuthentication no/' /etc/ssh/sshd_config
-systemctl restart ssh
+### 2в. Создать рабочего пользователя
+```bash
+adduser deploy
+```
+_Введи пароль для пользователя `deploy`, на остальные вопросы просто Enter_
 
-# Переключиться на deploy
+```bash
+usermod -aG sudo deploy
+usermod -aG docker deploy
+```
+_Даём пользователю права на sudo (администрирование) и Docker_
+
+Переключись на нового пользователя — дальше работаем от него:
+```bash
 su - deploy
+cd /home/deploy
 ```
 
 ---
 
-## Фаза 2 — Установка Docker
+## ШАГ 3 — Установить Docker
+
+> 👤 **Делаешь: ты**
+> _Docker устанавливается один раз. Скопируй весь блок целиком и вставь._
 
 ```bash
-# Установить Docker
 sudo apt install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -277,148 +140,147 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
 
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
 
-# Добавить deploy в группу docker (без sudo)
-sudo usermod -aG docker deploy
-newgrp docker
-
-# Проверить
+Проверь что установилось:
+```bash
 docker --version
 docker compose version
 ```
+_Должно вывести версии (Docker 24+, Compose 2+) — значит всё ок._
 
 ---
 
-## Фаза 3 — Загрузка кода на сервер
+## ШАГ 4 — Загрузить код на сервер
+
+> 👤 **Делаешь: ты**
 
 ```bash
-# Клонировать репо (использовать deploy key или HTTPS)
-cd /home/deploy
 git clone https://github.com/Sobicus/StayOnTrack-app.git stayontrack
 cd stayontrack
 git checkout main
 ```
 
+Проверь что файлы скачались:
+```bash
+ls
+```
+_Должны быть: `apps`, `docs`, `nginx`, `docker-compose.prod.yml` и т.д._
+
 ---
 
-## Фаза 4 — Настройка переменных окружения
+## ШАГ 5 — Создать файл с секретами
 
-Создать файл `.env.production` в корне проекта (НЕ коммитить в git!):
+> 👤 **Делаешь: ты** — самый важный шаг
+> _Секреты — пароли и ключи. Создаём прямо на сервере, в git они не попадают никогда._
 
+**Сначала сгенерируй JWT секреты** (случайные строки):
+```bash
+openssl rand -base64 64
+```
+_Скопируй вывод — это будет JWT_SECRET_
+
+```bash
+openssl rand -base64 64
+```
+_Скопируй вывод — это будет JWT_REFRESH_SECRET_
+
+**Создай файл с секретами:**
 ```bash
 nano .env.production
 ```
 
-Содержимое (заполнить реальными значениями):
+Вставь это и замени все значения на реальные:
 
 ```env
 # ── База данных ──────────────────────────────────────────
 DB_HOST=db
 DB_PORT=5432
 DB_USER=stayontrack
-DB_PASS=СГЕНЕРИРОВАТЬ_СИЛЬНЫЙ_ПАРОЛЬ          # openssl rand -base64 32
+DB_PASS=ПРИДУМАЙ_СИЛЬНЫЙ_ПАРОЛЬ
 DB_NAME=stayontrack
 
-# ── JWT ──────────────────────────────────────────────────
-JWT_SECRET=СГЕНЕРИРОВАТЬ_64_СИМВОЛА            # openssl rand -base64 64
-JWT_REFRESH_SECRET=СГЕНЕРИРОВАТЬ_64_СИМВОЛА    # openssl rand -base64 64
+# ── JWT токены авторизации ────────────────────────────────
+JWT_SECRET=ВСТАВЬ_СГЕНЕРИРОВАННУЮ_СТРОКУ_1
+JWT_REFRESH_SECRET=ВСТАВЬ_СГЕНЕРИРОВАННУЮ_СТРОКУ_2
 
-# ── CORS ─────────────────────────────────────────────────
+# ── Домены ───────────────────────────────────────────────
 CORS_ORIGIN=https://stayontrack.day
-
-# ── API URL (для фронтенда, встраивается при сборке) ─────
 NEXT_PUBLIC_API_URL=https://api.stayontrack.day/api/v1
 
-# ── Email (Resend) ───────────────────────────────────────
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+# ── Email через Resend ────────────────────────────────────
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
 FROM_EMAIL=noreply@stayontrack.day
 
-# ── Google OAuth ─────────────────────────────────────────
+# ── Google OAuth (вход через Google) ─────────────────────
 GOOGLE_CLIENT_ID=xxxxxxxxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxx
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxx
 GOOGLE_CALLBACK_URL=https://api.stayontrack.day/api/v1/auth/google/callback
 
-# ── Telegram ─────────────────────────────────────────────
-TELEGRAM_BOT_TOKEN=xxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=StayOnTrackBot   # без @
+# ── Telegram (вход через Telegram виджет) ────────────────
+TELEGRAM_BOT_TOKEN=xxxxxxxxxx:xxxxxxxxxx
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=StayOnTrackBot
 
-# ── Web Push (VAPID) — генерация ниже ───────────────────
+# ── Web Push уведомления ─────────────────────────────────
+# Генерация: npm install -g web-push && web-push generate-vapid-keys
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_EMAIL=mailto:noreply@stayontrack.day
 ```
 
-### Генерация VAPID ключей (один раз):
+Сохранить файл: `Ctrl+X` → `Y` → `Enter`
 
+Проверь что файл создан:
 ```bash
-# Установить web-push CLI
-npm install -g web-push
-web-push generate-vapid-keys
-# Скопировать Public Key и Private Key в .env.production
-```
-
-### Генерация случайных секретов:
-
-```bash
-openssl rand -base64 32   # для DB_PASS
-openssl rand -base64 64   # для JWT_SECRET
-openssl rand -base64 64   # для JWT_REFRESH_SECRET
+cat .env.production
 ```
 
 ---
 
-## Фаза 5 — Исправление кода (перед первым деплоем)
+## ШАГ 6 — Запустить приложение
 
-Выполнить исправления из секции "Критические исправления" выше, потом:
-
-```bash
-# На локальной машине
-git add apps/web/Dockerfile docker-compose.prod.yml nginx/nginx.conf
-git commit -m "fix(ops): fix NEXT_PUBLIC_API_URL build arg, JWT_REFRESH_SECRET, nginx subdomain routing"
-git push origin main
-
-# На сервере
-cd /home/deploy/stayontrack
-git pull origin main
-```
-
----
-
-## Фаза 6 — Первый запуск (без SSL)
-
-**Шаг 1:** Временно оставить в `nginx/nginx.conf` ТОЛЬКО HTTP-блок (без HTTPS, без 443), иначе nginx упадёт без сертификатов.
-
-**Шаг 2:** Запустить всё:
+> 👤 **Делаешь: ты**
+> _Первый раз займёт 5-10 минут — Docker собирает образы с нуля._
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-
-# Проверить статус
-docker compose -f docker-compose.prod.yml ps
-
-# Логи
-docker compose -f docker-compose.prod.yml logs -f --tail=50
-docker compose -f docker-compose.prod.yml logs api --tail=50
-docker compose -f docker-compose.prod.yml logs web --tail=50
 ```
 
-**Шаг 3:** Проверить что работает по HTTP:
-
+Следи за процессом (Ctrl+C чтобы выйти, контейнеры продолжат работать):
 ```bash
-curl http://stayontrack.day/api/v1/health   # должен вернуть {"status":"ok"}
-curl http://stayontrack.day                  # должен вернуть HTML
+docker compose -f docker-compose.prod.yml logs -f --tail=30
 ```
+
+Проверь что всё запустилось:
+```bash
+docker compose -f docker-compose.prod.yml ps
+```
+
+Результат должен быть такой:
+```
+NAME                  STATUS
+stayontrack_db        running (healthy)
+stayontrack_api       running (healthy)
+stayontrack_web       running (healthy)
+stayontrack_nginx     running
+```
+
+Проверь что API отвечает:
+```bash
+curl http://stayontrack.day/api/v1/health
+```
+_Должно вернуть: `{"status":"ok"}` — приложение работает!_
+
+> **База данных стартует пустой** — это нормально. TypeORM автоматически создаст все таблицы при первом запуске. Это и есть старт с нуля.
 
 ---
 
-## Фаза 7 — SSL-сертификат (Let's Encrypt)
+## ШАГ 7 — Получить SSL сертификат
 
-**Шаг 1:** Убедиться что HTTP работает и сертификат certbot может получить challenge.
-
-**Шаг 2:** Получить сертификат:
+> 👤 **Делаешь: ты**
+> _SSL = замочек в браузере. Бесплатно через Let's Encrypt. `.day` домен без него не открывается._
 
 ```bash
-# Запустить certbot (wildcard-сертификат для stayontrack.day + api.stayontrack.day)
 docker compose -f docker-compose.prod.yml --profile ssl run --rm certbot \
   certonly --webroot \
   --webroot-path=/var/www/certbot \
@@ -430,264 +292,145 @@ docker compose -f docker-compose.prod.yml --profile ssl run --rm certbot \
   --no-eff-email
 ```
 
-**Шаг 3:** Заменить `nginx/nginx.conf` на полную версию с HTTPS из раздела выше.
+Если всё хорошо увидишь:
+```
+Successfully received certificate.
+```
 
-**Шаг 4:** Перезапустить nginx:
+---
 
+## ШАГ 8 — Включить HTTPS
+
+> 🤖 **Делаю: я (Claude)** — обновлю nginx.conf и запушу
+> 👤 **Делаешь: ты** — подтянешь изменения и перезапустишь nginx
+
+**Скажи мне когда будешь на этом шаге** — я раскомментирую HTTPS блоки в конфиге.
+
+После того как я запушу — ты на сервере:
 ```bash
+git pull origin main
 docker compose -f docker-compose.prod.yml restart nginx
 ```
 
-**Шаг 5:** Проверить HTTPS:
-
+Проверь HTTPS:
 ```bash
-curl https://stayontrack.day/api/v1/health   # {"status":"ok"}
+curl https://stayontrack.day
 curl https://api.stayontrack.day/api/v1/health
-curl https://stayontrack.day                  # HTML страница
 ```
 
-**Шаг 6:** Автообновление сертификата — добавить в cron:
+Открой в браузере `https://stayontrack.day` — увидишь сайт с замочком 🔒
 
+Настрой автопродление сертификата (раз в день certbot проверяет):
 ```bash
 crontab -e
-# Добавить:
-0 12 * * * /home/deploy/stayontrack/scripts/renew-ssl.sh >> /var/log/certbot-renew.log 2>&1
 ```
-
-Создать скрипт `scripts/renew-ssl.sh`:
-
-```bash
-#!/bin/bash
-cd /home/deploy/stayontrack
-docker compose -f docker-compose.prod.yml --profile ssl run --rm certbot renew
-docker compose -f docker-compose.prod.yml restart nginx
+Добавь в конец:
 ```
-
-```bash
-chmod +x scripts/renew-ssl.sh
+0 12 * * * docker compose -f /home/deploy/stayontrack/docker-compose.prod.yml --profile ssl run --rm certbot renew && docker compose -f /home/deploy/stayontrack/docker-compose.prod.yml restart nginx
 ```
 
 ---
 
-## Фаза 8 — Проверка деплоя
+## ШАГ 9 — Автобэкап базы данных
+
+> 👤 **Делаешь: ты**
+> _Каждый день в 3:00 ночи автоматически сохраняется копия БД. Старые удаляются через 30 дней._
 
 ```bash
-# Все контейнеры запущены и healthy
-docker compose -f docker-compose.prod.yml ps
-
-# Ожидаемый результат:
-# stayontrack_db    running (healthy)
-# stayontrack_api   running (healthy)
-# stayontrack_web   running (healthy)
-# stayontrack_nginx running
-
-# Проверка API
-curl https://api.stayontrack.day/api/v1/health
-# {"status":"ok","database":"connected"}
-
-# Swagger документация
-# Открыть в браузере: https://api.stayontrack.day/api/v1/docs
-
-# Проверка фронтенда
-# Открыть в браузере: https://stayontrack.day
-
-# Проверить логи на ошибки
-docker compose -f docker-compose.prod.yml logs api --since=5m
-docker compose -f docker-compose.prod.yml logs web --since=5m
-```
-
----
-
-## Фаза 9 — CI/CD автодеплой (GitHub Actions)
-
-Добавить секреты в GitHub (Settings → Secrets → Actions):
-
-| Secret | Значение |
-|--------|---------|
-| `VPS_HOST` | `204.168.219.189` |
-| `VPS_USER` | `deploy` |
-| `VPS_SSH_KEY` | содержимое `~/.ssh/id_ed25519` (приватный ключ) |
-| `VPS_PORT` | `22` |
-
-Создать `.github/workflows/deploy.yml`:
-
-```yaml
-name: Deploy to Production
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
-            cd /home/deploy/stayontrack
-            git pull origin main
-            docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-            docker image prune -f
-```
-
-> После этого каждый push в `main` → автоматический деплой на сервер.
-
----
-
-## Фаза 10 — Резервное копирование БД
-
-Настроить `scripts/backup.sh` (уже существует):
-
-```bash
-# Проверить скрипт
-cat scripts/backup.sh
-
-# Добавить в cron (каждый день в 3:00)
-crontab -e
-# Добавить:
-0 3 * * * /home/deploy/stayontrack/scripts/backup.sh >> /var/log/backup.log 2>&1
-```
-
-Содержимое `scripts/backup.sh` (уже корректное):
-- Сохраняет в `/backups/stayontrack/db_YYYYMMDD_HHMM.sql.gz`
-- Удаляет бэкапы старше 30 дней автоматически
-
-```bash
-# Создать директорию для бэкапов
 sudo mkdir -p /backups/stayontrack
 sudo chown deploy:deploy /backups/stayontrack
 chmod +x /home/deploy/stayontrack/scripts/backup.sh
+```
 
-# Тест бэкапа
+Добавить в расписание:
+```bash
+crontab -e
+```
+Добавь в конец (или в тот же файл что редактировал выше):
+```
+0 3 * * * /home/deploy/stayontrack/scripts/backup.sh >> /var/log/backup.log 2>&1
+```
+
+Проверь что бэкап работает:
+```bash
 /home/deploy/stayontrack/scripts/backup.sh
-ls -la /backups/stayontrack/
+ls /backups/stayontrack/
 ```
+_Должен появиться файл `db_ДАТА_ВРЕМЯ.sql.gz`_
 
 ---
 
-## Фаза 11 — Мониторинг (опционально)
+## ШАГ 10 — Автодеплой CI/CD
 
-### Uptime Kuma (рекомендуется)
+> 🤖 **Делаю: я** — создам `.github/workflows/deploy.yml`
+> 👤 **Делаешь: ты** — генерируешь SSH ключ и добавляешь в GitHub
 
+_Смысл: push в main → GitHub автоматически заходит на сервер и обновляет приложение. Без этого нужно делать git pull вручную каждый раз._
+
+Сгенерируй SSH ключ на сервере:
 ```bash
-# Добавить сервис в docker-compose.prod.yml:
-uptime-kuma:
-  image: louislam/uptime-kuma:1
-  container_name: uptime_kuma
-  restart: always
-  ports:
-    - "3001:3001"
-  volumes:
-    - uptime_kuma:/app/data
-  networks:
-    - internal
+ssh-keygen -t ed25519 -C "github-deploy" -f ~/.ssh/github_deploy -N ""
+cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
 ```
 
-Открыть: `http://204.168.219.189:3001` и настроить мониторинг:
-- `https://stayontrack.day` — каждые 60 сек
-- `https://api.stayontrack.day/api/v1/health` — каждые 60 сек
-
-### Логи
-
+Скопируй приватный ключ (понадобится для GitHub):
 ```bash
-# Просмотр логов в реальном времени
-docker compose -f docker-compose.prod.yml logs -f
-
-# Логи конкретного сервиса
-docker compose -f docker-compose.prod.yml logs api -f --tail=100
-
-# Размер Docker-данных
-docker system df
+cat ~/.ssh/github_deploy
 ```
+_Скопируй весь вывод — от `-----BEGIN` до `-----END`_
+
+Перейди в GitHub:
+`Settings → Secrets and variables → Actions → New repository secret`
+
+| Имя | Значение |
+|-----|---------|
+| `VPS_HOST` | `204.168.219.189` |
+| `VPS_USER` | `deploy` |
+| `VPS_SSH_KEY` | весь вывод `cat ~/.ssh/github_deploy` |
+| `VPS_PORT` | `22` |
+
+**Скажи мне когда добавишь секреты** — создам файл автодеплоя.
 
 ---
 
-## Откат (Rollback)
+## Шпаргалка: частые команды на сервере
 
 ```bash
+# Перейти в папку проекта
 cd /home/deploy/stayontrack
 
-# Откат к предыдущему коммиту
-git log --oneline -10  # найти нужный хеш
-git checkout <commit-hash>
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-
-# Вернуться на main
-git checkout main
-```
-
----
-
-## Полезные команды (шпаргалка)
-
-```bash
 # Статус всех контейнеров
 docker compose -f docker-compose.prod.yml ps
 
-# Перезапустить всё
-docker compose -f docker-compose.prod.yml restart
+# Логи в реальном времени (Ctrl+C чтобы выйти)
+docker compose -f docker-compose.prod.yml logs -f
+
+# Только логи API
+docker compose -f docker-compose.prod.yml logs api -f --tail=50
+
+# Обновить приложение вручную
+git pull origin main
+docker compose -f docker-compose.prod.yml up -d --build
 
 # Перезапустить один сервис
 docker compose -f docker-compose.prod.yml restart api
 
-# Пересобрать и перезапустить (после деплоя нового кода)
-docker compose -f docker-compose.prod.yml up -d --build
-
-# Зайти в контейнер API
-docker exec -it stayontrack_api sh
-
 # Зайти в базу данных
 docker exec -it stayontrack_db psql -U stayontrack stayontrack
 
-# Ручной бэкап БД
-docker exec stayontrack_db pg_dump -U stayontrack stayontrack > backup_manual.sql
-
-# Очистить неиспользуемые образы (освободить место)
+# Освободить место на диске
 docker image prune -f
-
-# Посмотреть использование диска
-df -h
-docker system df
 ```
 
----
+## Если что-то пошло не так
 
-## Чеклист: полная готовность к деплою
+```bash
+# Посмотреть ошибки
+docker compose -f docker-compose.prod.yml logs api --tail=100
+docker compose -f docker-compose.prod.yml logs nginx --tail=50
 
-### Код (сделать на локальной машине, закоммитить в main)
-- [ ] Исправить `apps/web/Dockerfile` — добавить `ARG/ENV NEXT_PUBLIC_API_URL`
-- [ ] Исправить `docker-compose.prod.yml` — добавить `JWT_REFRESH_SECRET` + build args для web
-- [ ] Обновить `nginx/nginx.conf` — subdomain routing + HTTPS блоки (пока без SSL, просто структура)
-- [ ] Добавить `.github/workflows/deploy.yml` для автодеплоя
-
-### Сервер (сделать на VPS)
-- [ ] Обновить систему
-- [ ] Создать пользователя `deploy`
-- [ ] Настроить UFW (22, 80, 443)
-- [ ] Установить Docker + Docker Compose plugin
-- [ ] Клонировать репо в `/home/deploy/stayontrack`
-- [ ] Создать `.env.production` с реальными секретами
-- [ ] Запустить сервисы: `docker compose up -d --build`
-- [ ] Проверить HTTP: `curl http://stayontrack.day/api/v1/health`
-- [ ] Получить SSL через certbot
-- [ ] Подключить HTTPS в nginx.conf и перезапустить
-- [ ] Проверить HTTPS на всех доменах
-- [ ] Настроить cron для бэкапов (3:00 ежедневно)
-- [ ] Настроить cron для обновления SSL (раз в день)
-
-### GitHub (добавить секреты)
-- [ ] `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT`
-
-### Проверка после деплоя
-- [ ] `https://stayontrack.day` открывается
-- [ ] `https://api.stayontrack.day/api/v1/health` возвращает `{"status":"ok"}`
-- [ ] Регистрация работает (email приходит)
-- [ ] Google OAuth работает
-- [ ] Telegram Login Widget работает
-- [ ] Docker контейнеры healthy: `docker compose ps`
+# Полная пересборка (если сломалось совсем)
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d --build
+```
