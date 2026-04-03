@@ -47,24 +47,33 @@ StayOnTrackDev/
 ├── packages/
 │   └── contracts/    ← Shared TypeScript типы/енамы/константы
 ├── nginx/
-│   └── nginx.conf    ← Reverse proxy (продакшн), требует обновления для SSL
+│   └── nginx.conf    ← Reverse proxy (продакшн, subdomain routing + HTTP→HTTPS)
 ├── scripts/
 │   └── backup.sh     ← Cron-скрипт резервного копирования БД
-├── project/          ← ВСЯ ДОКУМЕНТАЦИЯ (читай сюда)
-│   ├── INFRASTRUCTURE.md  ← Полный план деплоя на VPS (читай перед деплоем!)
-│   ├── PROJECT_STATE.md   ← Текущий статус, известные баги
-│   ├── PROJECT_MAP.md     ← 67 API эндпойнтов, 16 страниц, 12 сущностей
-│   ├── PROJECT_GUIDE.md   ← Быстрый старт для разработки
-│   ├── DECISIONS_LOG.md   ← Архитектурные решения (DEC-001..DEC-017)
-│   ├── API_CONVENTIONS.md ← REST-соглашения
-│   ├── ROADMAP.md         ← Планы v2+
-│   └── tasks/             ← Задачи: INDEX.md, EXECUTION_QUEUE.md, BATCH-05..11
+├── docs/             ← ВСЯ ДОКУМЕНТАЦИЯ
+│   ├── deployment/
+│   │   └── INFRASTRUCTURE.md   ← Полный план деплоя на VPS ⬅ читай перед деплоем
+│   ├── architecture/
+│   │   ├── DECISIONS_LOG.md    ← Архитектурные решения DEC-001..DEC-017
+│   │   ├── PROJECT_MAP.md      ← 67 API эндпойнтов, 16 страниц, 12 сущностей
+│   │   ├── API_CONVENTIONS.md  ← REST-соглашения
+│   │   ├── ARCHITECTURE_AUDIT.md
+│   │   └── AGENT_SYSTEM.md
+│   ├── project-status/
+│   │   └── PROJECT_STATE.md    ← Текущий статус, что сделано, известные баги
+│   ├── quick-start/
+│   │   └── PROJECT_GUIDE.md    ← Быстрый старт для разработки
+│   ├── roadmap/
+│   │   └── ROADMAP.md          ← Планы v2+
+│   └── tasks/
+│       ├── INDEX.md            ← Каталог всех задач
+│       ├── EXECUTION_QUEUE.md  ← Очередь задач
+│       └── BATCH-05..11.md     ← История выполненных батчей
 ├── StayOnTrack_docs/ ← Продуктовые Word-документы (vision, PRD, UX concept)
-├── other/            ← Устаревшие доки первой итерации (можно архивировать)
 ├── docker-compose.yml       ← Dev: только PostgreSQL на порту 5450
 ├── docker-compose.prod.yml  ← Prod: api + web + db + nginx + certbot
 ├── .env.example             ← Шаблон для разработки
-├── .env.production.example  ← Шаблон для VPS (ВНИМАНИЕ: нужно обновить домен!)
+├── .env.production.example  ← Шаблон для VPS
 └── CLAUDE.md                ← Этот файл
 ```
 
@@ -89,7 +98,7 @@ StayOnTrackDev/
 | **DEC-017** | Timezone автоматически синхронизируется из браузера при каждом логине | Пользователи в разных часовых поясах, ручная настройка неудобна |
 | **DB** | TypeORM `synchronize: false` + `migrationsRun: true` в production | В dev — auto-sync, в prod — миграции запускаются автоматически при старте контейнера |
 | **Auth** | JWT: access 15 мин + refresh 7 дней. Ротация refresh токенов при каждом обновлении | После рестарта API все refresh-токены инвалидируются (известный баг, некритично для MVP) |
-| **API prefix** | Все эндпойнты: `/api/v1/...` | Nginx роутит `/api/` → контейнер api |
+| **API prefix** | Все эндпойнты: `/api/v1/...` | Nginx роутит по субдомену api.stayontrack.day |
 
 ---
 
@@ -101,12 +110,11 @@ StayOnTrackDev/
   - TASK-080 ✅ — Social sharing cards (achievements + challenges)
   - TASK-070 ✅ — Telegram Login Widget auth
   - TASK-090 ✅ — Daily target для позитивных привычек + habit-вкладка в LiveHero
-- **Следующий шаг:** OPS-100 — деплой на VPS (см. `project/INFRASTRUCTURE.md`)
+- **Следующий шаг:** OPS-100 — деплой на VPS (см. `docs/deployment/INFRASTRUCTURE.md`)
 
 ### Известные проблемы (некритичные)
 - JWT refresh-токены инвалидируются при рестарте API
 - Frontend тесты: 0% покрытия
-- `behavior-change.txt` в корне — личные заметки, не нужны в репо
 
 ---
 
@@ -114,13 +122,13 @@ StayOnTrackDev/
 
 | Что нужно | Куда идти |
 |-----------|-----------|
-| Развернуть на VPS | `project/INFRASTRUCTURE.md` |
-| Текущий статус / что сделано | `project/PROJECT_STATE.md` |
-| Все API эндпойнты | `project/PROJECT_MAP.md` |
-| Архитектурные решения | `project/DECISIONS_LOG.md` |
-| Задачи и беклог | `project/tasks/INDEX.md` |
-| Очередь задач | `project/tasks/EXECUTION_QUEUE.md` |
-| REST-соглашения | `project/API_CONVENTIONS.md` |
+| Развернуть на VPS | `docs/deployment/INFRASTRUCTURE.md` |
+| Текущий статус / что сделано | `docs/project-status/PROJECT_STATE.md` |
+| Все API эндпойнты | `docs/architecture/PROJECT_MAP.md` |
+| Архитектурные решения | `docs/architecture/DECISIONS_LOG.md` |
+| Задачи и беклог | `docs/tasks/INDEX.md` |
+| Очередь задач | `docs/tasks/EXECUTION_QUEUE.md` |
+| REST-соглашения | `docs/architecture/API_CONVENTIONS.md` |
 | Продуктовое видение | `StayOnTrack_docs/Product Vision Document PRDstyle.docx` |
 
 ---
@@ -150,20 +158,6 @@ npm run db:down
 ## Как правильно начать новый разговор
 
 1. Прочти `CLAUDE.md` (этот файл)
-2. Прочти `project/PROJECT_STATE.md` — текущий статус и известные проблемы
-3. Прочти `project/DECISIONS_LOG.md` — чтобы не нарушить критические решения
+2. Прочти `docs/project-status/PROJECT_STATE.md` — текущий статус и известные проблемы
+3. Прочти `docs/architecture/DECISIONS_LOG.md` — чтобы не нарушить критические решения
 4. Спроси пользователя, что он хочет сделать
-
----
-
-## Структура папок — что куда
-
-| Папка | Назначение | Статус |
-|-------|-----------|--------|
-| `apps/` | Исходный код (API + Web) | Активная разработка |
-| `packages/contracts/` | Shared типы | Активная разработка |
-| `project/` | Вся документация | Актуально |
-| `nginx/` | Nginx конфиг для прода | Нужно обновить для SSL |
-| `scripts/` | Утилиты для прода | Готово |
-| `StayOnTrack_docs/` | Продуктовые Word-доки | Архив/справка |
-| `other/` | Старые доки (устарели) | Можно удалить |
