@@ -207,10 +207,14 @@ JWT_REFRESH_SECRET=ВСТАВЬ_СГЕНЕРИРОВАННУЮ_СТРОКУ_2
 # ── Домены ───────────────────────────────────────────────
 CORS_ORIGIN=https://stayontrack.day
 NEXT_PUBLIC_API_URL=https://api.stayontrack.day/api/v1
+NEXT_PUBLIC_APP_URL=https://stayontrack.day
 
-# ── Email через Resend ────────────────────────────────────
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
-FROM_EMAIL=noreply@stayontrack.day
+# ── Email через Gmail SMTP ────────────────────────────────
+# GMAIL_APP_PASSWORD — 16-значный «App password» из Google Account →
+# Security → 2-Step Verification → App passwords (НЕ обычный пароль!)
+GMAIL_USER=youraddress@gmail.com
+GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
+EMAIL_FROM=StayOnTrack <noreply@stayontrack.day>
 
 # ── Google OAuth (вход через Google) ─────────────────────
 GOOGLE_CLIENT_ID=xxxxxxxxxx.apps.googleusercontent.com

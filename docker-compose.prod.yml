@@ -26,7 +26,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Inject ALL secrets from the env file into the container.
+    # NOTE: the CLI `--env-file` flag only feeds ${...} interpolation in this
+    # compose file — it does NOT pass vars into the container. This `env_file:`
+    # directive is what actually delivers GMAIL_*, GOOGLE_*, TELEGRAM_BOT_TOKEN,
+    # VAPID_* and NEXT_PUBLIC_APP_URL to the running API. Without it those
+    # optional features (email, OAuth, Telegram, push) silently stay disabled.
+    env_file:
+      - .env.production
     environment:
+      # Explicit entries below override the env file and fail-fast if missing.
       NODE_ENV: production
       PORT: 4800
       DB_HOST: db
