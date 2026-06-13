@@ -8,6 +8,8 @@ export class HabitResponseDto {
   habitType!: string;
   caloriesPerOccurrence!: number;
   pricePerOccurrence!: number;
+  targetUnit!: string | null;
+  dailyTarget!: number | null;
   frequencyType!: string;
   occurrencesPerWeek!: number | null;
   isActive!: boolean;
@@ -22,6 +24,8 @@ export class HabitResponseDto {
     dto.emoji = habit.emoji;
     dto.category = habit.category;
     dto.habitType = habit.habitType;
+    dto.targetUnit = habit.targetUnit;
+    dto.dailyTarget = habit.dailyTarget;
     dto.caloriesPerOccurrence = habit.caloriesPerOccurrence;
     dto.pricePerOccurrence = habit.pricePerOccurrence;
     dto.frequencyType = habit.frequencyType;

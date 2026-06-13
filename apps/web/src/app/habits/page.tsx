@@ -692,7 +692,7 @@ export default function HabitsPage() {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-[var(--foreground)]">
                     {t('dailyTarget')}
-                    <span className="ml-1 text-[var(--muted)] font-normal text-xs">({t('optional')})</span>
+                    <span className="ml-1 text-[var(--muted)] font-normal text-xs">({tc('optional')})</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <input

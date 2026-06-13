@@ -88,7 +88,8 @@ export class NotificationsService implements OnModuleInit {
           hour: 'numeric',
           hour12: false,
         });
-        userHour = parseInt(formatter.format(now), 10);
+        // Intl.DateTimeFormat with hour12:false can return 24 for midnight — normalize to 0
+        userHour = parseInt(formatter.format(now), 10) % 24;
       } catch {
         // If timezone is invalid, fall back to UTC
         userHour = now.getUTCHours();
